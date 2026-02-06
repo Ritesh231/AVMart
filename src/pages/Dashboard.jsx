@@ -119,7 +119,7 @@ const Dashboard = () => {
 
     return (
         <div className="p-6 min-h-screen">
-            <h2 className="text-2xl font-bold text-brand-navy mb-6">Dashboard</h2>
+            <h2 className=" text-brand-navy my-6">Dashboard</h2>
 
             {/* MAIN GRID LAYOUT */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -170,7 +170,7 @@ const Dashboard = () => {
                     <section className="bg-white border-2 border-brand-soft rounded-[2.5rem] p-6">
                         <div className='flex justify-between items-center mb-6 px-2'>
                             <h2 className="text-xl font-bold text-brand-navy">Short Overview</h2>
-                            <div className='bg-[#DCF0FF] rounded-lg py-2 px-4 flex gap-2 items-center text-brand-navy font-semibold text-sm'>
+                            <div className='bg-brand-blue rounded-lg py-2 px-4 flex gap-2 items-center text-brand-navy font-semibold text-sm'>
                                 <p>1 Last Month</p>
                                 <Filter size={18} />
                             </div>

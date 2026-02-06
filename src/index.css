@@ -15,7 +15,7 @@
 }
 @layer components {
   h2 {
-    @apply text-xl font-semibold text-gray-800;
+    @apply text-2xl font-bold  text-gray-800;
   }
 }
 html {

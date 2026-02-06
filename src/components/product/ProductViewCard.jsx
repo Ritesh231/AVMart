@@ -1,6 +1,9 @@
 import React from 'react'
 
+// IMP: THIS CARD IS USED IN DASHBOARD PAGE
 const ProductViewCard = ({ product }) => {
+
+
     return (
         <div className="relative bg-white border border-brand-teal/20 rounded-3xl p-4 flex flex-col items-start transition-shadow hover:shadow-md">
             {/* Discount Badge */}

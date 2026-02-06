@@ -13,6 +13,8 @@ export default {
           cyan: "#00E9BE",
           soft: "#E6F7F3",
           gray: "#94A3B8",
+          blue: "#DCF0FF",
+          green: "#57FB6866",
         },
       },
     },
