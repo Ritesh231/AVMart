@@ -8,9 +8,9 @@ export default {
     extend: {
       colors: {
         brand: {
-          navy: "#1E294B",
+          navy: "#1A2550",
           teal: "#49D1B1",
-          cyan: "#00F2B5",
+          cyan: "#00E9BE",
           soft: "#E6F7F3",
           gray: "#94A3B8",
         },

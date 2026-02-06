@@ -118,14 +118,14 @@ const Dashboard = () => {
     ];
 
     return (
-        <div className="p-6 bg-slate-50 min-h-screen">
+        <div className="p-6 min-h-screen">
             <h2 className="text-2xl font-bold text-brand-navy mb-6">Dashboard</h2>
 
             {/* MAIN GRID LAYOUT */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 {/* LEFT COLUMN: Finance & Transaction History (Span 4 of 12) */}
-                <section className="lg:col-span-4 flex flex-col gap-6 p-6 border-2 border-brand-soft rounded-[3rem] bg-white h-fit">
+                <section className="lg:col-span-4 flex flex-col gap-6 p-6 border-2 border-brand-soft rounded-[3rem] bg-white h-full">
                     <div className="total-revenue">
                         <div className="relative overflow-hidden bg-brand-navy rounded-[2.5rem] p-8 text-white shadow-xl min-h-[240px] flex flex-col justify-between">
                             <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-brand-cyan/70 rounded-full blur-[50px]"></div>
