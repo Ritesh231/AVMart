@@ -2,17 +2,19 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,ts,jsx,tsx}", // This ensures Tailwind scans all subfolders
   ],
   theme: {
     extend: {
       colors: {
         brand: {
-          navy: "#1E2A5A",
-          soft: "#F8FAFC",
-          cyan: "#E6FBF7",
-          teal: "#2EE6C5",
-          gray: "#6B7280",
+          navy: "#1A2550",
+          teal: "#49D1B1",
+          cyan: "#00E9BE",
+          soft: "#E6F7F3",
+          gray: "#94A3B8",
+          blue: "#DCF0FF",
+          green: "#57FB6866",
         },
       },
     },
