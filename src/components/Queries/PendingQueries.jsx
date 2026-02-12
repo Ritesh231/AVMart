@@ -1,23 +1,20 @@
-import { FaSearch, FaTrash, FaEye,FaCheck, FaTimes } from "react-icons/fa";
+import { FaSearch, FaTrash, FaEye, FaCheck, FaTimes } from "react-icons/fa";
 import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
 import { SiTicktick } from "react-icons/si";
 import { RxCrossCircled } from "react-icons/rx";
-import { Link } from "react-router-dom";
 
 const users = Array.from({ length: 6 }).map((_, i) => ({
     id: "#12345",
+    name: "Sarah Chen",
+    email: "sarahchen@gmail.com",
+    contact:"+91 8585202202",
+    message:"Hi, I haven't received my order yet. Can you help?",
     shop: "Medicovr Citycare Medical Shop",
     price: "450",
     placed: "20/12/2025",
-    items: [
-        "/images/item1.png",
-        "/images/item2.png",
-        "/images/item3.png",
-    ],
-    email: "sarahchen@gmail.com",
-    payment: "Online",
+    status: "Contacted",
     action: "Send to Delivery",
 }));
 
@@ -25,7 +22,7 @@ export default function UsersTable() {
     return (
         <>
             {/* Search & Actions */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
                     {/* Search Bar */}
                     <div className="w-full lg:w-[40%] md:w-[50%]">
                         <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
@@ -33,7 +30,7 @@ export default function UsersTable() {
                             <input
                                 className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
                                 type="text"
-                                placeholder='Search By Orders'
+                                placeholder='Search By User Name and Phone no'
                             />
                         </div>
                     </div>
@@ -51,21 +48,19 @@ export default function UsersTable() {
                         </button>
                     </div>
                 </div>
-            
+
             {/* Table */}
             <div className="bg-white rounded-xl border overflow-x-auto">
                 <table className="min-w-[900px] w-full text-sm">
                     <thead className="bg-[#F1F5F9] text-gray-600">
                         <tr>
                             <th className="p-3"></th>
-                            <th className="p-3 text-left">Order ID</th>
-                            <th className="p-3 text-left">Shop Info</th>
-                            <th className="p-3 text-left">Price</th>
-                            <th className="p-3 text-left">Placed On</th>
-                            <th className="p-3 text-left">Items</th>
-                            <th className="p-3 text-left">Payment Method</th>
+                            <th className="p-3 text-left">Customer</th>
+                            <th className="p-3 text-left">Contact</th>
+                            <th className="p-3 text-left">Message</th>
+                            <th className="p-3 text-left">Status</th>
+                            <th className="p-3 text-left">Date</th>
                             <th className="p-3 text-left">Action</th>
-                         
                         </tr>
                     </thead>
 
@@ -75,60 +70,46 @@ export default function UsersTable() {
                                 <td className="p-3">
                                     <input type="checkbox" />
                                 </td>
-                                <td className="p-3 font-medium">{u.id}</td>
-                                <td className="p-3 font-medium">{u.shop}</td>
-                                <td className="p-3">{u.price}</td>
-                                <td className="p-3">{u.placed}</td>
                                 <td className="p-3">
-                                    <div className="flex items-center gap-2">
-                                        {u.items?.slice(0, 3).map((img, index) => (
-                                            <img
-                                                key={index}
-                                                src={img}
-                                                alt="item"
-                                                className="w-8 h-8 rounded-md object-cover border"
-                                            />
-                                        ))}
+                                    <div className="flex items-center gap-3">
+                                        {/* Avatar */}
+                                        <div className="h-9 w-9 rounded-full bg-blue-900 text-white flex items-center justify-center font-semibold text-sm">
+                                            SC
+                                        </div>
+                                        
+                                        {/* Name & Email */}
+                                        <div className="leading-tight">
+                                            <p className="text-sm font-medium text-gray-900">{u.name}</p>
+                                            <p className="text-xs text-gray-500">{u.email}</p>
+                                        </div>
                                     </div>
                                 </td>
+
+                                <td className="p-3 font-medium">{u.contact}</td>
+                                <td className="p-3 w-48 break-words">{u.message}</td>
                                
+                               
+
                                 <td className="p-3">
                                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
-                                     bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
-                                        <BsWallet2 className="text-[#03C616]" />
-                                        {u.payment}
+                                     bg-[#FFDD00]/10 border border-[#FFDD00] text-[#FFDD00] text-sm font-semibold">
+                                        {u.status}
                                     </span>
                                 </td>
-                            <td className="p-3 whitespace-nowrap">
-  <div className="flex items-center gap-1">
-    {/* Approve */}
-    <button
-      className="p-1 text-green-600 bg-white"
-      title="Approve"
-    >
-      <SiTicktick size={18} />
-    </button>
+                                 <td className="p-3">{u.placed}</td>
+                                <td className="p-3 whitespace-nowrap">
+                                    <div className="flex items-center gap-1">
+                                    <button className="bg-[#1A2550] text-white p-2 rounded-lg">Mark as Contacted</button>
+                                        {/* Reject */}
+                                        <button
+                                            className="p-1 text-red-600 bg-white"
+                                            title="Reject"
+                                        >
+                                           <FaTrash size={18} />
+                                        </button>
 
-    {/* Reject */}
-    <button
-      className="p-1 text-red-600 bg-white"
-      title="Reject"
-    >
-      <RxCrossCircled size={18} />
-    </button>
-
-    {/* View */}
-    <Link to="/order/details">
-    <button
-      className="p-1 text-blue-900"
-      title="View"
-    >
-      <FaEye size={18} />
-    </button>
-    </Link>
-  </div>
-  
-</td>
+                                    </div>
+                                </td>
 
 
                             </tr>

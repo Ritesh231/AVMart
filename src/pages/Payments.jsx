@@ -6,21 +6,21 @@ import CashOnDeliveryCard from '../components/payment/CashOnDeliveryCard';
 import PartialPaymentCard from '../components/payment/PartialPaymentCard';
 
 const Payments = () => {
-
+    
     const paymentTypeStat = [
         {
             title: "Online Payments",
             number: "₹5.8K",
             statement: "+ 12 % from last Month",
             icon: <BadgeIndianRupee size={24} />,
-            special: true // Dark blue gradient background
+            special: true 
         },
         {
             title: "Cash On Delivery",
             number: "₹5.8K",
             statement: "+ 12 % from last week",
             icon: <BadgeIndianRupee size={24} />,
-            special: false // Light mint background
+            special: false 
         },
         {
             title: "Partial Payments",
@@ -37,8 +37,7 @@ const Payments = () => {
             special: false
         }
     ];
-
-    // Mock onlineTransaction list
+    
     const onlineTransaction = [
         {
             id: 1,
@@ -152,15 +151,14 @@ const Payments = () => {
                     ))}
                 </div>
             </section>
-
-
+           
             {/* Payment filter button section*/}
-            <section className="flex items-center bg-[#1E264F] p-2 my-6 rounded-xl w-fit shadow-lg">
+            <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2  md:w-fit w-full shadow-lg">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300 first:ml-0 ml-2
+                        className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300 first:ml-0 
                         ${activeTab === tab.id
                                 ? 'bg-[#00E5B0] text-white shadow-sm'
                                 : 'bg-white text-[#1E264F] hover:bg-opacity-90'
@@ -174,7 +172,6 @@ const Payments = () => {
                     </button>
                 ))}
             </section>
-
 
             <section className="bg-white border-2 border-brand-soft rounded-[2.5rem] p-6 shadow-sm overflow-hidden">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">

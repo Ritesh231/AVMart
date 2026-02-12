@@ -6,6 +6,8 @@ import { MdSubdirectoryArrowRight } from "react-icons/md";
 import { AiOutlineProduct } from "react-icons/ai";
 import { BsStar } from "react-icons/bs";
 import CategoryCard from "./CategoryCards";
+import { useGetallcategoriesQuery } from "../../Redux/apis/productsApi";
+
 
 const tabs = [
   { name: "Categories", icon: <BiCategory /> },
@@ -14,48 +16,52 @@ const tabs = [
   { name: "Brands", icon: <BsStar /> },
 ];
 
-const data = Array.from({ length: 8 });
 
 export default function ProductCategories() {
-  const [activeTab, setActiveTab] = useState("Categories");
+
+  const { data, isLoading, isError } = useGetallcategoriesQuery();
+  const categories = data?.data ?? [];
+
+  const CategoryShimmer = () => (
+    <div className="p-4 rounded-xl border bg-white animate-pulse">
+      <div className="flex gap-4">
+        <div className="w-10 h-10 bg-gray-200 rounded" />
+        <div className="flex-1">
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
+          <div className="h-3 bg-gray-200 rounded w-1/3" />
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <CategoryShimmer key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <p className="text-red-500">Failed to load categories</p>;
+  }
 
   return (
     <div className="p-6 bg-[#F8FAFC] rounded-xl border border-teal-200">
 
-      {/* 🔹 SEARCH + EXPORT */}
-         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-                    {/* Search Bar */}
-                    <div className="w-full lg:w-[40%] md:w-[50%]">
-                        <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
-                            <Search className="text-brand-gray" size={20} />
-                            <input
-                                className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
-                                type="text"
-                                placeholder='Search By Orders'
-                            />
-                        </div>
-                    </div>
-
-                    {/* Export Button */}
-                    <div className='flex justify-evenly gap-2 items-center'>
-                        <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-                            <SlidersHorizontal size={20} />
-                        </button>
-                        <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                            <p>Today’s</p> <ChevronDown size={20} />
-                        </button>
-                        <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-                            <Download size={20} /> Export
-                        </button>
-                    </div>
-                </div>
-
-      {/* 🔹 CARDS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2  gap-5">
-        {data.map((_, index) => (
-          <CategoryCard key={index} />
+      {/* Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {categories.map((category) => (
+          <CategoryCard
+            key={category._id}
+            category={category}
+          />
         ))}
       </div>
+
     </div>
   );
 }
+

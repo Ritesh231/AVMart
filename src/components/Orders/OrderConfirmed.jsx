@@ -21,8 +21,6 @@ const users = Array.from({ length: 6 }).map((_, i) => ({
 export default function UsersTable() {
     return (
         <>
-          
-
             {/* Search & Actions */}
              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
                     {/* Search Bar */}
@@ -50,8 +48,7 @@ export default function UsersTable() {
                         </button>
                     </div>
                 </div>
-                
-            
+                                  
             {/* Table */}
             <div className="bg-white rounded-xl border overflow-x-auto">
                 <table className="min-w-[900px] w-full text-sm">
@@ -66,10 +63,9 @@ export default function UsersTable() {
                             <th className="p-3 text-left">Items</th>
                             <th className="p-3 text-left">Payment</th>
                             <th className="p-3 text-left">Delivery Boy</th>
-                         
                         </tr>
                     </thead>
-
+                    
                     <tbody>
                         {users.map((u) => (
                             <tr key={u.id} className="border-t hover:bg-gray-50">

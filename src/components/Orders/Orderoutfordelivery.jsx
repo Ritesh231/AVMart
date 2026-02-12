@@ -28,7 +28,6 @@ export default function UsersTable() {
         ];
     return (
         <>
-          
             {/* Search & Actions */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
                     {/* Search Bar */}
@@ -42,7 +41,7 @@ export default function UsersTable() {
                             />
                         </div>
                     </div>
-
+                    
                     {/* Export Button */}
                     <div className='flex justify-evenly gap-2 items-center'>
                         <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
@@ -56,7 +55,7 @@ export default function UsersTable() {
                         </button>
                     </div>
                 </div>
-
+              
             {/* Table */}
             <div className="bg-white rounded-xl border overflow-x-auto">
                 <table className="min-w-[900px] w-full text-sm">
@@ -74,7 +73,7 @@ export default function UsersTable() {
                             <th className="p-3 text-left">Action</th>
                         </tr>
                     </thead>
-
+                        
                     <tbody>
                         {users.map((u) => (
                             <tr key={u.id} className="border-t hover:bg-gray-50">

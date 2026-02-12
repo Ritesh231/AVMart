@@ -4,11 +4,10 @@ import { ChevronDown, ChevronUp, DollarSign, WalletMinimal } from 'lucide-react'
 const PartialPaymentCard = ({ transaction }) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    // 1. Safety check: If transaction is missing, return null or a skeleton
     if (!transaction || !transaction.breakdown) {
         return <div className="p-4 border border-red-200 rounded-xl bg-red-50 text-red-500">Error: Transaction data missing</div>;
     }
-
+     
     const { advance, remaining } = transaction.breakdown || {};
 
     return (

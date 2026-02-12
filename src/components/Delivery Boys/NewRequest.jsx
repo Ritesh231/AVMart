@@ -1,4 +1,5 @@
 import { FaSearch, FaTrash, FaEye,FaCheck, FaTimes } from "react-icons/fa";
+import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
 import { SiTicktick } from "react-icons/si";
@@ -26,28 +27,32 @@ export default function UsersTable() {
           
 
             {/* Search & Actions */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-                <div className="relative w-full md:w-96">
-                    <FaSearch className="absolute left-3 top-3 text-gray-400 text-sm" />
-                    <input
-                        type="text"
-                        placeholder="Search By Shop Name, Location or Type"
-                        className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm outline-none"
-                    />
-                </div>
+           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+                    {/* Search Bar */}
+                    <div className="w-full lg:w-[40%] md:w-[50%]">
+                        <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
+                            <Search className="text-brand-gray" size={20} />
+                            <input
+                                className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
+                                type="text"
+                                placeholder='Search By User Name and Phone no'
+                            />
+                        </div>
+                    </div>
 
-                <div className="flex gap-2 w-full md:w-auto">
-                    <button className="flex-1 md:flex-none px-4 py-2 bg-[#00E9BE] border rounded-lg text-lg">
-                        <IoFilter />
-                    </button>
-                    <button className="flex-1 md:flex-none px-4 py-2 bg-white border rounded-lg text-sm">
-                        All Type
-                    </button>
-                    <button className="flex-1 md:flex-none px-4 py-2 bg-[#1E3A8A] text-white rounded-lg text-sm">
-                        Export
-                    </button>
+                    {/* Export Button */}
+                    <div className='flex justify-evenly gap-2 items-center'>
+                        <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+                            <SlidersHorizontal size={20} />
+                        </button>
+                        <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
+                            <p>Today’s</p> <ChevronDown size={20} />
+                        </button>
+                        <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
+                            <Download size={20} /> Export
+                        </button>
+                    </div>
                 </div>
-            </div>
             
             {/* Table */}
             <div className="bg-white rounded-xl border overflow-x-auto">

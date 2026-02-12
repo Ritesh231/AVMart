@@ -23,21 +23,22 @@ const OnlinePaymentCard = ({
                         <p className="text-brand-navy text-xs font-medium">{date}</p>
                     </div>
                 </div>
-
+               
                 {/* Status Badge */}
                 <div className="flex items-center gap-1 bg-brand-green text-green-600 px-3 py-2 rounded-lg border border-green-200">
                     <CheckCircle2 size={18} />
                     <span className="text-xs font-bold capitalize">{status}</span>
                 </div>
+                
             </div>
-
+            
             {/* Order Info */}
             <div className="mb-5">
                 <p className="text-brand-gray/60 text-sm font-semibold">
                     Order : {orderId} . Transaction : {transactionId}
                 </p>
             </div>
-
+           
             {/* Details Grid */}
             <div className="grid grid-cols-3 gap-4">
                 <div className="bg-brand-blue p-2 rounded-lg flex flex-col  justify-between items-start">

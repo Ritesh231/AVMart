@@ -7,7 +7,7 @@ import {
 
 const Header = () => {
     const location = useLocation();
-
+      
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
         { name: 'Users', path: '/users', icon: <Users size={18} /> },
@@ -20,7 +20,7 @@ const Header = () => {
         { name: 'Offers', path: '/offers', icon: <Tag size={18} /> },
         { name: 'Wallet', path: '/wallet', icon: <Wallet size={18} /> },
     ];
-
+    
     return (
         <header className="w-full bg-white shadow-sm">
             {/* Top Header Section */}
@@ -31,10 +31,10 @@ const Header = () => {
                         <img src="./images/logo.svg" alt="" />
                     </div>
                 </div>
-
+                
                 <div className="flex items-center gap-4 md:gap-6">
                     <div className="hidden md:flex items-center bg-brand-cyan px-4 py-2 rounded-xl text-brand-navy font-bold gap-3">
-                        <span>12.12.2026</span>
+                       <span>{new Date().toLocaleDateString("en-GB")}</span>
                         <Calendar size={18} />
                     </div>
 
@@ -54,7 +54,7 @@ const Header = () => {
                     </div>
                 </div>
             </div>
-
+                   
             {/* Navigation Bar */}
             <nav className="bg-brand-soft border-t border-brand-teal/10">
                 <div className="overflow-x-auto no-scrollbar scroll-smooth">
@@ -64,7 +64,7 @@ const Header = () => {
                                 <NavLink
                                     to={item.path}
                                     className={({ isActive }) => `
-                    flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 text-sm
+                    flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 text-xs
                     ${isActive
                                             ? 'bg-brand-navy text-white  '
                                             : 'bg-white text-brand-navy hover:bg-slate-50 border border-transparent'}

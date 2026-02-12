@@ -10,7 +10,7 @@ const Layout = () => {
       <header className="sticky top-0 z-50">
         <Header />
       </header>
-
+     
       {/* Page Content */}
       <main className="pt-2">
         <Outlet />

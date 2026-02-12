@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Layout from "../Layout/Layout";
 
+const Login = lazy(() => import("../pages/Login"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Users = lazy(() => import("../pages/UserManagment"));
 const Orders = lazy(() => import("../pages/OrderManagement"));
@@ -10,6 +11,7 @@ const Payments = lazy(() => import("../pages/Payments"));
 const Invoices = lazy(() => import("../pages/Invoices"));
 const Delivery = lazy(() => import("../pages/DeliveryBoy"));
 const Queries = lazy(() => import("../pages/TotalQueries"));
+const Wallet = lazy(() => import("../pages/Wallet"));
 
 /* Order Status */
 const OrderPending = lazy(() => import("../components/Orders/OrderPending"));
@@ -19,6 +21,8 @@ const OrderOutForDelivery = lazy(() =>
 );
 const OrderDelivered = lazy(() => import("../components/Orders/OrderDelivered"));
 const OrderRejected = lazy(() => import("../components/Orders/OrderRejected"));
+const OrderDetails = lazy(() => import("../components/Orders/OrderDetails"));
+
 
 /* Product */
 const AllProducts = lazy(() => import("../components/Products/AllProducts"));
@@ -29,15 +33,29 @@ const Subcategories = lazy(() =>
   import("../components/Products/Subcategories")
 );
 const Brands = lazy(() => import("../components/Products/Brands"));
+const AddProduct = lazy(() => import("../components/Products/AddProduct"));
+const AddCategory = lazy(() => import("../components/Products/AddCategory"));
+const AddSubcategory = lazy(() => import("../components/Products/AddSubcategory"));
+const AddBrand= lazy(() => import("../components/Products/AddBrand"));
 
 /* Delivery */
 const DeliveryRequests = lazy(() =>
   import("../components/Delivery Boys/NewRequest")
 );
 
-
 /*Queries */
 const Query = lazy(() => import("../components/Queries/TotalQueries"));
+const PendingQueries = lazy(() => import("../components/Queries/PendingQueries"));
+
+
+/*Offers*/
+const Offers = lazy(() => import("../pages/Offers"));
+const MainBanner = lazy(() => import("../components/Offers/MainBanner"));
+const AddBanner=lazy(()=>import("../components/Offers/AddBanner"));
+
+/*Wallet*/
+const WalletTable = lazy(() => import("../components/Wallet/TotalBalanceTable"));
+
 
 const Loader = () => (
   <div className="flex items-center justify-center h-screen">
@@ -49,18 +67,19 @@ export default function AppRouter() {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-
+        <Route path="/" element={<Login/>} />
+         
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/users" element={<Users />} />
           <Route path="/payments" element={<Payments />} />
           <Route path="/invoices" element={<Invoices />} />
-       
+           
           {/*Queries*/}
           <Route path="/queries" element={<Queries />}> 
            <Route index element={<Navigate to="pending" replace />} />
-           <Route path="pending" element={<Query/>} />
+           <Route path="all" element={<Query/>} />
+           <Route path="pending" element={<PendingQueries/>}/>
           </Route>
 
           {/* Orders */}
@@ -72,7 +91,8 @@ export default function AppRouter() {
             <Route path="delivered" element={<OrderDelivered />} />
             <Route path="rejected" element={<OrderRejected />} />
           </Route>
-
+          <Route path="/order/details" element={<OrderDetails/>}/>
+          
           {/* Products */}
           <Route path="/products" element={<Products />}>
             <Route index element={<Navigate to="categories" replace />} />
@@ -81,14 +101,32 @@ export default function AppRouter() {
             <Route path="subcategories" element={<Subcategories />} />
             <Route path="brands" element={<Brands />} />
           </Route>
-
+           
+            <Route path="/AddProduct" element={<AddProduct/>}/>
+            <Route path="/AddCategory" element={<AddCategory/>}/>
+            <Route path="/AddSubcategory" element={<AddSubcategory/>}/>
+            <Route path="/AddBrand" element={<AddBrand/>}/>
+               
           {/* Delivery */}
           <Route path="/delivery" element={<Delivery />}>
             <Route index element={<Navigate to="requests" replace />} />
             <Route path="requests" element={<DeliveryRequests />} />
           </Route>
-        </Route>
 
+          {/*Offer*/}
+           <Route path="/offers" element={<Offers/>}>
+            <Route index element={<Navigate to="mainbanner" replace />} />
+            <Route path="mainbanner" element={< MainBanner/>} />
+            <Route path="add-banner" element={<AddBanner/>}/>
+          </Route>
+       
+          {/*Wallet*/}
+            <Route path="/wallet" element={<Wallet/>}>
+            <Route index element={<Navigate to="WalletTable" replace />} />
+            <Route path="WalletTable" element={<WalletTable/>} />
+          </Route>
+
+        </Route>
         <Route path="*" element={<div>404 - Page Not Found</div>} />
       </Routes>
     </Suspense>

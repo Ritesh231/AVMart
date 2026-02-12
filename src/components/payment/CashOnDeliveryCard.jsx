@@ -23,7 +23,7 @@ const CashOnDeliveryCard = ({
                         <p className="text-brand-navy text-xs font-medium">{date}</p>
                     </div>
                 </div>
-
+            
                 {/* Status Badge */}
                 <div className="flex items-center gap-1 bg-brand-green text-green-600 px-3 py-2 rounded-lg border border-green-200">
                     <CheckCircle2 size={18} />

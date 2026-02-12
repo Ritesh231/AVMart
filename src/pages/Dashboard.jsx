@@ -1,10 +1,15 @@
 import React from 'react'
 import { PackageCheck, Box, ShoppingCart, Users, CarFront, ChartColumnIncreasing, Filter, Plus, ChevronsRight } from "lucide-react"
 import StatCard from '../components/StatCard';
-import ProductViewCard from '../components/product/ProductViewCard';
+import ProductViewCard from '../components/Products/ProductViewCard';
 import TransactionItem from '../components/TransactionItem';
+import {useGetallproductsQuery} from "../Redux/apis/productsApi"
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
+    const {data:Product,isLoading:isError}=useGetallproductsQuery();
+    const product=Product?.data||[];
+
     const overViewStats = [
         {
             title: "Delivery Boys",
@@ -54,30 +59,6 @@ const Dashboard = () => {
             icon: <ChartColumnIncreasing size={24} />,
         },
     ]
-
-    const recentAddedProducts = [
-        {
-            title: "Fogg Unisex Body Spray",
-            discount: "10",
-            image: "./images/product-images/fogg.png",
-            disPrice: 400,
-            ogPrice: 600,
-        },
-        {
-            title: "Mortein Multi Insect Killer",
-            discount: "10",
-            image: "./images/product-images/mortein.png",
-            disPrice: 400,
-            ogPrice: 600,
-        },
-        {
-            title: "Fogg Unisex Body Spray",
-            discount: "10",
-            image: "./images/product-images/fogg.png",
-            disPrice: 400,
-            ogPrice: 600,
-        }
-    ];
 
     const transactionHistory = [
         {
@@ -188,7 +169,7 @@ const Dashboard = () => {
                             ))}
                         </div>
                     </section>
-
+                    
                     {/* BOTTOM RIGHT: Recently Added Products */}
                     <section className="bg-white border-2 border-[#62CDB969] rounded-[2.5rem] p-6">
                         <div className="flex justify-between items-center mb-6">
@@ -198,14 +179,15 @@ const Dashboard = () => {
                             </button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {recentAddedProducts.map((product, index) => (
+                            {[...product].reverse().map((product, index) => (
                                 <ProductViewCard key={index} product={product} />
                             ))}
                         </div>
+                        
                         <div className="mt-6 flex justify-end">
-                            <a href="/products" className="flex items-center gap-1 text-brand-navy font-bold text-lg hover:underline">
+                            <Link to="/products/all" className="flex items-center gap-1 text-brand-navy font-bold text-lg hover:underline">
                                 View All Products <ChevronsRight size={20} />
-                            </a>
+                            </Link>
                         </div>
                     </section>
                 </div>

@@ -1,40 +1,38 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { MdOutlineMessage } from "react-icons/md";
 import { CreditCard, Wallet, Blocks } from "lucide-react";
-import { IoBag } from "react-icons/io5";
-import { MdCategory } from "react-icons/md";
-import { FaStar } from "react-icons/fa";
 
 const tabs = [
   {
-    id: "All Queries",
-    label: "All Queries",
-    icon: <MdOutlineMessage size={20} />,
-    path: "/queries/all",
+    id: "Main Banner",
+    label: "Main Banner",
+    path: "/offers/mainbanner",
   },
   {
-    id: "Contacted",
-    label: "Contacted",
-    icon: <MdOutlineMessage size={20} />,
-    path: "/queries",
+    id: "Category Banner",
+    label: "Category Banner",
+    path: "/offers",
   },
-   {
-    id: "Pending",
-    label: "Pending",
-    icon: <MdOutlineMessage size={20} />,
-    path: "/queries/pending",
-  }
+  {
+    id: "Top Selling",
+    label: "Top Selling",
+    path: "/offers",
+  },
+  {
+    id: "Product",
+    label: "Product",
+    path: "/offers",
+  },
 ];
 
 export default function OrderPaymentTabs() {
   const navigate = useNavigate();
   const location = useLocation();
-
+  
   return (
     <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2  md:w-fit w-full shadow-lg">
       {tabs.map((tab) => {
         const isActive = location.pathname === tab.path;
-
+          
         return (
           <button
             key={tab.id}
