@@ -55,7 +55,7 @@ export default function UsersTable() {
                         </button>
                     </div>
                 </div>
-              
+               
             {/* Table */}
             <div className="bg-white rounded-xl border overflow-x-auto">
                 <table className="min-w-[900px] w-full text-sm">
@@ -73,7 +73,7 @@ export default function UsersTable() {
                             <th className="p-3 text-left">Action</th>
                         </tr>
                     </thead>
-                        
+                             
                     <tbody>
                         {users.map((u) => (
                             <tr key={u.id} className="border-t hover:bg-gray-50">

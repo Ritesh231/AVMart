@@ -2,21 +2,21 @@ import React, { useState } from "react";
 import {
   useAddSubcategoryMutation,
   useGetallcategoriesQuery,
-} from "../../Redux/apis/productsApi"; // adjust if needed
+} from "../../Redux/apis/productsApi"; 
 import { toast } from "react-toastify";
 
 export default function AddSubcategory() {
   const [addSubcategory, { isLoading }] = useAddSubcategoryMutation();
   const { data: categoryData } = useGetallcategoriesQuery();
-
+    
   const categories = categoryData?.data || [];
-
+  
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
     image: null,
   });
-
+  
   const [preview, setPreview] = useState(null);
 
   /* -------------------- Handlers -------------------- */

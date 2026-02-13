@@ -77,7 +77,7 @@ export default function AddProduct() {
     category: "",
     subcategory: "",
     status: "active",
-    slug: "",
+    // slug: "",
     primaryImages: "",
   });
   
@@ -186,46 +186,102 @@ export default function AddProduct() {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+
+  /* ---------------- REQUIRED FIELD VALIDATION ---------------- */
+
+  if (!formData.productName.trim())
+    return toast.error("Product Name is required");
+
+  // if (!formData.slug.trim())
+  //   return toast.error("Slug is required");
+
+  if (!formData.brand)
+    return toast.error("Brand is required");
+
+  if (!formData.category)
+    return toast.error("Category is required");
+
+  if (!formData.subcategory)
+    return toast.error("Subcategory is required");
+
+  if (!formData.primaryImages)
+    return toast.error("Primary Image is required");
+
+  if (!variants.length)
+    return toast.error("At least one variant required");
+
+  for (let i = 0; i < variants.length; i++) {
+    const v = variants[i];
+
+    if (!v.quantityValue || !v.quantityUnit)
+      return toast.error(`Variant ${i + 1}: Quantity required`);
+
+    if (!v.originalPrice)
+      return toast.error(`Variant ${i + 1}: Original Price required`);
+
+    if (!v.stock)
+      return toast.error(`Variant ${i + 1}: Stock required`);
+
+    if (!v.sku)
+      return toast.error(`Variant ${i + 1}: SKU required`);
+  }
+
   try {
     const data = new FormData();
 
-    // Append normal fields
-    Object.keys(formData).forEach((key) => {
-      if (formData[key]) {
-        data.append(key, formData[key]);
-      }
-    });
+    /* ---------------- BASIC FIELDS ---------------- */
 
-    // Append variant images
-    variants.forEach((variant, index) => {
+    data.append("productName", formData.productName.trim());
+    data.append("subtext", formData.subtext.trim());
+    data.append("description", formData.description.trim());
+    data.append("keyFeatures", formData.keyFeatures.trim());
+    data.append("wholesaleAdvantage", formData.wholesaleAdvantage.trim());
+    data.append("brand", formData.brand);
+    data.append("category", formData.category);
+    data.append("subcategory", formData.subcategory);
+    data.append("status", formData.status);
+    // data.append("slug", formData.slug.trim());
+
+    /* ---------------- PRIMARY IMAGE ---------------- */
+
+    data.append("primaryImages", formData.primaryImages);
+
+    /* ---------------- FORMAT VARIANTS ---------------- */
+
+    const formattedVariants = variants.map((v) => ({
+      quantityValue: Number(v.quantityValue),
+      quantityUnit: v.quantityUnit,
+      originalPrice: Number(v.originalPrice),
+      discountType: v.discountType || "percent",
+      discountValue: Number(v.discountValue || 0),
+      gstRate: Number(v.gstRate || 0),
+      stock: Number(v.stock),
+      sku: v.sku,
+
+      // If you want to support image URLs manually later
+     images: [],
+    }));
+
+    data.append("variants", JSON.stringify(formattedVariants));
+
+    /* ---------------- VARIANT IMAGE FILES ---------------- */
+
+    variants.forEach((variant) => {
       variant.images.forEach((file) => {
         data.append("variantImages", file);
       });
     });
 
-    // Remove previewImages before sending
-    const formattedVariants = variants.map((v) => ({
-      quantityValue: Number(v.quantityValue),
-      quantityUnit: v.quantityUnit,
-      originalPrice: Number(v.originalPrice),
-      discountType: v.discountType,
-      discountValue: Number(v.discountValue),
-      gstRate: Number(v.gstRate),
-      stock: Number(v.stock),
-      sku: v.sku,
-      images: [], // backend should map uploaded files
-    }));
-
-    data.append("variants", JSON.stringify(formattedVariants));
-
     await addProduct(data).unwrap();
 
     toast.success("Product Added Successfully ✅");
+
   } catch (error) {
-    console.log(error);
-    toast.error("Failed to Add Product ❌");
+    console.error(error);
+    toast.error(error?.data?.message || "Failed to Add Product ❌");
   }
 };
+
   
   /* -------------------- UI -------------------- */
 
@@ -238,21 +294,19 @@ const handleSubmit = async (e) => {
             Add New Product
           </h2>
         </div>
-
+       
         <form onSubmit={handleSubmit} className="p-5 space-y-6">
 
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             <InputField label="Product Name" name="productName" value={formData.productName} onChange={handleChange} />
-            <InputField label="Slug" name="slug" value={formData.slug} onChange={handleChange} />
+            {/* <InputField label="Slug" name="slug" value={formData.slug} onChange={handleChange} /> */}
             <InputField label="Subtext" name="subtext" value={formData.subtext} onChange={handleChange} />
 
             <SelectField label="Brand" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} options={brands} />
             <SelectField label="Category" value={formData.category} onChange={handleCategoryChange} options={categories} />
             <SelectField label="Subcategory" value={formData.subcategory} onChange={handleSubcategoryChange} options={filteredSubcategories} />
-
-            
 
             {/* Main Image */}
           <div>

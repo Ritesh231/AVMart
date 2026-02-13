@@ -3,7 +3,7 @@ import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown
 import { FaSearch, FaTrash, FaEye } from "react-icons/fa";
 import { RxCrossCircled } from "react-icons/rx";
 import { SiTicktick } from "react-icons/si";
-import { useGetallusersQuery, useUpdateStatusMutation,useDeleteUserMutation  } from "../Redux/apis/userApi"
+import { useGetallusersQuery, useUpdateStatusMutation, useDeleteUserMutation } from "../Redux/apis/userApi"
 import { toast } from "react-toastify";
 
 const tabs = [
@@ -11,7 +11,6 @@ const tabs = [
   { id: 'approved', label: 'Approved' },
   { id: 'rejected', label: 'Rejected' }
 ];
-
 
 export default function UsersTable() {
   const [activeTab, setActiveTab] = useState('pending');
@@ -31,7 +30,7 @@ export default function UsersTable() {
   });
 
   const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
-  const [deleteStatus, { isLoading: isDeleting }]=useDeleteUserMutation ();
+  const [deleteStatus, { isLoading: isDeleting }] = useDeleteUserMutation();
    
   const handleStatusChange = async (id, newStatus) => {
     try {
@@ -41,23 +40,23 @@ export default function UsersTable() {
       toast.error("Failed to Update", error);
     }
   }
-  
-  const handleDelete=async(id)=>{
-     const confirmDelete = window.confirm("Are you sure you want to delete this user?");
-     if (!confirmDelete) return;
-    try{
-      
+   
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
+    if (!confirmDelete) return;
+    try {
+
       await deleteStatus(id).unwrap();
       toast.success("user deleted successfully");
-    }catch (error){
-      toast.error("Failed to delete User",error);
+    } catch (error) {
+      toast.error("Failed to delete User", error);
     }
   }
-
+  
   if (isError) {
     return <p>No User Found</p>;
   }
-
+    
   return (
     <>
       {/* Tabs */}
@@ -82,7 +81,7 @@ export default function UsersTable() {
           </button>
         ))}
       </section>
-
+        
       {/* Search & Actions */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
         {/* Search Bar */}
@@ -97,7 +96,7 @@ export default function UsersTable() {
             />
           </div>
         </div>
-
+         
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
           <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
@@ -111,7 +110,7 @@ export default function UsersTable() {
           </button>
         </div>
       </div>
-     
+
       {/* Table */}
       <div className="bg-white rounded-xl border overflow-x-auto">
         <table className="min-w-[900px] w-full text-sm">
@@ -127,7 +126,7 @@ export default function UsersTable() {
               <th className="p-3 text-left">Action</th>
             </tr>
           </thead>
-          
+
           <tbody>
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
@@ -160,7 +159,7 @@ export default function UsersTable() {
                   <td className="p-3">
                     <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
                   </td>
-                   
+                
                   <td className="p-3">
                     <div className="flex gap-3">
                       <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
@@ -169,13 +168,18 @@ export default function UsersTable() {
                   </td>
                 </tr>
               ))
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="text-center py-10 text-gray-500 font-medium">
+                  No users available in {activeTab} tab.
+                </td>
+              </tr>
             ) : (
               filteredUsers.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input type="checkbox" />
                   </td>
-
 
                   <td className="p-3">
                     <div className="flex items-center gap-3">
@@ -194,7 +198,7 @@ export default function UsersTable() {
                       <span className="font-medium">{u.shopName}</span>
                     </div>
                   </td>
-                   
+
                   <td className="p-3">{u.name || "-"}</td>
                   <td className="p-3">{u.shopAddress}</td>
 
@@ -206,11 +210,11 @@ export default function UsersTable() {
                   <td className="p-3">
                     <div className="text-sm text-black">{u.shopType}</div>
                   </td>
-
+                  
                   <td className="p-3">
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
-
+                  
                   <td className="p-3">
                     {u.status === "pending" && (
                       <div className="flex gap-3 text-lg">
@@ -233,7 +237,7 @@ export default function UsersTable() {
                           Approved
                         </span>
                         <FaEye className="text-blue-900 cursor-pointer" />
-                        <FaTrash className="text-red-600 cursor-pointer" onClick={()=>handleDelete(u._id)} />
+                        <FaTrash className="text-red-600 cursor-pointer" onClick={() => handleDelete(u._id)} />
                       </div>
                     )}
 
@@ -243,7 +247,7 @@ export default function UsersTable() {
                           Rejected
                         </span>
                         <FaEye className="text-blue-900 cursor-pointer" />
-                        <FaTrash className="text-red-600 cursor-pointer" onClick={()=>handleDelete(u._id)} />
+                        <FaTrash className="text-red-600 cursor-pointer" onClick={() => handleDelete(u._id)} />
                       </div>
                     )}
                   </td>

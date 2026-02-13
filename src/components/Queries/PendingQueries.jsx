@@ -34,7 +34,7 @@ export default function UsersTable() {
                             />
                         </div>
                     </div>
-
+                    
                     {/* Export Button */}
                     <div className='flex justify-evenly gap-2 items-center'>
                         <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
@@ -48,7 +48,7 @@ export default function UsersTable() {
                         </button>
                     </div>
                 </div>
-
+                
             {/* Table */}
             <div className="bg-white rounded-xl border overflow-x-auto">
                 <table className="min-w-[900px] w-full text-sm">
@@ -63,7 +63,7 @@ export default function UsersTable() {
                             <th className="p-3 text-left">Action</th>
                         </tr>
                     </thead>
-
+                     
                     <tbody>
                         {users.map((u) => (
                             <tr key={u.id} className="border-t hover:bg-gray-50">
@@ -84,12 +84,10 @@ export default function UsersTable() {
                                         </div>
                                     </div>
                                 </td>
-
+                            
                                 <td className="p-3 font-medium">{u.contact}</td>
                                 <td className="p-3 w-48 break-words">{u.message}</td>
                                
-                               
-
                                 <td className="p-3">
                                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
                                      bg-[#FFDD00]/10 border border-[#FFDD00] text-[#FFDD00] text-sm font-semibold">
@@ -107,11 +105,8 @@ export default function UsersTable() {
                                         >
                                            <FaTrash size={18} />
                                         </button>
-
                                     </div>
                                 </td>
-
-
                             </tr>
                         ))}
                     </tbody>

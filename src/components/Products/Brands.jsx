@@ -11,7 +11,8 @@ export default function BrandsSection() {
 const [deleteBrand, { isLoading: isDeleting }] = useDeleteBrandMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState(null);
-
+  const [searchTerm,setSearchTerm]=useState("");
+   
   const openEditModal = (brand) => {
     setSelectedBrand(brand);
     setIsModalOpen(true);
@@ -21,6 +22,13 @@ const [deleteBrand, { isLoading: isDeleting }] = useDeleteBrandMutation();
     setIsModalOpen(false);
     setSelectedBrand(null);
   };
+
+     const filteredBrands=brands.filter((u)=>{
+        const search=searchTerm.toLowerCase();
+        return(
+          u.name?.toLowerCase().includes(search)
+        )
+    })
   
 const ShimmerCard = () => (
   <div className="w-40 h-36 bg-gray-200 animate-pulse rounded-xl p-4 flex flex-col items-center gap-3">
@@ -59,13 +67,16 @@ const ShimmerCard = () => (
             type="text"
             placeholder="Search By Brand Name"
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-teal-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
+          
         <button className="flex items-center gap-2 bg-[#1A2550] text-white px-4 py-2 rounded-lg text-sm font-medium">
           <FiDownload size={14} />
           Export
         </button>
+
       </div>
 
       {/* Brand Cards */}
@@ -75,7 +86,7 @@ const ShimmerCard = () => (
     ? Array(12)
         .fill(0)
         .map((_, index) => <ShimmerCard key={index} />)
-    : brands.map((brand) => (
+    : filteredBrands.map((brand) => (
         <div
           key={brand._id}
           className="w-40 h-36 bg-[#ECFDFB] rounded-xl p-4 flex flex-col items-center gap-3 border border-teal-100"
@@ -105,8 +116,7 @@ const ShimmerCard = () => (
         </div>
       ))}
 </div>
-
-
+    
       {/* Separate Modal Component */}
       <EditBrandModal
         isOpen={isModalOpen}

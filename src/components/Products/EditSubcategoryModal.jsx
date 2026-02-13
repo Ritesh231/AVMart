@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { IoIosCloudUpload } from "react-icons/io";
 import { useEditSubcategoryMutation } from "../../Redux/apis/productsApi";
 
 export default function EditSubcategoryModal({
@@ -15,15 +16,17 @@ export default function EditSubcategoryModal({
     image: null,
   });
 
-  useEffect(() => {
-    if (subcategoryData) {
-      setFormData({
-        name: subcategoryData.name || "",
-        categoryId: subcategoryData.CategoryId || "",
-        image: null,
-      });
-    }
-  }, [subcategoryData]);
+useEffect(() => {
+  if (subcategoryData) {
+    setFormData({
+      name: subcategoryData.name || "",
+      categoryId: subcategoryData.CategoryId || "",
+      image: null,
+    });
+
+    setPreview(subcategoryData.image || null);
+  }
+}, [subcategoryData]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -34,6 +37,8 @@ export default function EditSubcategoryModal({
       setFormData({ ...formData, [name]: value });
     }
   };
+
+const [preview, setPreview] = useState(null);
 
 const handleSubmit = async () => {
   try {
@@ -93,18 +98,43 @@ const handleSubmit = async () => {
           <input
             type="text"
             name="categoryId"
-            value={formData.categoryId}
+            value={formData.categoryName}
             onChange={handleChange}
             placeholder="Category ID"
             className="w-full border p-2 rounded-lg"
           />
 
-          <input
-            type="file"
-            name="image"
-            onChange={handleChange}
-            className="w-full border p-2 rounded-lg"
-          />
+        <div>
+  <label
+    htmlFor="editImage"
+    className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-indigo-500 transition"
+  >
+    {preview ? (
+      <img
+        src={preview}
+        alt="preview"
+        className="h-24 object-contain"
+      />
+    ) : (
+      <div className="flex flex-col items-center text-gray-400">
+        <IoIosCloudUpload  size={36} />
+        <span className="text-sm mt-2">
+          Click to Upload Image
+        </span>
+      </div>
+    )}
+  </label>
+   
+  <input
+    type="file"
+    id="editImage"
+    name="image"
+    accept="image/*"
+    onChange={handleChange}
+    className="hidden"
+  />
+</div>
+
         </div>
 
         <div className="flex justify-end gap-3 mt-5">

@@ -130,7 +130,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
-
+                    
                     <div className="transation-history px-2">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-brand-navy">Transaction History</h2>

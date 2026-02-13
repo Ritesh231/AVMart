@@ -22,15 +22,26 @@ const users = Array.from({ length: 6 }).map((_, i) => ({
 
 export default function UsersTable() {  
   const { data, isLoading, isError } = useGetallSubcategoriesQuery();
-  const {deleteSubcategory}=useDeleteSubcategoryMutation();
+  const [deleteSubcategory,{ isLoading: isDeleting } ]=useDeleteSubcategoryMutation();
   const subcategory = data?.data || [];
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredSubcategories=subcategory.filter((u)=>{
+    const search=searchTerm.toLowerCase();
+    return(
+      u.name?.toLowerCase().includes(search)||
+      u.categoryname?.toLowerCase().includes(search)||
+      u._id?.toLowerCase().includes(search)||
+      u.productCount?.toString().includes(search)
+    )
+  })
 
   if (isError) {
     return <p className="text-red-500">Failed to load Subcategories</p>;
   }
-
+  
    const handleDelete=async(id)=>{
        const confirmDelete = window.confirm(
       "Are you sure you want to delete this category?"
@@ -56,11 +67,13 @@ export default function UsersTable() {
             <input
               className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
               type="text"
-              placeholder='Search By User Name and Phone no'
+              placeholder='Search By Subcategory name and Subcategory id'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-
+           
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
           <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
@@ -128,7 +141,7 @@ export default function UsersTable() {
                 </tr>
               ))
             ) : (
-              subcategory.map((u) => (
+            filteredSubcategories.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input type="checkbox" />
@@ -148,7 +161,7 @@ export default function UsersTable() {
                   <td className="p-3">
                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
             bg-[#8A9FF324] border border-[#0B97ED] text-[#0B97ED] text-sm font-semibold">
-                      {u.categoryname}
+                      {u.categoryName}
                     </span>
                   </td>
 

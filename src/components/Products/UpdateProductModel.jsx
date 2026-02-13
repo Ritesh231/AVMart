@@ -8,7 +8,7 @@ export default function EditProductModal({
   productData,
 }) {
   const [updateProduct, { isLoading }] = useUpdateProductMutation();
-    
+      
   const [formData, setFormData] = useState({
     productName: "",
     subtext: "",
@@ -32,7 +32,7 @@ export default function EditProductModal({
   useEffect(() => {
     if (productData) {
       setFormData({
-        productName: productData.productName || "",
+        productName: productData.name || "",
         subtext: productData.subtext || "",
         description: productData.description || "",
         keyFeatures: productData.keyFeatures || "",
@@ -43,7 +43,7 @@ export default function EditProductModal({
         categoryname: productData.category?.name || "",
         subcategoryname: productData.subcategory?.name|| "",
         status: productData.status || "active",
-        slug: productData.slug || "",
+        // slug: productData.slug || "",
         primaryImage: null,
         variants: productData.variants || [],
       });
@@ -95,76 +95,55 @@ export default function EditProductModal({
     setFormData({ ...formData, variants: updatedVariants });
   };
 
-  const handleSubmit = async () => {
-    try {
-      const data = new FormData();
+const handleSubmit = async () => {
+  try {
+    const data = new FormData();
 
-      // Append simple fields
-      data.append("productName", formData.productName);
-      data.append("subtext", formData.subtext);
-      data.append("description", formData.description);
-      data.append("keyFeatures", formData.keyFeatures);
-      data.append("wholesaleAdvantage", formData.wholesaleAdvantage);
-      data.append("brand", formData.brand);
-      data.append("category", formData.category);
-      data.append("subcategory", formData.subcategory);
-      data.append("categoryname", formData.categoryname);
-      data.append("subcategoryname", formData.subcategoryname);
-      data.append("status", formData.status);
-      data.append("slug", formData.slug);
+    // Basic Fields
+    data.append("productName", formData.productName);
+    data.append("subtext", formData.subtext);
+    data.append("description", formData.description);
+    data.append("keyFeatures", formData.keyFeatures); // send as string
+    data.append("wholesaleAdvantage", formData.wholesaleAdvantage);
+    data.append("brand", formData.brand);
+    data.append("category", formData.category);
+    data.append("subcategory", formData.subcategory);
+    data.append("status", formData.status);
+    data.append("slug", formData.slug);
 
-      // Main image
-      if (formData.primaryImage) {
-        data.append("primaryImage", formData.primaryImage);
-      }
-
-    const cleanedVariants = formData.variants.map((v, index) => {
-  // Validation
-  if (!v.quantityValue || Number(v.quantityValue) < 0.01) {
-    throw new Error(`Variant ${index + 1}: Quantity must be at least 0.01`);
-  }
-
-  if (!v.originalPrice || Number(v.originalPrice) < 1) {
-    throw new Error(`Variant ${index + 1}: Price must be at least 1`);
-  }
-
-  if (!v.stock || Number(v.stock) < 0) {
-    throw new Error(`Variant ${index + 1}: Stock cannot be negative`);
-  }
-
-  // Append image separately
-  if (v.image instanceof File) {
-    data.append("variantImages", v.image);
-  }
-
-  return {
-    label: v.label || "",
-    quantityValue: Number(v.quantityValue),
-    quantityUnit: v.quantityUnit || "",
-    originalPrice: Number(v.originalPrice),
-    discountType: v.discountType || null,
-    discountValue: v.discountValue
-      ? Number(v.discountValue)
-      : 0,
-    stock: Number(v.stock),
-    sku: v.sku || "",
-    images: [],
-  };
-});
-  
-      data.append("variants", JSON.stringify(cleanedVariants));
-
-      await updateProduct({
-        id: productData._id,
-        body: data,
-      }).unwrap();
-
-      toast.success("Product Updated Successfully");
-      onClose();
-    } catch (err) {
-      toast.error("Update Failed");
+    // Primary Image (plural name!)
+    if (formData.primaryImage instanceof File) {
+      data.append("primaryImages", formData.primaryImage);
     }
-  };
+
+    // Variants
+    const cleanedVariants = formData.variants.map((v) => ({
+      quantityValue: Number(v.quantityValue),
+      quantityUnit: v.quantityUnit,
+      originalPrice: Number(v.originalPrice),
+      discountType: v.discountType || "percent",
+      discountValue: Number(v.discountValue || 0),
+      gstRate: Number(v.gstRate || 18),
+      stock: Number(v.stock),
+      sku: v.sku,
+      images: v.images || [],
+    }));
+
+    data.append("variants", JSON.stringify(cleanedVariants));
+
+    await updateProduct({
+      id: productData._id,
+      body: data,
+    }).unwrap();
+
+    toast.success("Product Updated Successfully");
+    onClose();
+  } catch (err) {
+    toast.error(err.message || "Update Failed");
+  }
+};
+
+
 
   if (!isOpen) return null;
 
@@ -185,6 +164,32 @@ export default function EditProductModal({
         </div>
 
         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded-lg mt-3" />
+        <div className="grid grid-cols-3 gap-3 mt-3">
+  <input
+    name="origin"
+    value={formData.origin}
+    onChange={handleChange}
+    placeholder="Origin"
+    className="border p-2 rounded"
+  />
+
+  <input
+    name="shelfLife"
+    value={formData.shelfLife}
+    onChange={handleChange}
+    placeholder="Shelf Life"
+    className="border p-2 rounded"
+  />
+
+  <input
+    name="storage"
+    value={formData.storage}
+    onChange={handleChange}
+    placeholder="Storage Info"
+    className="border p-2 rounded"
+  />
+</div>
+
 
         {/* Main Image Upload */}
         <div className="mt-4">
@@ -262,14 +267,18 @@ export default function EditProductModal({
   className="border p-2 rounded"
 />
 
-<input
-  value={variant.discountType || ""}
+<select
+  value={variant.discountType || "percent"}
   onChange={(e) =>
-    handleVariantChange(index, "discountType", e.target.value)
+    handleVariantChange(index, e)
   }
-  placeholder="Discount Type"
+  name="discountType"
   className="border p-2 rounded"
-/>
+>
+  <option value="percent">Percentage</option>
+  <option value="fixed">Fixed</option>
+</select>
+
 
 <input
   type="number"
@@ -289,6 +298,17 @@ export default function EditProductModal({
   placeholder="SKU"
   className="border p-2 rounded"
 />
+
+<input
+  type="number"
+  value={variant.gstRate || ""}
+  onChange={(e) =>
+    handleVariantChange(index, "gstRate", e.target.value)
+  }
+  placeholder="GST Rate"
+  className="border p-2 rounded"
+/>
+
 
               </div>
 

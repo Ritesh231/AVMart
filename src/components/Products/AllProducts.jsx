@@ -7,15 +7,16 @@ import EditProductModal from "../../components/Products/UpdateProductModel";
 import { useState } from "react";
 
 const products = Array.from({ length: 20 });
-
+     
 const ProductGrid = () => {
     const { data, isLoading, isError } = useGetallproductsQuery();
     const products = data?.data || [];
-
+    
     const [ deleteproduct, { isLoading: isDeleting } ] = useDeleteProductMutation();
-
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [searchTerm,setSearchTerm]=useState("")
 
     const handleDelete = async (id) => {
         const confirmDelete = window.confirm(
@@ -30,6 +31,14 @@ const ProductGrid = () => {
             toast.error("Error to delete Category", err);
         }
     }
+
+     const filteredProducts=products.filter((u)=>{
+        const search=searchTerm.toLowerCase();
+        return(
+          u.slug?.toLowerCase().includes(search)||
+           u.price?.toString().includes(search)
+        )
+    })
     
     const ProductShimmer = () => {
         return (
@@ -45,6 +54,8 @@ const ProductGrid = () => {
             </div>
         );
     };
+
+   
 
     if (isError) {
         return <p>No products available</p>;
@@ -72,6 +83,8 @@ const ProductGrid = () => {
                             className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
                             type="text"
                             placeholder='Search By User Name and Phone no'
+                            value={searchTerm}
+                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
@@ -93,7 +106,7 @@ const ProductGrid = () => {
             {/* 🔹 Products Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
 
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                     <div
                         key={product._i}
                         className="relative border border-emerald-200 rounded-xl p-3 hover:shadow-md transition"

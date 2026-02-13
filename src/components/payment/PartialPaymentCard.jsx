@@ -28,7 +28,7 @@ const PartialPaymentCard = ({ transaction }) => {
                         </p>
                     </div>
                 </div>
-
+                
                 <div className="hidden md:block bg-brand-navy text-white text-xs px-4 py-3 rounded-xl font-bold">
                     Delivery Boy - {transaction.deliveryBoy}
                 </div>
