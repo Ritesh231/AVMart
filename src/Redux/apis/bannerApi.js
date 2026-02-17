@@ -11,7 +11,7 @@ tags:["Banners"],
       }),
       providesTags:["Banners"],
      }),
-
+      
       addBanner:builder.mutation({
          query:(body)=>({
         url:"/api/v1/admin/BestSellerBanner/add",
@@ -27,8 +27,7 @@ tags:["Banners"],
     method:"DELETE",
    }),
     invalidatesTags: ["Banners"],
-  })
-    
+  })    
 })
 })
 

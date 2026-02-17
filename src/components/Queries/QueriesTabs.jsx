@@ -1,9 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { MdOutlineMessage } from "react-icons/md";
-import { CreditCard, Wallet, Blocks } from "lucide-react";
-import { IoBag } from "react-icons/io5";
-import { MdCategory } from "react-icons/md";
-import { FaStar } from "react-icons/fa";
 
 const tabs = [
   {
@@ -16,7 +12,7 @@ const tabs = [
     id: "Contacted",
     label: "Contacted",
     icon: <MdOutlineMessage size={20} />,
-    path: "/queries",
+    path: "/queries/contacted",
   },
    {
     id: "Pending",
@@ -28,8 +24,8 @@ const tabs = [
 
 export default function OrderPaymentTabs() {
   const navigate = useNavigate();
-  const location = useLocation();
-
+   const location = useLocation()
+  
   return (
     <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2  md:w-fit w-full shadow-lg">
       {tabs.map((tab) => {

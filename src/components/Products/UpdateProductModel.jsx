@@ -8,7 +8,7 @@ export default function EditProductModal({
   productData,
 }) {
   const [updateProduct, { isLoading }] = useUpdateProductMutation();
-      
+
   const [formData, setFormData] = useState({
     productName: "",
     subtext: "",
@@ -25,9 +25,9 @@ export default function EditProductModal({
     primaryImage: null,
     variants: [],
   });
-   
+
   const [previewImage, setPreviewImage] = useState(null);
-  
+
   // Prefill
   useEffect(() => {
     if (productData) {
@@ -37,11 +37,12 @@ export default function EditProductModal({
         description: productData.description || "",
         keyFeatures: productData.keyFeatures || "",
         wholesaleAdvantage: productData.wholesaleAdvantage || "",
-        brand: productData.brand || "",
+        brand: productData.brand?._id || "",
         category: productData.category?._id || "",
         subcategory: productData.subcategory?._id || "",
         categoryname: productData.category?.name || "",
-        subcategoryname: productData.subcategory?.name|| "",
+        subcategoryname: productData.subcategory?.name || "",
+        brandname:productData.brand?.name||"",
         status: productData.status || "active",
         // slug: productData.slug || "",
         primaryImage: null,
@@ -95,53 +96,52 @@ export default function EditProductModal({
     setFormData({ ...formData, variants: updatedVariants });
   };
 
-const handleSubmit = async () => {
-  try {
-    const data = new FormData();
+  const handleSubmit = async () => {
+    try {
+      const data = new FormData();
+      // Basic Fields
+      data.append("productName", formData.productName);
+      data.append("subtext", formData.subtext);
+      data.append("description", formData.description);
+      data.append("keyFeatures", formData.keyFeatures); // send as string
+      data.append("wholesaleAdvantage", formData.wholesaleAdvantage);
+      data.append("brand", formData.brand);
+      data.append("category", formData.category);
+      data.append("subcategory", formData.subcategory);
+      data.append("status", formData.status);
+      data.append("slug", formData.slug);
 
-    // Basic Fields
-    data.append("productName", formData.productName);
-    data.append("subtext", formData.subtext);
-    data.append("description", formData.description);
-    data.append("keyFeatures", formData.keyFeatures); // send as string
-    data.append("wholesaleAdvantage", formData.wholesaleAdvantage);
-    data.append("brand", formData.brand);
-    data.append("category", formData.category);
-    data.append("subcategory", formData.subcategory);
-    data.append("status", formData.status);
-    data.append("slug", formData.slug);
+      // Primary Image (plural name!)
+      if (formData.primaryImage instanceof File) {
+        data.append("primaryImages", formData.primaryImage);
+      }
 
-    // Primary Image (plural name!)
-    if (formData.primaryImage instanceof File) {
-      data.append("primaryImages", formData.primaryImage);
+      // Variants
+      const cleanedVariants = formData.variants.map((v) => ({
+        quantityValue: Number(v.quantityValue),
+        quantityUnit: v.quantityUnit,
+        originalPrice: Number(v.originalPrice),
+        discountType: v.discountType || "percent",
+        discountValue: Number(v.discountValue || 0),
+        gstRate: Number(v.gstRate || 18),
+        stock: Number(v.stock),
+        sku: v.sku,
+        images: v.images || [],
+      }));
+
+      data.append("variants", JSON.stringify(cleanedVariants));
+
+      await updateProduct({
+        id: productData._id,
+        body: data,
+      }).unwrap();
+
+      toast.success("Product Updated Successfully");
+      onClose();
+    } catch (err) {
+      toast.error(err.message || "Update Failed");
     }
-
-    // Variants
-    const cleanedVariants = formData.variants.map((v) => ({
-      quantityValue: Number(v.quantityValue),
-      quantityUnit: v.quantityUnit,
-      originalPrice: Number(v.originalPrice),
-      discountType: v.discountType || "percent",
-      discountValue: Number(v.discountValue || 0),
-      gstRate: Number(v.gstRate || 18),
-      stock: Number(v.stock),
-      sku: v.sku,
-      images: v.images || [],
-    }));
-
-    data.append("variants", JSON.stringify(cleanedVariants));
-
-    await updateProduct({
-      id: productData._id,
-      body: data,
-    }).unwrap();
-
-    toast.success("Product Updated Successfully");
-    onClose();
-  } catch (err) {
-    toast.error(err.message || "Update Failed");
-  }
-};
+  };
 
 
 
@@ -157,38 +157,38 @@ const handleSubmit = async () => {
         <div className="grid grid-cols-2 gap-3">
           <input name="productName" value={formData.productName} onChange={handleChange} placeholder="Product Name" className="border p-2 rounded-lg" />
           <input name="slug" value={formData.slug} onChange={handleChange} placeholder="Slug" className="border p-2 rounded-lg" />
-          <input name="brand" value={formData.brand} onChange={handleChange} placeholder="Brand ID" className="border p-2 rounded-lg" />
+          <input name="brand" value={formData.brandname} onChange={handleChange} placeholder="Brand ID" className="border p-2 rounded-lg" />
           <input name="category" value={formData.categoryname} onChange={handleChange} placeholder="Category ID" className="border p-2 rounded-lg" />
           <input name="subcategory" value={formData.subcategoryname} onChange={handleChange} placeholder="Subcategory ID" className="border p-2 rounded-lg" />
           <input name="status" value={formData.status} onChange={handleChange} placeholder="Status" className="border p-2 rounded-lg" />
         </div>
-
+        
         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded-lg mt-3" />
         <div className="grid grid-cols-3 gap-3 mt-3">
-  <input
-    name="origin"
-    value={formData.origin}
-    onChange={handleChange}
-    placeholder="Origin"
-    className="border p-2 rounded"
-  />
+          <input
+            name="origin"
+            value={formData.origin}
+            onChange={handleChange}
+            placeholder="Origin"
+            className="border p-2 rounded"
+          />
 
-  <input
-    name="shelfLife"
-    value={formData.shelfLife}
-    onChange={handleChange}
-    placeholder="Shelf Life"
-    className="border p-2 rounded"
-  />
+          <input
+            name="shelfLife"
+            value={formData.shelfLife}
+            onChange={handleChange}
+            placeholder="Shelf Life"
+            className="border p-2 rounded"
+          />
 
-  <input
-    name="storage"
-    value={formData.storage}
-    onChange={handleChange}
-    placeholder="Storage Info"
-    className="border p-2 rounded"
-  />
-</div>
+          <input
+            name="storage"
+            value={formData.storage}
+            onChange={handleChange}
+            placeholder="Storage Info"
+            className="border p-2 rounded"
+          />
+        </div>
 
 
         {/* Main Image Upload */}
@@ -219,95 +219,95 @@ const handleSubmit = async () => {
             <div key={index} className="border p-4 rounded-lg mb-4">
 
               <div className="grid grid-cols-2 gap-3">
-              <input
-  value={variant.label || ""}
-  onChange={(e) =>
-    handleVariantChange(index, "label", e.target.value)
-  }
-  placeholder="Label"
-  className="border p-2 rounded"
-/>
+                <input
+                  value={variant.label || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "label", e.target.value)
+                  }
+                  placeholder="Label"
+                  className="border p-2 rounded"
+                />
 
-<input
-  type="number"
-  value={variant.quantityValue || ""}
-  onChange={(e) =>
-    handleVariantChange(index, "quantityValue", e.target.value)
-  }
-  placeholder="Quantity"
-  className="border p-2 rounded"
-/>
+                <input
+                  type="number"
+                  value={variant.quantityValue || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "quantityValue", e.target.value)
+                  }
+                  placeholder="Quantity"
+                  className="border p-2 rounded"
+                />
 
-<input
-  value={variant.quantityUnit || ""}
-  onChange={(e) =>
-    handleVariantChange(index, "quantityUnit", e.target.value)
-  }
-  placeholder="Unit (kg, ml, etc)"
-  className="border p-2 rounded"
-/>
+                <input
+                  value={variant.quantityUnit || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "quantityUnit", e.target.value)
+                  }
+                  placeholder="Unit (kg, ml, etc)"
+                  className="border p-2 rounded"
+                />
 
-<input
-  type="number"
-  value={variant.originalPrice || ""}
-  onChange={(e) =>
-    handleVariantChange(index, "originalPrice", e.target.value)
-  }
-  placeholder="Original Price"
-  className="border p-2 rounded"
-/>
+                <input
+                  type="number"
+                  value={variant.originalPrice || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "originalPrice", e.target.value)
+                  }
+                  placeholder="Original Price"
+                  className="border p-2 rounded"
+                />
 
-<input
-  type="number"
-  value={variant.discountValue || ""}
-  onChange={(e) =>
-    handleVariantChange(index, "discountValue", e.target.value)
-  }
-  placeholder="Discount"
-  className="border p-2 rounded"
-/>
+                <input
+                  type="number"
+                  value={variant.discountValue || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "discountValue", e.target.value)
+                  }
+                  placeholder="Discount"
+                  className="border p-2 rounded"
+                />
 
-<select
-  value={variant.discountType || "percent"}
-  onChange={(e) =>
-    handleVariantChange(index, e)
-  }
-  name="discountType"
-  className="border p-2 rounded"
->
-  <option value="percent">Percentage</option>
-  <option value="fixed">Fixed</option>
-</select>
+                <select
+                  value={variant.discountType || "percent"}
+                  onChange={(e) =>
+                    handleVariantChange(index, e)
+                  }
+                  name="discountType"
+                  className="border p-2 rounded"
+                >
+                  <option value="percent">Percentage</option>
+                  <option value="fixed">Fixed</option>
+                </select>
 
 
-<input
-  type="number"
-  value={variant.stock || ""}
-  onChange={(e) =>
-    handleVariantChange(index, "stock", e.target.value)
-  }
-  placeholder="Stock"
-  className="border p-2 rounded"
-/>
+                <input
+                  type="number"
+                  value={variant.stock || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "stock", e.target.value)
+                  }
+                  placeholder="Stock"
+                  className="border p-2 rounded"
+                />
 
-<input
-  value={variant.sku || ""}
-  onChange={(e) =>
-    handleVariantChange(index, "sku", e.target.value)
-  }
-  placeholder="SKU"
-  className="border p-2 rounded"
-/>
+                <input
+                  value={variant.sku || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "sku", e.target.value)
+                  }
+                  placeholder="SKU"
+                  className="border p-2 rounded"
+                />
 
-<input
-  type="number"
-  value={variant.gstRate || ""}
-  onChange={(e) =>
-    handleVariantChange(index, "gstRate", e.target.value)
-  }
-  placeholder="GST Rate"
-  className="border p-2 rounded"
-/>
+                <input
+                  type="number"
+                  value={variant.gstRate || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "gstRate", e.target.value)
+                  }
+                  placeholder="GST Rate"
+                  className="border p-2 rounded"
+                />
 
 
               </div>

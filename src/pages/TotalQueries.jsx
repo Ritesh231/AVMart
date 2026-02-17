@@ -1,5 +1,4 @@
 import QueriesCards from "../components/Queries/QueriesCards";
-import TotalQueries from "../components/Queries/TotalQueries";
 import QueriesTabs from "../components/Queries/QueriesTabs"
 import { Outlet } from "react-router-dom";
 

@@ -2,7 +2,7 @@ import { baseApi } from "../apis/baseApi";
 
 export const Userapi =  baseApi.injectEndpoints({
   tags:["Users"],
-   
+     
   endpoints: (builder) => ({
      getallusers:builder.query({
       query:()=>({
@@ -27,6 +27,7 @@ export const Userapi =  baseApi.injectEndpoints({
       }),
       invalidatesTags:["Users"],
      }),
+    
   }),
 });
 

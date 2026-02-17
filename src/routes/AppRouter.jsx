@@ -32,6 +32,7 @@ const ProductCategories = lazy(() =>
 const Subcategories = lazy(() =>
   import("../components/Products/Subcategories")
 );
+
 const Brands = lazy(() => import("../components/Products/Brands"));
 const AddProduct = lazy(() => import("../components/Products/AddProduct"));
 const AddCategory = lazy(() => import("../components/Products/AddCategory"));
@@ -44,7 +45,6 @@ const DeliveryRequests = lazy(() =>
 );
 
 /*Queries */
-const Query = lazy(() => import("../components/Queries/TotalQueries"));
 const PendingQueries = lazy(() => import("../components/Queries/PendingQueries"));
 
 
@@ -78,8 +78,10 @@ export default function AppRouter() {
           {/*Queries*/}
           <Route path="/queries" element={<Queries />}> 
            <Route index element={<Navigate to="pending" replace />} />
-           <Route path="all" element={<Query/>} />
+           <Route path="all" element={<PendingQueries/>} />
            <Route path="pending" element={<PendingQueries/>}/>
+          <Route path="contacted" element={<PendingQueries/>}/>
+           
           </Route>
 
           {/* Orders */}

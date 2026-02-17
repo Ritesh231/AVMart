@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from "react";
+import { useForm } from "react-hook-form";
+
 import {
   useAddProductMutation,
   useGetallSubcategoriesQuery,
@@ -6,39 +8,42 @@ import {
   useGetallcategoriesQuery,
 } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
+import { IoIosCloudUpload } from "react-icons/io";
 
 /* -------------------- Reusable Fields -------------------- */
 
-const InputField = ({ label, ...props }) => (
+const InputField = ({ label, error, ...props }) => (
   <div>
     <label className="text-xs font-medium text-gray-600">{label}</label>
     <input
       {...props}
-      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg 
-      focus:ring-2 focus:ring-[#00E5B0] outline-none"
+      className={`w-full mt-1 px-3 py-2 text-sm border ${error ? 'border-red-500' : 'border-gray-200'
+        } rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none`}
     />
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
 
-const TextareaField = ({ label, ...props }) => (
+const TextareaField = ({ label, error, ...props }) => (
   <div>
     <label className="text-xs font-medium text-gray-600">{label}</label>
     <textarea
       rows="3"
       {...props}
-      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg 
-      focus:ring-2 focus:ring-[#00E5B0] outline-none"
+      className={`w-full mt-1 px-3 py-2 text-sm border ${error ? 'border-red-500' : 'border-gray-200'
+        } rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none`}
     />
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
 
-const SelectField = ({ label, options, ...props }) => (
+const SelectField = ({ label, options, error, ...props }) => (
   <div>
     <label className="text-xs font-medium text-gray-600">{label}</label>
     <select
       {...props}
-      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg 
-      focus:ring-2 focus:ring-[#00E5B0] outline-none"
+      className={`w-full mt-1 px-3 py-2 text-sm border ${error ? 'border-red-500' : 'border-gray-200'
+        } rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none`}
     >
       <option value="">Select</option>
       {options.map((opt) => (
@@ -47,6 +52,7 @@ const SelectField = ({ label, options, ...props }) => (
         </option>
       ))}
     </select>
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
 
@@ -66,82 +72,55 @@ export default function AddProduct() {
   const [preview, setPreview] = useState(null);
 
   /* -------------------- Main Form -------------------- */
-
-  const [formData, setFormData] = useState({
-    productName: "",
-    subtext: "",
-    description: "",
-    keyFeatures: "",
-    wholesaleAdvantage: "",
-    brand: "",
-    category: "",
-    subcategory: "",
-    status: "active",
-    // slug: "",
-    primaryImages: "",
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      productName: "",
+      subtext: "",
+      description: "",
+      keyFeatures: "",
+      wholesaleAdvantage: "",
+      brand: "",
+      category: "",
+      subcategory: "",
+      status: "active",
+      primaryImages: null,
+    },
   });
-  
+
   /* -------------------- Filter Subcategory -------------------- */
+  const selectedCategory = watch("category");
 
   const filteredSubcategories = useMemo(() => {
-    if (!formData.category) return [];
+    if (!selectedCategory) return [];
     return subcategories.filter(
-      (sub) => sub.CategoryId === formData.category
+      (sub) => sub.CategoryId === selectedCategory
     );
-  }, [formData.category, subcategories]);
+  }, [selectedCategory, subcategories]);
 
   /* -------------------- Variants -------------------- */
-
   const [variants, setVariants] = useState([
     {
       quantityValue: "",
       quantityUnit: "",
       originalPrice: "",
-      discountType: "percent",
+      discountType: "",
       discountValue: "",
       gstRate: "",
       stock: "",
       sku: "",
-      images: [],
-      previewImages: [],
+      imageFiles: [], // For storing file objects
+      imageUrls: [], // For storing URLs (if you have them)
+      previewImages: [], // For preview
     },
   ]);
 
-  /* -------------------- Handlers -------------------- */
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleCategoryChange = (e) => {
-    setFormData({
-      ...formData,
-      category: e.target.value,
-      subcategory: "",
-    });
-  };
-
-  const handleSubcategoryChange = (e) => {
-    setFormData({
-      ...formData,
-      subcategory: e.target.value,
-    });
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setFormData((prev) => ({
-      ...prev,
-      primaryImages: file,
-    }));
-
-    setPreview(URL.createObjectURL(file));
-  };
-
   /* -------------------- Variant Logic -------------------- */
-
   const handleVariantChange = (index, e) => {
     const updated = [...variants];
     updated[index][e.target.name] = e.target.value;
@@ -150,13 +129,19 @@ export default function AddProduct() {
 
   const handleVariantImageChange = (index, e) => {
     const files = Array.from(e.target.files);
-
     const updated = [...variants];
-    updated[index].images = files;
+    
+    // Store the actual file objects in imageFiles
+    updated[index].imageFiles = files;
+    
+    // Create preview URLs
     updated[index].previewImages = files.map((file) =>
       URL.createObjectURL(file)
     );
-
+    
+    // For now, keep imageUrls empty since you don't have URLs yet
+    updated[index].imageUrls = [];
+    
     setVariants(updated);
   };
 
@@ -172,7 +157,8 @@ export default function AddProduct() {
         gstRate: "",
         stock: "",
         sku: "",
-        images: [],
+        imageFiles: [],
+        imageUrls: [],
         previewImages: [],
       },
     ]);
@@ -183,200 +169,277 @@ export default function AddProduct() {
   };
 
   /* -------------------- Submit -------------------- */
+  const onSubmit = async (data) => {
+    const formData = data;
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+    /* ---------------- REQUIRED FIELD VALIDATION ---------------- */
+    if (!formData.productName?.trim())
+      return toast.error("Product Name is required");
 
-  /* ---------------- REQUIRED FIELD VALIDATION ---------------- */
+    if (!formData.brand)
+      return toast.error("Brand is required");
 
-  if (!formData.productName.trim())
-    return toast.error("Product Name is required");
+    if (!formData.category)
+      return toast.error("Category is required");
 
-  // if (!formData.slug.trim())
-  //   return toast.error("Slug is required");
+    if (!formData.subcategory)
+      return toast.error("Subcategory is required");
 
-  if (!formData.brand)
-    return toast.error("Brand is required");
+    if (!formData.primaryImages || !formData.primaryImages[0])
+      return toast.error("Primary Image is required");
 
-  if (!formData.category)
-    return toast.error("Category is required");
+    if (!variants.length)
+      return toast.error("At least one variant required");
 
-  if (!formData.subcategory)
-    return toast.error("Subcategory is required");
+    // Validate variants
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i];
 
-  if (!formData.primaryImages)
-    return toast.error("Primary Image is required");
+      if (!v.quantityValue || !v.quantityUnit)
+        return toast.error(`Variant ${i + 1}: Quantity required`);
 
-  if (!variants.length)
-    return toast.error("At least one variant required");
+      if (!v.originalPrice)
+        return toast.error(`Variant ${i + 1}: Original Price required`);
 
-  for (let i = 0; i < variants.length; i++) {
-    const v = variants[i];
+      const originalPrice = Number(v.originalPrice);
+      const discountValue = Number(v.discountValue || 0);
 
-    if (!v.quantityValue || !v.quantityUnit)
-      return toast.error(`Variant ${i + 1}: Quantity required`);
+      if (discountValue > originalPrice) {
+        return toast.error(`Variant ${i + 1}: Discount cannot exceed original price`);
+      }
 
-    if (!v.originalPrice)
-      return toast.error(`Variant ${i + 1}: Original Price required`);
+      if (!v.stock)
+        return toast.error(`Variant ${i + 1}: Stock required`);
 
-    if (!v.stock)
-      return toast.error(`Variant ${i + 1}: Stock required`);
+      if (!v.sku)
+        return toast.error(`Variant ${i + 1}: SKU required`);
+    }
 
-    if (!v.sku)
-      return toast.error(`Variant ${i + 1}: SKU required`);
-  }
+    try {
+      const submitData = new FormData();
 
-  try {
-    const data = new FormData();
+      // Append all fields
+      submitData.append("productName", formData.productName.trim());
+      submitData.append("subtext", formData.subtext?.trim() || "");
+      submitData.append("description", formData.description?.trim() || "");
+      submitData.append("keyFeatures", formData.keyFeatures?.trim() || "");
+      submitData.append("wholesaleAdvantage", formData.wholesaleAdvantage?.trim() || "");
+      submitData.append("brand", formData.brand);
+      submitData.append("category", formData.category);
+      submitData.append("subcategory", formData.subcategory);
+      submitData.append("status", formData.status);
+        
+      // Primary image
+      submitData.append("primaryImages", formData.primaryImages[0]);
+      
+      // Format variants - Use imageUrls if available, otherwise empty array
+      const formattedVariants = variants.map((v) => ({
+        quantityValue: Number(v.quantityValue),
+        quantityUnit: v.quantityUnit,
+        originalPrice: Number(v.originalPrice),
+        discountType: v.discountType || null,
+        discountValue: Number(v.discountValue || 0),
+        gstRate: Number(v.gstRate || 0),
+        stock: Number(v.stock),
+        sku: v.sku,
+        // IMPORTANT: Send empty array for now since we don't have URLs
+        // The API expects URLs, not files
+        images: [] // Send empty array to avoid errors
+      }));
 
-    /* ---------------- BASIC FIELDS ---------------- */
+      submitData.append("variants", JSON.stringify(formattedVariants));
 
-    data.append("productName", formData.productName.trim());
-    data.append("subtext", formData.subtext.trim());
-    data.append("description", formData.description.trim());
-    data.append("keyFeatures", formData.keyFeatures.trim());
-    data.append("wholesaleAdvantage", formData.wholesaleAdvantage.trim());
-    data.append("brand", formData.brand);
-    data.append("category", formData.category);
-    data.append("subcategory", formData.subcategory);
-    data.append("status", formData.status);
-    // data.append("slug", formData.slug.trim());
+      // DO NOT append variant image files here - the API expects URLs in the images array
+      // If you need to upload images, you need to do it separately and get URLs first
 
-    /* ---------------- PRIMARY IMAGE ---------------- */
+      // Log the FormData contents (for debugging)
+      console.log("FormData entries:");
+      for (let pair of submitData.entries()) {
+        if (pair[0] === 'variants') {
+          console.log(pair[0], JSON.parse(pair[1]));
+        } else if (pair[0].includes('image')) {
+          console.log(pair[0], 'File:', pair[1].name, 'Size:', pair[1].size);
+        } else {
+          console.log(pair[0], pair[1]);
+        }
+      }
 
-    data.append("primaryImages", formData.primaryImages);
+      // Make the API call
+      const response = await addProduct(submitData).unwrap();
 
-    /* ---------------- FORMAT VARIANTS ---------------- */
+      toast.success("Product Added Successfully ✅");
+      console.log("Response:", response);
 
-    const formattedVariants = variants.map((v) => ({
-      quantityValue: Number(v.quantityValue),
-      quantityUnit: v.quantityUnit,
-      originalPrice: Number(v.originalPrice),
-      discountType: v.discountType || "percent",
-      discountValue: Number(v.discountValue || 0),
-      gstRate: Number(v.gstRate || 0),
-      stock: Number(v.stock),
-      sku: v.sku,
+      // Reset form
+      setVariants([{
+        quantityValue: "",
+        quantityUnit: "",
+        originalPrice: "",
+        discountType: "percent",
+        discountValue: "",
+        gstRate: "",
+        stock: "",
+        sku: "",
+        imageFiles: [],
+        imageUrls: [],
+        previewImages: [],
+      }]);
+      setPreview(null);
 
-      // If you want to support image URLs manually later
-     images: [],
-    }));
+    } catch (error) {
+      console.error("Full error:", error);
 
-    data.append("variants", JSON.stringify(formattedVariants));
+      // Handle different error types
+      let errorMessage = "Failed to Add Product ❌";
 
-    /* ---------------- VARIANT IMAGE FILES ---------------- */
+      if (error.data) {
+        if (typeof error.data === 'string' && error.data.includes('<!DOCTYPE')) {
+          errorMessage = "Server error (500). Please check your data format.";
+          console.error("Server returned HTML error page");
+        } else {
+          errorMessage = error.data.message || errorMessage;
+        }
+      } else if (error.error) {
+        errorMessage = error.error;
+      }
 
-    variants.forEach((variant) => {
-      variant.images.forEach((file) => {
-        data.append("variantImages", file);
-      });
-    });
+      toast.error(errorMessage);
+    }
+  };
 
-    await addProduct(data).unwrap();
-
-    toast.success("Product Added Successfully ✅");
-
-  } catch (error) {
-    console.error(error);
-    toast.error(error?.data?.message || "Failed to Add Product ❌");
-  }
-};
-
-  
   /* -------------------- UI -------------------- */
-
   return (
     <div className="bg-[#F8FAFC] py-6 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md border">
-
         <div className="px-5 py-3 border-b bg-[#1E264F] rounded-t-xl">
           <h2 className="text-white font-semibold text-lg">
             Add New Product
           </h2>
         </div>
-       
-        <form onSubmit={handleSubmit} className="p-5 space-y-6">
 
+        <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InputField
+              label="Product Name"
+              error={errors.productName?.message}
+              {...register("productName", { required: "Product Name is required" })}
+            />
 
-            <InputField label="Product Name" name="productName" value={formData.productName} onChange={handleChange} />
-            {/* <InputField label="Slug" name="slug" value={formData.slug} onChange={handleChange} /> */}
-            <InputField label="Subtext" name="subtext" value={formData.subtext} onChange={handleChange} />
+            <InputField
+              label="Subtext"
+              error={errors.subtext?.message}
+              {...register("subtext")}
+            />
 
-            <SelectField label="Brand" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} options={brands} />
-            <SelectField label="Category" value={formData.category} onChange={handleCategoryChange} options={categories} />
-            <SelectField label="Subcategory" value={formData.subcategory} onChange={handleSubcategoryChange} options={filteredSubcategories} />
+            <SelectField
+              label="Brand"
+              options={brands}
+              error={errors.brand?.message}
+              {...register("brand", { required: "Brand is required" })}
+            />
+
+            <SelectField
+              label="Category"
+              options={categories}
+              error={errors.category?.message}
+              {...register("category", { required: "Category is required" })}
+            />
+
+            <SelectField
+              label="Subcategory"
+              options={filteredSubcategories}
+              error={errors.subcategory?.message}
+              {...register("subcategory", { required: "Subcategory is required" })}
+            />
 
             {/* Main Image */}
-          <div>
-  <label className="text-xs font-medium text-gray-600">
-    Product Image
-  </label>
+            <div>
+              <label className="text-xs font-medium text-gray-600">
+                Primary Image
+              </label>
 
-  <label
-    htmlFor="mainImage"
-    className="mt-1 flex items-center justify-center border-2 border-dashed 
-    rounded-lg p-4 cursor-pointer hover:border-[#00E5B0]"
-  >
-    {preview ? (
-      <img
-        src={preview}
-        alt="preview"
-        className="h-24 object-contain"
-      />
-    ) : (
-      <span className="text-xs text-gray-400">
-        Click to Upload
-      </span>
-    )}
-  </label>
+              {/* Upload Box */}
+              <label
+                htmlFor="primaryImage"
+                className="mt-1 flex flex-col items-center justify-center 
+    border-2 border-dashed border-gray-300 rounded-lg 
+    h-28 cursor-pointer hover:border-[#00E5B0] transition"
+              >
+                {preview ? (
+                  <img
+                    src={preview}
+                    alt="preview"
+                    className="h-20 object-contain"
+                  />
+                ) : (
+                  <>
+                    {/* Upload Icon */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12v-8m0 0L9 7m3-3l3 3"
+                      />
+                    </svg>
+                    <span className="text-xs text-gray-400 mt-1">
+                      Click to Upload
+                    </span>
+                  </>
+                )}
+              </label>
 
-  <input
-    type="file"
-    id="mainImage"
-    accept="image/*"
-    className="hidden"
-    onChange={(e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+              {/* Hidden Input */}
+              <input
+                id="primaryImage"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                {...register("primaryImages", {
+                  required: "Primary Image is required",
+                  onChange: (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setPreview(URL.createObjectURL(file));
+                    }
+                  },
+                })}
+              />
 
-      setFormData((prev) => ({
-        ...prev,
-        primaryImages: file,
-      }));
+              {errors.primaryImages && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.primaryImages.message}
+                </p>
+              )}
+            </div>
+          </div>
 
-      setPreview(URL.createObjectURL(file));
-    }}
-  />
-</div>
+          {/* Textareas */}
+          <div className="space-y-4">
+            <TextareaField
+              label="Description"
+              error={errors.description?.message}
+              {...register("description")}
+            />
 
+            <TextareaField
+              label="Key Features (Comma separated)"
+              error={errors.keyFeatures?.message}
+              {...register("keyFeatures")}
+            />
 
-
-  <TextareaField
-    label="Description"
-    name="description"
-    value={formData.description}
-    onChange={handleChange}
-  />
-
-  <TextareaField
-    label="Key Features (Comma separated)"
-    name="keyFeatures"
-    value={formData.keyFeatures}
-    onChange={handleChange}
-  />
-
-  <TextareaField
-    label="Wholesale Advantage"
-    name="wholesaleAdvantage"
-    value={formData.wholesaleAdvantage}
-    onChange={handleChange}
-  />
-
-
-
-
+            <TextareaField
+              label="Wholesale Advantage"
+              error={errors.wholesaleAdvantage?.message}
+              {...register("wholesaleAdvantage")}
+            />
           </div>
 
           {/* Variants */}
@@ -385,59 +448,161 @@ const handleSubmit = async (e) => {
 
             {variants.map((variant, index) => (
               <div key={index} className="border p-4 rounded-lg bg-gray-50 space-y-3">
-
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <InputField label="Quantity Value" name="quantityValue" value={variant.quantityValue} onChange={(e) => handleVariantChange(index, e)} />
-                  <InputField label="Quantity Unit" name="quantityUnit" value={variant.quantityUnit} onChange={(e) => handleVariantChange(index, e)} />
-                  <InputField label="Original Price" name="originalPrice" value={variant.originalPrice} onChange={(e) => handleVariantChange(index, e)} />
-                  <InputField label="Discount Value" name="discountValue" value={variant.discountValue} onChange={(e) => handleVariantChange(index, e)} />
-                  <InputField label="GST Rate" name="gstRate" value={variant.gstRate} onChange={(e) => handleVariantChange(index, e)} />
-                  <InputField label="Stock" name="stock" value={variant.stock} onChange={(e) => handleVariantChange(index, e)} />
-                  <InputField label="SKU" name="sku" value={variant.sku} onChange={(e) => handleVariantChange(index, e)} />
+                  <InputField
+                    label="Quantity Value"
+                    name="quantityValue"
+                    placeholder="Value should be Number"
+                    value={variant.quantityValue}
+                    onChange={(e) => handleVariantChange(index, e)}
+                  />
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">
+                      Quantity Unit
+                    </label>
+                    <select name="quantityUnit"
+                      value={variant.quantityUnit}
+                      onChange={(e) => handleVariantChange(index, e)}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none">
+                      <option value="">Select</option>
+                      <option value="ml">ml</option>
+                      <option value="l">l</option>
+                      <option value="g">g</option>
+                      <option value="kg">kg</option>
+                      <option value="piece">piece</option>
+                      <option value="dozen">dozen</option>
+                      <option value="pack">pack</option>
+                      <option value="box">box</option>
+                    </select>
+                  </div>
+
+                  <InputField
+                    label="Original Price"
+                    name="originalPrice"
+                    placeholder="Value should be Number"
+                    type="number"
+                    value={variant.originalPrice}
+                    onChange={(e) => handleVariantChange(index, e)}
+                  />
+
+                  <InputField
+                    label="Discount Value"
+                    name="discountValue"
+                    placeholder="Value should be Number"
+                    type="number"
+                    value={variant.discountValue}
+                    onChange={(e) => handleVariantChange(index, e)}
+                  />
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">
+                      Discount Type
+                    </label>
+                    <select
+                      name="discountType"
+                      value={variant.discountType}
+                      onChange={(e) => handleVariantChange(index, e)}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none"
+                    >
+                      <option value="">None</option>
+                      <option value="percentage">Percentage</option>
+                      <option value="flat">Flat</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">
+                      GST Rate
+                    </label>
+                    <select
+                      name="gstRate"
+                      value={variant.gstRate}
+                      onChange={(e) => handleVariantChange(index, e)}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none"
+                    >
+                      <option value="">Select</option>
+                      <option value="0">0%</option>
+                      <option value="3">3%</option>
+                      <option value="5">5%</option>
+                      <option value="12">12%</option>
+                      <option value="18">18%</option>
+                      <option value="28">28%</option>
+                    </select>
+                  </div>
+
+                  <InputField
+                    label="Stock"
+                    name="stock"
+                    type="number"
+                    value={variant.stock}
+                    onChange={(e) => handleVariantChange(index, e)}
+                  />
+
+                  <InputField
+                    label="SKU"
+                    name="sku"
+                    placeholder="SOAP-3PACK"
+                    value={variant.sku}
+                    onChange={(e) => handleVariantChange(index, e)}
+                  />
                 </div>
 
                 {/* Variant Images */}
-               <div>
-  <label className="text-xs font-medium text-gray-600">
-    Variant Images
-  </label>
+                <div>
+                  <label className="text-xs font-medium text-gray-600">
+                    Variant Images (Preview only - URLs needed for API)
+                  </label>
 
-  <input
-    type="file"
-    multiple
-    accept="image/*"
-    onChange={(e) => {
-      const files = Array.from(e.target.files);
-
-      const updated = [...variants];
-      updated[index].images = files;
-      updated[index].previewImages = files.map((file) =>
-        URL.createObjectURL(file)
-      );
-
-      setVariants(updated);
-    }}
-    className="mt-2"
-  />
-
-  <div className="flex gap-2 mt-2 flex-wrap">
-    {variant.previewImages?.map((img, i) => (
-      <img
-        key={i}
-        src={img}
-        alt="variant"
-        className="h-16 rounded border"
-      />
-    ))}
-  </div>
-</div>
-
+                  <div className="mt-2">
+                    {/* Hidden Input */}
+                    <input
+                      id={`variantImages-${index}`}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleVariantImageChange(index, e)}
+                    />
+                    
+                    {/* Upload / Preview Box */}
+                    <label
+                      htmlFor={`variantImages-${index}`}
+                      className="w-32 h-32 border-2 border-dashed border-gray-300 
+      rounded-lg cursor-pointer hover:border-[#00E5B0] 
+      flex items-center justify-center overflow-hidden relative"
+                    >
+                      {variant.previewImages?.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 p-1 overflow-auto">
+                          {variant.previewImages.map((img, i) => (
+                            <img
+                              key={i}
+                              src={img}
+                              alt="variant"
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <IoIosCloudUpload className="text-2xl text-gray-400" />
+                          <span className="text-[10px] text-gray-400 mt-1 text-center">
+                            Upload
+                          </span>
+                        </div>
+                      )}
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Note: Images are for preview only. API expects image URLs.
+                    </p>
+                  </div>
+                </div>
 
                 {variants.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeVariant(index)}
-                    className="text-red-500 text-sm"
+                    className="text-red-500 text-sm hover:text-red-700"
                   >
                     Remove Variant
                   </button>
@@ -448,7 +613,7 @@ const handleSubmit = async (e) => {
             <button
               type="button"
               onClick={addVariant}
-              className="bg-[#1E264F] text-white px-4 py-2 rounded-lg text-sm"
+              className="bg-[#1E264F] text-white px-4 py-2 rounded-lg text-sm hover:bg-opacity-90"
             >
               + Add Variant
             </button>
@@ -458,12 +623,11 @@ const handleSubmit = async (e) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-[#00E5B0] text-white px-5 py-2 rounded-lg"
+              className="bg-[#00E5B0] text-white px-5 py-2 rounded-lg hover:bg-opacity-90 disabled:opacity-50"
             >
               {isLoading ? "Adding..." : "Add Product"}
             </button>
           </div>
-
         </form>
       </div>
     </div>
