@@ -5,8 +5,7 @@ import OnlinePaymentCard from '../components/payment/OnlinePaymentCard';
 import CashOnDeliveryCard from '../components/payment/CashOnDeliveryCard';
 import PartialPaymentCard from '../components/payment/PartialPaymentCard';
 
-const Payments = () => {
-    
+const Payments = () => { 
     const paymentTypeStat = [
         {
             title: "Online Payments",
@@ -63,7 +62,7 @@ const Payments = () => {
             status: "Completed"
         },
     ];
-    // Mock Partial Payment Transaction list
+    
     const partialPaymentTransactions = [
         {
             id: "PAR-9012",
@@ -84,7 +83,7 @@ const Payments = () => {
                 },
                 remaining: {
                     label: "Remaining Payment",
-                    amount: 3500, // Based on image total collection
+                    amount: 3500,
                     method: "Cash",
                     date: "20/12/2025",
                     time: "09:30 AM",
@@ -92,6 +91,7 @@ const Payments = () => {
                 }
             }
         },
+         
         {
             id: "PAR-9012",
             customerName: "Anita Desai",
@@ -120,7 +120,7 @@ const Payments = () => {
             }
         },
     ];
-
+     
     // NOTE: Code for pyment type toggle button
     const [activeTab, setActiveTab] = useState('Online');
     const tabs = [
@@ -232,6 +232,7 @@ const Payments = () => {
                     </div> : <></>
                 }
             </section >
+
         </div>
     )
 }

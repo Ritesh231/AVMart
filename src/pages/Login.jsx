@@ -14,7 +14,7 @@ const Login = () => {
   const handleSubmit = async () => {
     try {
       const res = await login({ email, password }).unwrap();
-      //  localStorage.setItem("token",res.token);     
+       localStorage.setItem("Admin_token",res.token);     
       navigate("/dashboard");
       toast.success("Login Successffully");
     } catch (err) {

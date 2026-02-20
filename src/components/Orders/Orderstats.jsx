@@ -1,39 +1,47 @@
-import { FaUsers, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import { IoCartOutline } from "react-icons/io5";
-import StatCard from "../StatCard"; // adjust path if needed
-
-const stats = [
-  {
-    title: "Total Orders",
-    number: "200",
-    statement: "+12% from last Month",
-    icon: <IoCartOutline size={24}/>,
-    variant: "special",
-  },
-  {
-    title: "Completed",
-    number: "20",
-    statement: "+12% from last week",
-    icon: <IoCartOutline size={24}/>,
-    variant: "normal",
-  },
-  {
-    title: "Approved",
-    number: "20",
-    statement: "+12% from last week",
-    icon: <IoCartOutline size={24}/>,
-    variant: "normal",
-  },
-  {
-    title: "Rejected",
-    number: "20",
-    statement: "+12% from last week",
-    icon: <IoCartOutline size={24}/>,
-    variant: "normal",
-  },
-];
+import StatCard from "../StatCard";
+import { useGetallordersQuery } from "../../Redux/apis/ordersApi";
 
 export default function UserStats() {
+
+  const { data, isLoading, isError } = useGetallordersQuery();
+
+  const count = data?.topStats || {};
+
+  const stats = [
+    {
+      title: "Total Orders",
+      number: count.totalOrders || 0,
+      statement: "+12% from last Month",
+      icon: <IoCartOutline size={24} />,
+      variant: "special",
+    },
+    {
+      title: "Completed",
+      number: count.completed || 0,
+      statement: "+12% from last week",
+      icon: <IoCartOutline size={24} />,
+      variant: "normal",
+    },
+    {
+      title: "Approved",
+      number: count.approved || 0,
+      statement: "+12% from last week",
+      icon: <IoCartOutline size={24} />,
+      variant: "normal",
+    },
+    {
+      title: "Rejected",
+      number: count.rejected || 0,
+      statement: "+12% from last week",
+      icon: <IoCartOutline size={24} />,
+      variant: "normal",
+    },
+  ];
+
+  if (isLoading) return <p>Loading...</p>;
+  if (isError) return <p>Error loading stats</p>;
+
   return (
        <section className="stat-card-sec mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

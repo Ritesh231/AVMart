@@ -4,6 +4,7 @@ export const Productsapi =  baseApi.injectEndpoints({
  
   endpoints: (builder) => ({
    getallcategories:builder.query({
+     credentials: "include",
    query:()=>({
     url:"/api/v1/admin/categories/all"
    }),

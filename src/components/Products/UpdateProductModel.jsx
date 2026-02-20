@@ -8,7 +8,7 @@ export default function EditProductModal({
   productData,
 }) {
   const [updateProduct, { isLoading }] = useUpdateProductMutation();
-
+  
   const [formData, setFormData] = useState({
     productName: "",
     subtext: "",
@@ -25,7 +25,7 @@ export default function EditProductModal({
     primaryImage: null,
     variants: [],
   });
-
+   
   const [previewImage, setPreviewImage] = useState(null);
 
   // Prefill
@@ -42,7 +42,7 @@ export default function EditProductModal({
         subcategory: productData.subcategory?._id || "",
         categoryname: productData.category?.name || "",
         subcategoryname: productData.subcategory?.name || "",
-        brandname:productData.brand?.name||"",
+        brandname: productData.brand?.name || "",
         status: productData.status || "active",
         // slug: productData.slug || "",
         primaryImage: null,
@@ -51,6 +51,9 @@ export default function EditProductModal({
       setPreviewImage(productData.displayImage || null);
     }
   }, [productData]);
+
+  const QUANTITY_UNITS = ["ml", "l", "g", "kg", "piece", "dozen", "pack", "box", ""];
+  const GST_RATES = [0, 3, 5, 12, 18, 28];
 
   // Handle normal input
   const handleChange = (e) => {
@@ -162,7 +165,7 @@ export default function EditProductModal({
           <input name="subcategory" value={formData.subcategoryname} onChange={handleChange} placeholder="Subcategory ID" className="border p-2 rounded-lg" />
           <input name="status" value={formData.status} onChange={handleChange} placeholder="Status" className="border p-2 rounded-lg" />
         </div>
-        
+
         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded-lg mt-3" />
         <div className="grid grid-cols-3 gap-3 mt-3">
           <input
@@ -190,7 +193,6 @@ export default function EditProductModal({
           />
         </div>
 
-
         {/* Main Image Upload */}
         <div className="mt-4">
           <label className="font-medium">Main Product Image</label>
@@ -217,17 +219,8 @@ export default function EditProductModal({
 
           {formData.variants.map((variant, index) => (
             <div key={index} className="border p-4 rounded-lg mb-4">
-
               <div className="grid grid-cols-2 gap-3">
-                <input
-                  value={variant.label || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "label", e.target.value)
-                  }
-                  placeholder="Label"
-                  className="border p-2 rounded"
-                />
-
+                {/* Quantity Value */}
                 <input
                   type="number"
                   value={variant.quantityValue || ""}
@@ -238,15 +231,23 @@ export default function EditProductModal({
                   className="border p-2 rounded"
                 />
 
-                <input
+                {/* Quantity Unit Dropdown */}
+                <select
                   value={variant.quantityUnit || ""}
                   onChange={(e) =>
                     handleVariantChange(index, "quantityUnit", e.target.value)
                   }
-                  placeholder="Unit (kg, ml, etc)"
                   className="border p-2 rounded"
-                />
+                >
+                  <option value="">Select Unit</option>
+                  {QUANTITY_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit || "None"}
+                    </option>
+                  ))}
+                </select>
 
+                {/* Original Price */}
                 <input
                   type="number"
                   value={variant.originalPrice || ""}
@@ -256,30 +257,51 @@ export default function EditProductModal({
                   placeholder="Original Price"
                   className="border p-2 rounded"
                 />
+                 
+                {/* Discount Value */}
+                <div className="flex items-center gap-2">
+                  {/* Discount Value Input */}
+                  <div className="relative w-full">
+                    <input
+                      type="number"
+                      value={variant.discountValue || ""}
+                      onChange={(e) => {
+                        let value = Number(e.target.value);
 
-                <input
-                  type="number"
-                  value={variant.discountValue || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "discountValue", e.target.value)
-                  }
-                  placeholder="Discount"
-                  className="border p-2 rounded"
-                />
+                        // Limit to 100 if percentage
+                        if (variant.discountType === "percentage" && value > 100) {
+                          value = 100;
+                        }
 
-                <select
-                  value={variant.discountType || "percent"}
-                  onChange={(e) =>
-                    handleVariantChange(index, e)
-                  }
-                  name="discountType"
-                  className="border p-2 rounded"
-                >
-                  <option value="percent">Percentage</option>
-                  <option value="fixed">Fixed</option>
-                </select>
+                        handleVariantChange(index, "discountValue", value);
+                      }}
+                      placeholder="Discount"
+                      className={`border p-2 rounded w-full ${variant.discountType === "percentage" ? "pr-8" : ""
+                        }`} // Add padding-right for % sign
+                    />
+                    
+                    {/* % sign inside input */}
+                    {variant.discountType === "percentage" && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                        %
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Discount Type Dropdown */}
+                  <select
+                    value={variant.discountType || "percentage"}
+                    onChange={(e) =>
+                      handleVariantChange(index, "discountType", e.target.value)
+                    }
+                    className="border p-2 rounded"
+                  >
+                    <option value="percentage">Percentage</option>
+                    <option value="flat">Flat</option>
+                  </select>
+                </div>
 
-
+                {/* Stock */}
                 <input
                   type="number"
                   value={variant.stock || ""}
@@ -290,6 +312,7 @@ export default function EditProductModal({
                   className="border p-2 rounded"
                 />
 
+                {/* SKU */}
                 <input
                   value={variant.sku || ""}
                   onChange={(e) =>
@@ -299,57 +322,30 @@ export default function EditProductModal({
                   className="border p-2 rounded"
                 />
 
-                <input
-                  type="number"
-                  value={variant.gstRate || ""}
+                {/* GST Rate Dropdown */}
+                <select
+                  value={variant.gstRate ?? ""}
                   onChange={(e) =>
-                    handleVariantChange(index, "gstRate", e.target.value)
+                    handleVariantChange(index, "gstRate", Number(e.target.value))
                   }
-                  placeholder="GST Rate"
                   className="border p-2 rounded"
-                />
+                >
+                  {/* Placeholder option */}
+                  <option value="" disabled>
+                    Select GST Rate
+                  </option>
 
-
+                  {/* Actual GST options */}
+                  {GST_RATES.map((rate) => (
+                    <option key={rate} value={rate}>
+                      {rate}%
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              {/* Variant Image Upload */}
-              <div className="mt-3">
-                <label className="text-sm font-medium">Variant Image</label>
-
-                <div className="border-dashed border-2 rounded-lg p-3 text-center mt-1 relative">
-                  {variant.preview || variant.image ? (
-                    <img
-                      src={
-                        variant.preview ||
-                        (typeof variant.image === "string"
-                          ? variant.image
-                          : "")
-                      }
-                      alt="Variant Preview"
-                      className="h-24 mx-auto object-contain"
-                    />
-                  ) : (
-                    <p className="text-sm">Upload Image</p>
-                  )}
-
-                  <input
-                    type="file"
-                    onChange={(e) =>
-                      handleVariantImageChange(index, e.target.files[0])
-                    }
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={() => removeVariant(index)}
-                className="text-red-500 text-sm mt-3"
-              >
-                Remove Variant
-              </button>
             </div>
           ))}
+
 
           <button
             onClick={addVariant}

@@ -7,39 +7,38 @@ import EditProductModal from "../../components/Products/UpdateProductModel";
 import { useState } from "react";
 
 const products = Array.from({ length: 20 });
-     
+
 const ProductGrid = () => {
     const { data, isLoading, isError } = useGetallproductsQuery();
     const products = data?.data || [];
-    
-    const [ deleteproduct, { isLoading: isDeleting } ] = useDeleteProductMutation();
-    
+
+    const [deleteproduct, { isLoading: isDeleting }] = useDeleteProductMutation();
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
-    const [searchTerm,setSearchTerm]=useState("")
+    const [searchTerm, setSearchTerm] = useState("")
 
     const handleDelete = async (id) => {
         const confirmDelete = window.confirm(
-            "Are you sure you want to delete this category?"
+            "Are you sure you want to delete this product?"
         );
-
         if (!confirmDelete) return;
         try {
             await deleteproduct(id).unwrap();
-            toast.success("Category Deleted Successfully");
+            toast.success("Product Deleted Successfully");
         } catch (err) {
-            toast.error("Error to delete Category", err);
+            toast.error("Error to delete Product", err);
         }
     }
 
-     const filteredProducts=products.filter((u)=>{
-        const search=searchTerm.toLowerCase();
-        return(
-          u.slug?.toLowerCase().includes(search)||
-           u.price?.toString().includes(search)
+    const filteredProducts = products.filter((u) => {
+        const search = searchTerm.toLowerCase();
+        return (
+            u.slug?.toLowerCase().includes(search) ||
+            u.price?.toString().includes(search)
         )
     })
-    
+
     const ProductShimmer = () => {
         return (
             <div className="border border-gray-200 rounded-xl p-3 bg-white animate-pulse">
@@ -55,12 +54,10 @@ const ProductGrid = () => {
         );
     };
 
-   
-
     if (isError) {
         return <p>No products available</p>;
     }
-
+    
     if (isLoading) {
         return (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -70,11 +67,13 @@ const ProductGrid = () => {
             </div>
         )
     }
-     
+      
     return (
         <div className="p-6 bg-white rounded-xl border border-emerald-200">
+
             {/* Search */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+                
                 {/* Search Bar */}
                 <div className="w-full lg:w-[40%] md:w-[50%]">
                     <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
@@ -84,11 +83,11 @@ const ProductGrid = () => {
                             type="text"
                             placeholder='Search By User Name and Phone no'
                             value={searchTerm}
-                             onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
-
+                
                 {/* Export Button */}
                 <div className='flex justify-evenly gap-2 items-center'>
                     <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
