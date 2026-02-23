@@ -1,11 +1,10 @@
 import { IoCartOutline } from "react-icons/io5";
 import StatCard from "../StatCard";
-import { useGetallordersQuery } from "../../Redux/apis/ordersApi";
+import {useGetOrdersByStatusQuery  } from "../../Redux/apis/ordersApi";
 
 export default function UserStats() {
 
-  const { data, isLoading, isError } = useGetallordersQuery();
-
+  const { data, isLoading, isError } = useGetOrdersByStatusQuery ("Pending");
   const count = data?.topStats || {};
 
   const stats = [

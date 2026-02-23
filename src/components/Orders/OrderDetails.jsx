@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FaCheckCircle } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
 import { FaCalendarAlt } from "react-icons/fa";
 import { IoBag } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa";
 import Orderstats from "../../components/Orders/Orderstats";
+import { useParams } from "react-router-dom";
+import { useGetOrderDetailsByIdMutation } from "../../Redux/apis/ordersApi";
 
 const steps = [
   { title: "Order Placed", done: true },
@@ -15,161 +17,301 @@ const steps = [
 ];
 
 const OrderDetails = () => {
+
+  const { id } = useParams();
+
+  const [getOrderDetails, { data, isLoading }] =
+    useGetOrderDetailsByIdMutation();
+
+  useEffect(() => {
+    if (id) {
+      getOrderDetails(id);
+    }
+  }, [id]);
+
+  const orders = data?.data?.recentOrders || [];
+
+  const ongoingOrders = orders.filter(
+    (order) => order.status !== "delivered"
+  );
+
+  const completedOrders = orders.filter(
+    (order) => order.status === "delivered"
+  );
+
+  const getTrackingSteps = (order) => {
+    const steps = [
+      { key: "ordered", label: "Order Placed" },
+      { key: "confirmed", label: "Order Confirmed" },
+      { key: "assigned", label: "Delivery Assigned" },
+      { key: "delivered", label: "Delivered" },
+    ];
+
+    const statusOrder = ["ordered", "confirmed", "assigned", "delivered"];
+    const currentIndex = statusOrder.indexOf(order.order_status);
+
+    return steps.map((step, index) => ({
+      ...step,
+      done: index <= currentIndex,
+    }));
+  };
+
+  const OrderCard = ({ order }) => (
+    <div className="bg-white rounded-xl shadow-sm p-6 space-y-4 border">
+
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="font-semibold text-lg">
+            Order #{order.orderId}
+          </h3>
+          <p className="text-sm text-gray-500">
+            {new Date(order.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+
+        <div className="text-right">
+          <span className={`px-3 py-1 text-xs rounded-full ${order.status === "delivered"
+              ? "bg-green-100 text-green-600"
+              : "bg-yellow-100 text-yellow-600"
+            }`}>
+            {order.deliveryStatus}
+          </span>
+          <p className="font-semibold text-emerald-600 mt-1">
+            ₹{order.total}
+          </p>
+        </div>
+      </div>
+
+      {/* Items */}
+      {order.items.map((item, index) => (
+        <div key={index} className="flex justify-between border rounded-lg p-3">
+          <div className="flex gap-3">
+            <img
+              src={item.image}
+              alt="product"
+              className="w-14 h-14 rounded object-cover"
+            />
+            <div>
+              <p className="font-medium">{item.productName}</p>
+              <p className="text-sm text-gray-500">
+                Qty: {item.quantity}
+              </p>
+            </div>
+          </div>
+          <p className="font-semibold">₹{item.price}</p>
+        </div>
+      ))}
+
+      <div className="border border-emerald-200 rounded-xl p-5 mt-6">
+        <h4 className="font-semibold mb-6">Order Tracking</h4>
+        
+        <div className="relative">
+          <div className="absolute left-5 top-2 h-full w-[2px] bg-slate-300"></div>
+
+          <div className="space-y-8">
+            {getTrackingSteps(order).map((step, index) => (
+              <div key={index} className="flex items-start gap-4 relative">
+                <div
+                  className={`w-10 h-10 flex items-center justify-center rounded-full z-10
+                  ${step.done ? "bg-[#0F1E4A]" : "bg-gray-400"}
+                `}
+                >
+                  <FaCheck
+                    className={`text-sm ${step.done ? "text-emerald-400" : "text-white"
+                      }`}
+                  />
+                </div>
+
+                <div>
+                  <p className="font-medium">{step.label}</p>
+                  <p className="text-xs text-gray-500">
+                    {step.done ? "Completed" : "Pending"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const [activeTab, setActiveTab] = React.useState("ongoing");
+
+  const OrderDetailsSkeleton = () => (
+    <div className="min-h-screen bg-gray-50 p-6 animate-pulse">
+
+      {/* Profile Card Skeleton */}
+      <div className="bg-[#E0F5F1] rounded-xl p-6 flex justify-between items-center">
+        <div className="space-y-3">
+          <div className="h-6 w-40 bg-gray-300 rounded"></div>
+          <div className="h-4 w-32 bg-gray-300 rounded"></div>
+          <div className="mt-4 space-y-2">
+            <div className="h-8 w-24 bg-gray-300 rounded"></div>
+            <div className="h-4 w-20 bg-gray-300 rounded"></div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 w-48 bg-gray-300 rounded"></div>
+          <div className="h-4 w-32 bg-gray-300 rounded"></div>
+        </div>
+      </div>
+
+      {/* Tabs Skeleton */}
+      <div className="flex gap-3 bg-[#1A2550] p-3 w-fit mt-4 rounded-lg">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-8 w-28 bg-gray-400 rounded-lg"></div>
+        ))}
+      </div>
+
+      {/* Order Card Skeleton */}
+      <div className="mt-6 space-y-6">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm p-6 border space-y-4">
+
+            {/* Header */}
+            <div className="flex justify-between">
+              <div className="space-y-2">
+                <div className="h-5 w-32 bg-gray-300 rounded"></div>
+                <div className="h-4 w-24 bg-gray-300 rounded"></div>
+              </div>
+              <div className="space-y-2 text-right">
+                <div className="h-6 w-20 bg-gray-300 rounded-full"></div>
+                <div className="h-5 w-16 bg-gray-300 rounded"></div>
+              </div>
+            </div>
+
+            {/* Items */}
+            <div className="space-y-3">
+              {[1, 2].map((j) => (
+                <div key={j} className="flex justify-between border rounded-lg p-3">
+                  <div className="flex gap-3">
+                    <div className="w-14 h-14 bg-gray-300 rounded"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-gray-300 rounded"></div>
+                      <div className="h-3 w-20 bg-gray-300 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 w-12 bg-gray-300 rounded"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tracking Skeleton */}
+            <div className="border border-emerald-200 rounded-xl p-5 mt-6 space-y-6">
+              <div className="h-5 w-32 bg-gray-300 rounded"></div>
+              {[1, 2, 3, 4].map((k) => (
+                <div key={k} className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 w-28 bg-gray-300 rounded"></div>
+                    <div className="h-3 w-20 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (isLoading) return <OrderDetailsSkeleton />;
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-        <Orderstats/>
+      <Orderstats />
       <div className="">
-        
+
         {/* Profile Card */}
         <div className="bg-[#E0F5F1] rounded-xl p-6 flex justify-between items-center">
           <div>
             <h2 className="text-lg font-semibold">
-              Medicover Clycare Medical Shop
+              {data?.data?.shop?.shopName}
             </h2>
-            <h2 className="text-base">+91 8484555555</h2>
-              <div className="">
-            <p className="text-2xl font-bold text-[#03C616] mt-4">$3,28,500</p>
-            <p className="text-sm text-gray-500">Total Spent</p>
+            <h2 className="text-base">{data?.data?.shop?.contact}</h2>
+            <div className="">
+              <p className="text-2xl font-bold text-[#03C616] mt-4">${data?.data?.stats?.totalRevenue}</p>
+              <p className="text-sm text-gray-500">Total Spent</p>
+            </div>
           </div>
-          </div>
-           
-           <p className="flex items-center mb-24 gap-3 text-sm text-gray-500 whitespace-nowrap">
-  <FaLocationDot className="text-xl text-[#1A2550]" />
-  <span>United States</span>
 
-  <FaCalendarAlt className="text-xl text-[#1A2550]" />
-  <span>Joined on 2020-09-09</span>
-</p>
+          <p className="flex items-center mb-24 gap-3 text-sm text-gray-500 whitespace-nowrap">
+            <FaLocationDot className="text-xl text-[#1A2550]" />
+            <span>{data?.data?.shop?.address}</span>
 
+            <FaCalendarAlt className="text-xl text-[#1A2550]" />
+            <span>{new Date(data?.data?.shop?.joined).toLocaleDateString()}</span>
+          </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-3 bg-[#1A2550] p-3 w-[600px] mt-4">
-          {["Ongoing Orders", "Completed Orders", "Addresses", "Personal Details"].map(
-            (tab, i) => (
-              <button
-                key={i}
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                  i === 0
-                    ? "bg-white text-black"
-                    : "bg-[#1A2550] text-white"
+        <div className="flex gap-3 bg-[#1A2550] p-3 w-fit mt-4 rounded-lg">
+          {[
+            { label: "Ongoing Orders", value: "ongoing" },
+            { label: "Completed Orders", value: "completed" },
+            { label: "Addresses", value: "address" },
+            { label: "Personal Details", value: "personal" },
+          ].map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.value
+                  ? "bg-white text-black"
+                  : "text-white hover:bg-white/20"
                 }`}
-              >
-                {tab}
-              </button>
-            )
-          )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Order Card */}
-        <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+        <div className="mt-6 space-y-6">
 
-          {/* Order Header */}
-          <div className="flex justify-between items-center">
-            
-            <div className="flex items-center gap-4">
-    <div className="bg-[#1A2550] text-white rounded-full p-4">
-      <IoBag className="text-xl" />
-    </div>
+          {/* Ongoing Orders */}
+          {activeTab === "ongoing" && (
+            ongoingOrders.length > 0 ? (
+              ongoingOrders.map((order) => (
+                <OrderCard key={order._id} order={order} />
+              ))
+            ) : (
+              <p className="text-gray-500">No ongoing orders</p>
+            )
+          )}
 
-    <div>
-      <h3 className="font-semibold">Order #ORD-2024-09</h3>
-      <p className="text-sm text-gray-500">2024-09-12</p>
-    </div>
-  </div>
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1 text-xs rounded-full bg-[#1A2550] text-white">
-                Processing
-              </span>
-              <span className="font-semibold text-emerald-600">$328.500</span>
+          {/* Completed Orders */}
+          {activeTab === "completed" && (
+            completedOrders.length > 0 ? (
+              completedOrders.map((order) => (
+                <OrderCard key={order._id} order={order} />
+              ))
+            ) : (
+              <p className="text-gray-500">No completed orders</p>
+            )
+          )}
+
+
+
+          {/* Address Tab */}
+          {activeTab === "address" && (
+            <div className="bg-white rounded-xl shadow-sm p-6 border">
+              <h3 className="font-semibold text-lg mb-3">Shop Address</h3>
+              <p>{data?.data?.shop?.address}</p>
             </div>
-          </div>
+          )}
 
-          {/* Order Items */}
-          <div className="space-y-4">
-            {[1, 2].map((item) => (
-              <div
-                key={item}
-                className="flex items-center justify-between border rounded-lg p-4"
-              >
-                <div className="flex items-center gap-4">
-                  <img
-                    src="https://via.placeholder.com/50"
-                    alt="product"
-                    className="w-12 h-12 rounded"
-                  />
-                  <div>
-                    <p className="font-medium">Fogg Perfume</p>
-                    <p className="text-sm text-gray-500">Quantity: 1</p>
-                  </div>
-                </div>
-
-                <p className="font-semibold text-emerald-600">$328.500</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Order Tracking */}
-          <div className="border border-emerald-200 rounded-xl p-5">
-      <h4 className="font-semibold mb-6">Order Tracking</h4>
-
-      <div className="relative">
-        {/* Vertical line */}
-        <div className="absolute left-5 top-2 h-full w-[2px] bg-slate-300"></div>
-
-        <div className="space-y-8">
-          {steps.map((step, index) => (
-            <div key={index} className="flex items-start gap-4 relative">
-              {/* Icon */}
-              <div
-                className={`w-10 h-10 flex items-center justify-center rounded-full z-10
-                  ${step.done ? "bg-[#0F1E4A]" : "bg-[#0F1E4A] opacity-80"}
-                `}
-              >
-                <FaCheck
-                  className={`text-sm ${
-                    step.done ? "text-emerald-400" : "text-slate-400"
-                  }`}
-                />
-              </div>
-
-              {/* Text */}
-              <div>
-                <p className="font-medium">{step.title}</p>
-                <p className="text-xs text-gray-500">
-                  Nov 28, 2024 10:30 AM
-                </p>
-              </div>
+          {/* Personal Details */}
+          {activeTab === "personal" && (
+            <div className="bg-white rounded-xl shadow-sm p-6 border space-y-2">
+              <h3 className="font-semibold text-lg mb-3">Personal Details</h3>
+              <p><strong>Name:</strong> {data?.data?.shop?.shopName}</p>
+              <p><strong>Email:</strong> {data?.data?.shop?.email}</p>
+              <p><strong>Contact:</strong> {data?.data?.shop?.contact}</p>
+              <p><strong>Joined:</strong> {new Date(data?.data?.shop?.joined).toLocaleDateString()}</p>
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
-
-          {/* Shipping Address */}
-          <div className="bg-[#1A2550] text-white rounded-lg p-4">
-            <h4 className="font-semibold mb-1">Shipping Address</h4>
-            <p className="text-sm">
-              123 Park Avenue, New York NY 1987651
-            </p>
-          </div>
-
-          {/* Price Summary */}
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>$150</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Shipping</span>
-              <span>$30</span>
-            </div>
-            <div className="flex justify-between font-semibold text-base">
-              <span>Total</span>
-              <span className="text-emerald-600">$180</span>
-            </div>
-          </div>
-
+          )}
         </div>
       </div>
     </div>

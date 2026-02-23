@@ -11,14 +11,10 @@ export const Authapi = baseApi.injectEndpoints({
       transformResponse: (response) => {
         return response;
       },
-    }),
-    
-   
-  
+    }),  
   }),
 });
 
 export const { 
-  useLoginMutation, 
- 
+  useLoginMutation,  
 } = Authapi;

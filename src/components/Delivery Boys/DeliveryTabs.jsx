@@ -8,19 +8,19 @@ const tabs = [
     id: "New Requests",
     label: "New Requests",
     icon: <FaRegClock size={20} />,
-    path: "/Delivery/requests",
+    path: "/delivery/requests",   // pending
   },
   {
     id: "Approved",
-    label: "Sub Categories",
+    label: "Approved",
     icon: <SiTicktick size={20} />,
-    path: "/DeliveryRequests",
+    path: "/delivery/approved",
   },
-   {
+  {
     id: "Rejected",
-    label: "Sub Categories",
+    label: "Rejected",
     icon: <RxCrossCircled size={20} />,
-    path: "/DeliveryRequests",
+    path: "/delivery/rejected",
   },
 ];
 
@@ -29,7 +29,7 @@ export default function OrderPaymentTabs() {
   const location = useLocation();
 
   return (
-    <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2  md:w-fit w-full shadow-lg">
+    <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2 md:w-fit w-full shadow-lg">
       {tabs.map((tab) => {
         const isActive = location.pathname === tab.path;
 
@@ -37,16 +37,14 @@ export default function OrderPaymentTabs() {
           <button
             key={tab.id}
             onClick={() => navigate(tab.path)}
-            className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300  first:ml-0
+            className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all
               ${
                 isActive
-                  ? "bg-[#00E5B0] text-white shadow-sm"
-                  : "bg-white text-[#1E264F] hover:bg-opacity-90"
+                  ? "bg-[#00E5B0] text-white"
+                  : "bg-white text-[#1E264F]"
               }`}
           >
-            <span className={isActive ? "text-white" : "text-[#1E264F]"}>
-              {tab.icon}
-            </span>
+            {tab.icon}
             {tab.label}
           </button>
         );

@@ -27,8 +27,9 @@ tags:["Banners"],
     method:"DELETE",
    }),
     invalidatesTags: ["Banners"],
-  })    
+  }),
+      
 })
 })
 
-export const { useGetallbannersQuery,useAddBannerMutation, useDeleteBannerMutation } = Bannerapi;
+export const { useGetallbannersQuery,useAddBannerMutation,useDeleteBannerMutation } = Bannerapi;

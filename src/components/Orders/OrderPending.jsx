@@ -5,136 +5,316 @@ import { BsWallet2 } from "react-icons/bs";
 import { SiTicktick } from "react-icons/si";
 import { RxCrossCircled } from "react-icons/rx";
 import { Link } from "react-router-dom";
-import { useGetallordersQuery } from "../../Redux/apis/ordersApi";
-
-// const users = Array.from({ length: 6 }).map((_, i) => ({
-//     id: "#12345",
-//     shop: "Medicovr Citycare Medical Shop",
-//     price: "450",
-//     placed: "20/12/2025",
-//     items: [
-//         "/images/item1.png",
-//         "/images/item2.png",
-//         "/images/item3.png",
-//     ],
-//     email: "sarahchen@gmail.com",
-//     payment: "Online",
-//     action: "Send to Delivery",
-// }));
+import { useGetOrdersByStatusQuery, useAssignOrderStatusMutation, } from "../../Redux/apis/ordersApi";
+import {
+  useGetAllDeliveryBoysQuery,
+  useGetAssignDeliveryBoysMutation
+} from "../../Redux/apis/deliveryApi";
+import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
+import OrderDetailsModal from "../Orders/OrderdetailedModal"
+import { useState } from "react";
 
 export default function UsersTable() {
-    const { data, isLoading, isError } = useGetallordersQuery();
-    const users = data?.orders || [];
+  const { data, isLoading, isError } = useGetOrdersByStatusQuery("Pending");
+  const users = data?.orders || [];
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [getOrderById, { data: orderData, loading = { isLoading } }] =
+    useGetOrdersByIdMutation();
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
 
-    return (
-        <>
-            {/* Search & Actions */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-                {/* Search Bar */}
-                <div className="w-full lg:w-[40%] md:w-[50%]">
-                    <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
-                        <Search className="text-brand-gray" size={20} />
-                        <input
-                            className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
-                            type="text"
-                            placeholder='Search By Orders'
-                        />
+  const [
+    assignOrderStatus,
+    { isLoading: isUpdating }
+  ] = useAssignOrderStatusMutation();
+
+  const skeletonRows = Array.from({ length: 6 });
+
+  const { data: deliveryData } = useGetAllDeliveryBoysQuery({
+  status: "approved"
+});
+
+const [assignDeliveryBoy] = useGetAssignDeliveryBoysMutation();
+
+const handleApprove = async (id) => {
+  try {
+    await assignOrderStatus({
+      id,
+      status: "confirmed",
+    }).unwrap();
+
+    // Open Delivery Modal
+    setSelectedOrderForDelivery(id);
+    setIsDeliveryModalOpen(true);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to approve ❌");
+  }
+};
+
+  const handleReject = async (id) => {
+    try {
+      await assignOrderStatus({
+        id,
+        status: "cancelled",
+      }).unwrap();
+
+      alert("Order Rejected ❌");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to reject ❌");
+    }
+  };
+
+  const handleAssignDelivery = async (deliveryBoyId) => {
+  try {
+    await assignDeliveryBoy({
+      orderId: selectedOrderForDelivery,
+      deliveryBoyId,
+    }).unwrap();
+
+    alert("Delivery Boy Assigned Successfully ✅");
+
+    setIsDeliveryModalOpen(false);
+    setSelectedOrderForDelivery(null);
+
+  } catch (error) {
+    console.error(error);
+    alert("Failed to Assign Delivery Boy ❌");
+  }
+};
+
+
+  return (
+    <>
+      {/* Search & Actions */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+        {/* Search Bar */}
+        <div className="w-full lg:w-[40%] md:w-[50%]">
+          <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
+            <Search className="text-brand-gray" size={20} />
+            <input
+              className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
+              type="text"
+              placeholder='Search By Orders'
+            />
+          </div>
+        </div>
+
+        {/* Export Button */}
+        <div className='flex justify-evenly gap-2 items-center'>
+          <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+            <SlidersHorizontal size={20} />
+          </button>
+          <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
+            <p>Today’s</p> <ChevronDown size={20} />
+          </button>
+          <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
+            <Download size={20} /> Export
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-xl border overflow-x-auto">
+        <table className="min-w-[900px] w-full text-sm">
+          <thead className="bg-[#F1F5F9] text-gray-600">
+            <tr>
+              <th className="p-3"></th>
+              <th className="p-3 text-left">Order ID</th>
+              <th className="p-3 text-left">Shop Info</th>
+              <th className="p-3 text-left">Price</th>
+              <th className="p-3 text-left">Placed On</th>
+              <th className="p-3 text-left">Items</th>
+              <th className="p-3 text-left">Payment Method</th>
+              <th className="p-3 text-left">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {/* 🔹 Loading Skeleton */}
+            {isLoading &&
+              skeletonRows.map((_, i) => (
+                <tr key={i} className="border-t animate-pulse">
+                  <td className="p-3">
+                    <div className="h-4 w-4 bg-gray-200 rounded"></div>
+                  </td>
+                  <td className="p-3">
+                    <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                  </td>
+                  <td className="p-3">
+                    <div className="h-4 w-40 bg-gray-200 rounded"></div>
+                  </td>
+                  <td className="p-3">
+                    <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                  </td>
+                  <td className="p-3">
+                    <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                  </td>
+                  <td className="p-3">
+                    <div className="flex gap-2">
+                      <div className="h-8 w-8 bg-gray-200 rounded"></div>
+                      <div className="h-8 w-8 bg-gray-200 rounded"></div>
+                      <div className="h-8 w-8 bg-gray-200 rounded"></div>
                     </div>
-                </div>
+                  </td>
+                  <td className="p-3">
+                    <div className="h-6 w-24 bg-gray-200 rounded-full"></div>
+                  </td>
+                  <td className="p-3">
+                    <div className="flex gap-2">
+                      <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                      <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                      <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
 
-                {/* Export Button */}
-                <div className='flex justify-evenly gap-2 items-center'>
-                    <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-                        <SlidersHorizontal size={20} />
-                    </button>
-                    <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                        <p>Today’s</p> <ChevronDown size={20} />
-                    </button>
-                    <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-                        <Download size={20} /> Export
-                    </button>
-                </div>
-            </div>
+            {/* 🔹 Error State */}
+            {isError && (
+              <tr>
+                <td colSpan="8" className="text-center py-10 text-red-500 font-semibold">
+                  ❌ Failed to load orders. Please try again.
+                </td>
+              </tr>
+            )}
 
-            {/* Table */}
-            <div className="bg-white rounded-xl border overflow-x-auto">
-                <table className="min-w-[900px] w-full text-sm">
-                    <thead className="bg-[#F1F5F9] text-gray-600">
-                        <tr>
-                            <th className="p-3"></th>
-                            <th className="p-3 text-left">Order ID</th>
-                            <th className="p-3 text-left">Shop Info</th>
-                            <th className="p-3 text-left">Price</th>
-                            <th className="p-3 text-left">Placed On</th>
-                            <th className="p-3 text-left">Items</th>
-                            <th className="p-3 text-left">Payment Method</th>
-                            <th className="p-3 text-left">Action</th>
-                        </tr>
-                    </thead>
-                    
-                    <tbody>
-                        {users.map((u) => (
-                            <tr key={u._id} className="border-t hover:bg-gray-50">
-                                <td className="p-3">
-                                    <input type="checkbox" />
-                                </td>
-                                <td className="p-3 font-medium">{u._id?.slice(-5)}</td>
-                                <td className="p-3 font-medium">{u.shopInfo?.name}</td>
-                                <td className="p-3">{u.price}</td>
-                                <td className="p-3">{u.placedOn}</td>
-                                <td className="p-3">
-                                    <div className="flex items-center gap-2">
-                                        {u.itemsPreview?.slice(0, 3).map((item, index) => (
-                                            <img
-                                                key={index}
-                                                src={item.image}
-                                                alt="item"
-                                                className="w-8 h-8 rounded-md object-cover border"
-                                            />
-                                        ))}
-                                    </div>
-                                </td>
-                                <td className="p-3">
-                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
-                                     bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
-                                        <BsWallet2 className="text-[#03C616]" />
-                                        {u.paymentMethod}
-                                    </span>
-                                </td>
-                                <td className="p-3 whitespace-nowrap">
-                                    <div className="flex items-center gap-1">
-                                        {/* Approve */}
-                                        <button
-                                            className="p-1 text-green-600 bg-white"
-                                            title="Approve"
-                                        >
-                                            <SiTicktick size={18} />
-                                        </button>
+            {/* 🔹 Empty State */}
+            {!isLoading && !isError && users.length === 0 && (
+              <tr>
+                <td colSpan="8" className="text-center py-10 text-gray-500 font-medium">
+                  No orders found.
+                </td>
+              </tr>
+            )}
 
-                                        {/* Reject */}
-                                        <button
-                                            className="p-1 text-red-600 bg-white"
-                                            title="Reject"
-                                        >
-                                            <RxCrossCircled size={18} />
-                                        </button>
+            {/* 🔹 Data Rows */}
+            {!isLoading &&
+              !isError &&
+              users.map((u) => (
+                <tr key={u._id} className="border-t hover:bg-gray-50">
+                  <td className="p-3">
+                    <input type="checkbox" />
+                  </td>
+                  <td className="p-3 font-medium">{u._id?.slice(-5)}</td>
+                  <td className="p-3 font-medium">{u.shopInfo?.name}</td>
+                  <td className="p-3">{u.price}</td>
+                  <td className="p-3">{u.placedOn}</td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      {u.items?.slice(0, 3).map((item, index) => (
+                        <img
+                          key={index}
+                          src={item.image}
+                          alt="item"
+                          className="w-8 h-8 rounded-md object-cover border"
+                        />
+                      ))}
+                    </div>
+                  </td>
 
-                                        {/* View */}
-                                        <Link to="/order/details">
-                                            <button
-                                                className="p-1 text-blue-900"
-                                                title="View"
-                                            >
-                                                <FaEye size={18} />
-                                            </button>
-                                        </Link>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </>
-    );
+                  <td className="p-3">
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
+                      bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
+                      <BsWallet2 className="text-[#03C616]" />
+                      {u.paymentMethod}
+                    </span>
+                  </td>
+                  <td className="p-3 whitespace-nowrap">
+                    {u.OrderStatus === "confirmed" ? (
+                      <span className="px-3 py-1.5 rounded-xl bg-green-100 text-green-700 font-semibold text-sm">
+                        Approved
+                      </span>
+                    ) : u.OrderStatus === "cancelled" ? (
+                      <span className="px-3 py-1.5 rounded-xl bg-red-100 text-red-600 font-semibold text-sm">
+                        Rejected
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        {/* ✅ Approve */}
+                        <button
+                          className="p-1 text-green-600 bg-white"
+                          onClick={() => handleApprove(u._id)}
+                          disabled={isUpdating}
+                        >
+                          <SiTicktick size={18} />
+                        </button>
+
+                        {/* ❌ Reject */}
+                        <button
+                          className="p-1 text-red-600 bg-white"
+                          onClick={() => handleReject(u._id)}
+                          disabled={isUpdating}
+                        >
+                          <RxCrossCircled size={18} />
+                        </button>
+
+                        {/* 👁 View */}
+                        <button
+                          className="p-1 text-blue-900"
+                          onClick={async () => {
+                            setSelectedOrderId(u._id);
+                            await getOrderById(u._id);
+                          }}
+                        >
+                          <FaEye size={18} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+
+        {selectedOrderId && (
+          <OrderDetailsModal
+            order={orderData?.order}
+            loading={isLoading}
+            onClose={() => setSelectedOrderId(null)}
+          />
+        )}
+
+        {isDeliveryModalOpen && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-lg w-[400px] max-h-[500px] overflow-y-auto">
+
+      <h2 className="text-lg font-semibold mb-4">
+        Select Delivery Boy
+      </h2>
+
+      {deliveryData?.data?.map((boy) => (
+        <div
+          key={boy._id}
+          onClick={() => handleAssignDelivery(boy._id)}
+          className="border p-3 rounded mb-2 cursor-pointer hover:bg-gray-100"
+        >
+          <p className="font-medium">{boy.Name}</p>
+          <p className="text-sm text-gray-500">
+            Orders: {boy.completeOrders}
+          </p>
+          <p className="text-sm text-gray-500">
+            Status: {boy.deliveryBoyAvailable}
+          </p>
+        </div>
+      ))}
+
+      <button
+        onClick={() => {
+          setIsDeliveryModalOpen(false);
+          setSelectedOrderForDelivery(null);
+        }}
+        className="mt-4 bg-red-500 text-white px-3 py-1 rounded"
+      >
+        Close
+      </button>
+
+    </div>
+  </div>
+)}
+      </div>
+    </>
+  );
 }

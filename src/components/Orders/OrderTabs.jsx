@@ -7,11 +7,11 @@ const tabs = [
     label: "Pending",
     path: "/orders/pending",
   },
-  {
-    id: "confirmed",
-    label: "Confirmed",
-    path: "/orders/confirmed",
-  },
+  // {
+  //   id: "confirmed",
+  //   label: "Confirmed",
+  //   path: "/orders/confirmed",
+  // },
   {
     id: "out-for-delivery",
     label: "Out For Delivery",

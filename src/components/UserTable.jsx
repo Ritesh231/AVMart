@@ -5,6 +5,7 @@ import { RxCrossCircled } from "react-icons/rx";
 import { SiTicktick } from "react-icons/si";
 import { useGetallusersQuery, useUpdateStatusMutation, useDeleteUserMutation } from "../Redux/apis/userApi"
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const tabs = [
   { id: 'pending', label: 'Pending' },
@@ -17,6 +18,7 @@ export default function UsersTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const { data, isLoading, isError } = useGetallusersQuery();
   const users = data?.data || [];
+  const navigate = useNavigate();
 
   const filteredUsers = users.filter((user) => {
     const matchesStatus = user.status === activeTab;
@@ -31,7 +33,7 @@ export default function UsersTable() {
 
   const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
   const [deleteStatus, { isLoading: isDeleting }] = useDeleteUserMutation();
-   
+
   const handleStatusChange = async (id, newStatus) => {
     try {
       await updateStatus({ id, status: newStatus }).unwrap();
@@ -40,7 +42,7 @@ export default function UsersTable() {
       toast.error("Failed to Update", error);
     }
   }
-   
+
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this user?");
     if (!confirmDelete) return;
@@ -52,11 +54,11 @@ export default function UsersTable() {
       toast.error("Failed to delete User", error);
     }
   }
-  
+
   if (isError) {
     return <p>No User Found</p>;
   }
-    
+
   return (
     <>
       {/* Tabs */}
@@ -81,7 +83,7 @@ export default function UsersTable() {
           </button>
         ))}
       </section>
-        
+
       {/* Search & Actions */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
         {/* Search Bar */}
@@ -96,7 +98,7 @@ export default function UsersTable() {
             />
           </div>
         </div>
-         
+
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
           <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
@@ -159,7 +161,7 @@ export default function UsersTable() {
                   <td className="p-3">
                     <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
                   </td>
-                
+
                   <td className="p-3">
                     <div className="flex gap-3">
                       <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
@@ -210,18 +212,18 @@ export default function UsersTable() {
                   <td className="p-3">
                     <div className="text-sm text-black">{u.shopType}</div>
                   </td>
-                  
+
                   <td className="p-3">
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
-                  
+
                   <td className="p-3">
                     {u.status === "pending" && (
                       <div className="flex gap-3 text-lg">
                         <SiTicktick
                           size={20}
                           className="text-green-600 cursor-pointer"
-                          onClick={() => handleStatusChange(u._id, "accepted")}
+                          onClick={() => handleStatusChange(u._id, "Approved")}
                         />
                         <RxCrossCircled
                           size={20}
@@ -236,7 +238,10 @@ export default function UsersTable() {
                         <span className="text-green-700 text-xs bg-green-100 px-3 py-1 rounded-full">
                           Approved
                         </span>
-                        <FaEye className="text-blue-900 cursor-pointer" />
+                        <FaEye
+                          className="text-blue-900 cursor-pointer"
+                          onClick={() => navigate(`/order/details/${u._id}`)}
+                        />
                         <FaTrash className="text-red-600 cursor-pointer" onClick={() => handleDelete(u._id)} />
                       </div>
                     )}

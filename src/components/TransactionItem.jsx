@@ -9,7 +9,10 @@ const TransactionItem = ({ data }) => {
                 {/* Profile Image with Soft Background */}
                 <div className="h-14 w-14 rounded-2xl overflow-hidden bg-brand-soft flex-shrink-0">
                     <img
-                        src={data.image || "https://ui-avatars.com/api/?name=" + data.username}
+                        src={
+                            data.image ||
+                            `https://ui-avatars.com/api/?name=${data.username?.charAt(0)?.toUpperCase()}&size=128`
+                        }
                         alt={data.username}
                         className="h-full w-full object-cover"
                     />
@@ -22,7 +25,7 @@ const TransactionItem = ({ data }) => {
             </div>
 
             {/* Dynamic Amount Styling */}
-            <div className={`text-xl font-bold ${isCredited ? 'text-green-500' : 'text-red-500'}`}>
+            <div className={`text-md font-bold whitespace-nowrap ${isCredited ? 'text-green-500' : 'text-red-500'}`}>
                 {isCredited ? '+' : '-'}₹{data.amount}
             </div>
         </div>

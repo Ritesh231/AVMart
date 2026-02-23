@@ -14,7 +14,9 @@ export const baseApi = createApi({
     "Subcategories", 
     "Brands",
     "Queries",
-    "Orders"
+    "Orders",
+    "Wallet",
+    "Dashboard",
   ],
   endpoints: () => ({}),
 });

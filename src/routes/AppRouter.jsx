@@ -93,7 +93,7 @@ export default function AppRouter() {
             <Route path="delivered" element={<OrderDelivered />} />
             <Route path="rejected" element={<OrderRejected />} />
           </Route>
-          <Route path="/order/details" element={<OrderDetails/>}/>
+          <Route path="/order/details/:id" element={<OrderDetails/>}/>
           
           {/* Products */}
           <Route path="/products" element={<Products />}>
@@ -113,6 +113,8 @@ export default function AppRouter() {
           <Route path="/delivery" element={<Delivery />}>
             <Route index element={<Navigate to="requests" replace />} />
             <Route path="requests" element={<DeliveryRequests />} />
+            <Route path="approved" element={<DeliveryRequests />} />
+            <Route path="rejected" element={<DeliveryRequests />} />
           </Route>
 
           {/*Offer*/}

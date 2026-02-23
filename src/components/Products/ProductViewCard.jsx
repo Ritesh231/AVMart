@@ -1,19 +1,19 @@
 import React from 'react'
-import { useGetallproductsQuery } from '../../Redux/apis/productsApi';
+import {  useGetDashboardQuery } from '../../Redux/apis/dashboardApi';
 
 const ProductViewCard = ({ product }) => {
-
+    
     return (
         <div className="relative bg-white border border-brand-teal/20 rounded-3xl p-4 flex flex-col items-start transition-shadow hover:shadow-md">
             {/* Discount Badge */}
             <div className="absolute top-4 left-4 z-10 bg-[#EAB308] text-white text-[10px] font-bold h-10 w-10 flex items-center justify-center rounded-full shadow-lg border-2 border-white/20">
-                {product.discountValue}%
+                {product.discountBadge}
             </div>
             
             {/* Product Image Container */}
             <div className="w-full aspect-square flex items-center justify-center mb-4 bg-slate-50 rounded-2xl overflow-hidden">
                 <img
-                    src={product.displayImage || 'https://via.placeholder.com/150'}
+                    src={product.image || 'https://via.placeholder.com/150'}
                     alt={product.name}
                     className="max-h-[80%] object-contain"
                 />
@@ -29,7 +29,7 @@ const ProductViewCard = ({ product }) => {
                     ₹{product.price}
                 </span>
                 <span className="text-brand-gray line-through text-xs font-medium">
-                    ₹{product.originalPrice}
+                    ₹{product.mrp}
                 </span>
             </div>
         </div>
