@@ -71,20 +71,20 @@ export default function CategoryCard({ category }) {
         {/* Left section */}
         <div className="flex justify-between gap-4">
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Lipstick_icon.svg/1024px-Lipstick_icon.svg.png"
+            src={category.image}
             alt="category"
             className="w-10 h-10 object-contain"
           />
 
           <div>
             <h3 className="font-semibold text-gray-800">{category.name}</h3>
-            <p className="text-xs text-gray-500">Subcategories: 10</p>
+            <p className="text-xs text-gray-500">Subcategories:{category.subcategoryCount}</p>
           </div>
         </div>
 
         {/* Right section */}
         <div className="flex md:flex-col flex-row sm:items-start gap-2">
-          <span className="text-xs text-gray-400">142 Products</span>
+          <span className="text-xs text-gray-400">Products:{category.productCount}</span>
 
           <div className="flex items-center gap-2">
             <button

@@ -18,7 +18,7 @@ const ProductViewCard = ({ product }) => {
                     className="max-h-[80%] object-contain"
                 />
             </div>
-
+             
             {/* Product Details */}
             <h3 className="text-brand-navy font-semibold text-sm mb-2 px-1">
                 {product.name}

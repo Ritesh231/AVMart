@@ -8,7 +8,7 @@ const tabs = [
     id: "New Requests",
     label: "New Requests",
     icon: <FaRegClock size={20} />,
-    path: "/delivery/requests",   // pending
+    path: "/delivery/requests",  
   },
   {
     id: "Approved",

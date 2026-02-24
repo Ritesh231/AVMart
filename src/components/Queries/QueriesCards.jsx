@@ -19,13 +19,13 @@ export default function UserStats() {
 
   // 🎯 Dynamic Stats Array
   const stats = [
-    {
-      title: "Total Queries",
-      number: totalQueries,
-      statement: "All user queries",
-      icon: <MdMessage size={24} />,
-      variant: "special",
-    },
+    // {
+    //   title: "Total Queries",
+    //   number: totalQueries,
+    //   statement: "All user queries",
+    //   icon: <MdMessage size={24} />,
+    //   variant: "special",
+    // },
     {
       title: "Contacted",
       number: contactedCount,

@@ -28,29 +28,37 @@ export default function EditProductModal({
    
   const [previewImage, setPreviewImage] = useState(null);
 
-  // Prefill
-  useEffect(() => {
-    if (productData) {
-      setFormData({
-        productName: productData.name || "",
-        subtext: productData.subtext || "",
-        description: productData.description || "",
-        keyFeatures: productData.keyFeatures || "",
-        wholesaleAdvantage: productData.wholesaleAdvantage || "",
-        brand: productData.brand?._id || "",
-        category: productData.category?._id || "",
-        subcategory: productData.subcategory?._id || "",
-        categoryname: productData.category?.name || "",
-        subcategoryname: productData.subcategory?.name || "",
-        brandname: productData.brand?.name || "",
-        status: productData.status || "active",
-        // slug: productData.slug || "",
-        primaryImage: null,
-        variants: productData.variants || [],
-      });
-      setPreviewImage(productData.displayImage || null);
-    }
-  }, [productData]);
+useEffect(() => {
+  if (productData) {
+    setFormData({
+      productName: productData.productName || "",
+      subtext: productData.subtext || "",
+      description: productData.description || "",
+      keyFeatures: productData.keyFeatures || [],
+      wholesaleAdvantage: productData.wholesaleAdvantage || "",
+      brand: productData.brand?._id || "",
+      brandname: productData.brand?.name || "",
+      category: productData.category?._id || "",
+      categoryname: productData.category?.name || "",
+      subcategory: productData.subcategory?._id || "",
+      subcategoryname: productData.subcategory?.name || "",
+      status: productData.status || "active",
+      slug: productData.slug || "",
+      origin: productData.origin || "",
+      shelfLife: productData.shelfLife || "",
+      storage: productData.storage || "",
+      primaryImage: null,
+      variants: productData.variants.map(v => ({
+        ...v,
+        discountType: v.discountType || "percentage",
+        discountValue: v.discountValue ?? 0,
+        gstRate: v.gstRate ?? 18,
+      })),
+    });
+
+    setPreviewImage(productData.primaryImages?.[0] || null);
+  }
+}, [productData]);
 
   const QUANTITY_UNITS = ["ml", "l", "g", "kg", "piece", "dozen", "pack", "box", ""];
   const GST_RATES = [0, 3, 5, 12, 18, 28];
@@ -83,7 +91,7 @@ export default function EditProductModal({
 
     setFormData({ ...formData, variants: updatedVariants });
   };
-
+  
   const addVariant = () => {
     setFormData({
       ...formData,

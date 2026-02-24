@@ -1,4 +1,5 @@
 import { FaSearch, FaTrash, FaEye, FaCheck, FaTimes } from "react-icons/fa";
+import { useState } from "react";
 import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import { useGetallqueriesQuery, useMarkasContactedMutation, useDeleteQueryMutation } from "../../Redux/apis/queryApi";
 import { useLocation } from "react-router-dom";
@@ -7,6 +8,7 @@ export default function UsersTable() {
     const { data, isLoading, isError } = useGetallqueriesQuery();
     const [markedContacted, { isLoading: isUpdating }] = useMarkasContactedMutation();
     const [markedDeleted, { isLoading: isDeleting }] = useDeleteQueryMutation();
+    const [updatingId, setUpdatingId] = useState(null);
     
     const location = useLocation();
     let statusFilter = "Pending";
@@ -16,21 +18,24 @@ export default function UsersTable() {
     } else if (location.pathname.includes("contacted")) {
         statusFilter = "Contacted";
     }
-      
+
     const queries = (data?.data || []).filter((q) => {
         if (statusFilter === "All") return true;
         return q.status === statusFilter;
     });
-    
+
     const handleMarkAsContacted = async (id) => {
         try {
-            await markedContacted({ id, status: "Contacted", }).unwrap();
+            setUpdatingId(id);
+            await markedContacted({ id, status: "Contacted" }).unwrap();
             console.log("Marked as Contacted");
         } catch (error) {
             console.error("Failed to update:", error);
+        } finally {
+            setUpdatingId(null);
         }
-    }
-      
+    };
+
     const handleDelete = async (id) => {
         const confirmDelete = window.confirm(
             "Are you sure you want to delete this query?"
@@ -43,7 +48,7 @@ export default function UsersTable() {
             toast.error("Error to delete Query", err);
         }
     }
-    
+
     return (
         <>
             {/* Search & Actions */}
@@ -59,7 +64,7 @@ export default function UsersTable() {
                         />
                     </div>
                 </div>
-                
+
                 {/* Export Button */}
                 <div className='flex justify-evenly gap-2 items-center'>
                     <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
@@ -73,7 +78,7 @@ export default function UsersTable() {
                     </button>
                 </div>
             </div>
-            
+
             {/* Table */}
             <div className="bg-white rounded-xl border overflow-x-auto">
                 <table className="min-w-[900px] w-full text-sm">
@@ -123,22 +128,22 @@ export default function UsersTable() {
                                 </tr>
                             ))
                         ) : isError ? (
-    // Real Error
-    <tr>
-      <td colSpan="7" className="text-center p-6 text-red-500">
-        Failed to load queries.
-      </td>
-    </tr>
-  ) : queries.length === 0 ? (
-    // No Data Found
-    <tr>
-      <td colSpan="7" className="text-center p-6 text-red-500">
-        {statusFilter === "All"
-          ? "No Queries Found"
-          : `No ${statusFilter} Queries Found`}
-      </td>
-    </tr>
-  ) : (
+                            // Real Error
+                            <tr>
+                                <td colSpan="7" className="text-center p-6 text-red-500">
+                                    Failed to load queries.
+                                </td>
+                            </tr>
+                        ) : queries.length === 0 ? (
+                            // No Data Found
+                            <tr>
+                                <td colSpan="7" className="text-center p-6 text-red-500">
+                                    {statusFilter === "All"
+                                        ? "No Queries Found"
+                                        : `No ${statusFilter} Queries Found`}
+                                </td>
+                            </tr>
+                        ) : (
                             queries.map((u) => (
                                 <tr key={u._id} className="border-t hover:bg-gray-50">
                                     <td className="p-3">
@@ -180,10 +185,10 @@ export default function UsersTable() {
                                             {u.status === "Pending" && (
                                                 <button
                                                     onClick={() => handleMarkAsContacted(u._id)}
-                                                    disabled={isUpdating}
+                                                    disabled={updatingId === u._id}
                                                     className="bg-[#1A2550] text-white p-2 rounded-lg disabled:opacity-50"
                                                 >
-                                                    {isUpdating ? "Updating..." : "Mark as Contacted"}
+                                                    {updatingId === u._id ? "Updating..." : "Mark as Contacted"}
                                                 </button>
                                             )}
 

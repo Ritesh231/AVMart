@@ -26,9 +26,9 @@ const OnlinePaymentCard = ({
                 </div>
                 
                 {/* Status Badge */}
-                <div className="flex items-center gap-1 bg-brand-green text-green-600 px-3 py-2 rounded-lg border border-green-200">
+                <div className="flex items-center gap-1 bg-brand-green text-green-600 px-3 py-2 rounded-lg border border-green-200 whitespace-break-spaces">
                     <CheckCircle2 size={18} />
-                    <span className="text-xs font-bold capitalize">{status}</span>
+                    <span className="text-xs font-semibold ">{status}</span>
                 </div>
             </div>
             

@@ -42,7 +42,7 @@ const CashOnDeliveryCard = ({ transaction }) => {
 
       {/* Order Info */}
       <div className="mb-5">
-        <p className="text-brand-gray/60 text-sm font-semibold">
+        <p className="text-brand-gray/60 text-sm font-semibold whitespace-break-spaces">
           Order : {orderId} · COD ID : {CODId}
         </p>
       </div>

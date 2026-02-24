@@ -48,7 +48,7 @@ export const EditCategoryModal =  ({ isOpen, onClose, productData }) => {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl w-[400px] p-6 shadow-xl">
-        <h2 className="text-lg font-bold mb-4">Edit Product</h2>
+        <h2 className="text-lg font-bold mb-4">Edit Category</h2>
 
         <div className="space-y-3">
           <input

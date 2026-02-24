@@ -152,12 +152,10 @@ export default function UsersTable() {
 
                                     <td className="p-3 font-medium">{u.shopInfo?.name}</td>
 
-                                    <td className="p-3">₹ {u.price}</td>
+                                    <td className="p-3">{u.price}</td>
 
                                     <td className="p-3">
-                                        {u.createdAt
-                                            ? new Date(u.createdAt).toLocaleDateString()
-                                            : "-"}
+                                       {u.placedOn}
                                     </td>
 
                                     <td className="p-3">

@@ -29,7 +29,7 @@ export const Productsapi =  baseApi.injectEndpoints({
 
       getallproducts:builder.query({
     query:()=>({
-        url:"/api/v1/admin/products/all"
+        url:"/api/v1/admin/products/all-detailed"
     }),
       providesTags: ["Products"],
    }),

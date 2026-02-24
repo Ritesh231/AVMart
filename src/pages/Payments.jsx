@@ -8,6 +8,7 @@ import { useGetTransactionsOverviewQuery } from "../Redux/apis/paymentApi";
 
 const Payments = () => {
     const [activeTab, setActiveTab] = useState('Online');
+    const [searchTerm, setSearchTerm] = useState("");
 
     const tabMapping = {
         Online: "online",
@@ -21,8 +22,21 @@ const Payments = () => {
         isFetching,
         isError,
     } = useGetTransactionsOverviewQuery(tabMapping[activeTab]);
-    
+
     const transactions = data?.list?.transactions || [];
+    const filteredTransactions = transactions.filter((txn) => {
+  const search = searchTerm.toLowerCase();
+
+  return (
+    txn.customer?.toLowerCase().includes(search) ||
+    txn.orderId?.toLowerCase().includes(search) ||
+    txn.shortOrderId?.toLowerCase().includes(search) ||
+    txn.txnId?.toLowerCase().includes(search) ||
+    txn.paymentDetails?.[0]?.id?.toLowerCase().includes(search)
+  );
+});
+
+    const summary = data?.summary || {};
 
     const StatCardSkeleton = () => {
         return (
@@ -52,117 +66,117 @@ const Payments = () => {
     const paymentTypeStat = [
         {
             title: "Online Payments",
-            number: "₹5.8K",
+            number: summary?.online || "0",
             statement: "+ 12 % from last Month",
             icon: <BadgeIndianRupee size={24} />,
             special: true
         },
         {
             title: "Cash On Delivery",
-            number: "₹5.8K",
+            number: summary?.cod || "0",
             statement: "+ 12 % from last week",
             icon: <BadgeIndianRupee size={24} />,
             special: false
         },
         {
             title: "Partial Payments",
-            number: "₹5.8K",
+            number: summary?.partial || "0",
             statement: "+ 12 % from last week",
             icon: <BadgeIndianRupee size={24} />,
             special: false
         },
         {
             title: "Total Revenue",
-            number: "₹5.8K",
+            number: summary?.totalRevenue || "0",
             statement: "+ 12 % from last week",
             icon: <BadgeIndianRupee size={24} />,
             special: false
         }
     ];
 
-    const onlineTransaction = [
-        {
-            id: 1,
-            customerName: "John Doe",
-            date: "2026-02-05 10:30 AM",
-            orderId: "ORD - 1234",
-            transactionId: "TXN-123",
-            paymentMethod: "UPI",
-            amount: "1,250",
-            status: "Success"
-        },
-    ];
-    // Mock CashOnDelivery Transaction list
-    const CODTransaction = [
-        {
-            id: 1,
-            customerName: "John Doe",
-            date: "2026-02-05 10:30 AM",
-            orderId: "ORD - 1234",
-            CODId: "COD-123",
-            deliveryBoy: "Rahul Sharma",
-            amount: "1,250",
-            status: "Completed"
-        },
-    ];
+    // const onlineTransaction = [
+    //     {
+    //         id: 1,
+    //         customerName: "John Doe",
+    //         date: "2026-02-05 10:30 AM",
+    //         orderId: "ORD - 1234",
+    //         transactionId: "TXN-123",
+    //         paymentMethod: "UPI",
+    //         amount: "1,250",
+    //         status: "Success"
+    //     },
+    // ];
+    // // Mock CashOnDelivery Transaction list
+    // const CODTransaction = [
+    //     {
+    //         id: 1,
+    //         customerName: "John Doe",
+    //         date: "2026-02-05 10:30 AM",
+    //         orderId: "ORD - 1234",
+    //         CODId: "COD-123",
+    //         deliveryBoy: "Rahul Sharma",
+    //         amount: "1,250",
+    //         status: "Completed"
+    //     },
+    // ];
 
-    const partialPaymentTransactions = [
-        {
-            id: "PAR-9012",
-            customerName: "Anita Desai",
-            orderId: "ORD-1239",
-            deliveryBoy: "John Doe",
-            totalAmount: 3500,
-            currency: "₹",
-            status: "Fully Paid",
-            breakdown: {
-                advance: {
-                    label: "Advance Payment ( Partial )",
-                    amount: 3500,
-                    method: "UPI",
-                    date: "20/12/2025",
-                    time: "09:30 AM",
-                    statusText: "Paid At Order Placement"
-                },
-                remaining: {
-                    label: "Remaining Payment",
-                    amount: 3500,
-                    method: "Cash",
-                    date: "20/12/2025",
-                    time: "09:30 AM",
-                    statusText: "Paid At Delivery"
-                }
-            }
-        },
+    // const partialPaymentTransactions = [
+    //     {
+    //         id: "PAR-9012",
+    //         customerName: "Anita Desai",
+    //         orderId: "ORD-1239",
+    //         deliveryBoy: "John Doe",
+    //         totalAmount: 3500,
+    //         currency: "₹",
+    //         status: "Fully Paid",
+    //         breakdown: {
+    //             advance: {
+    //                 label: "Advance Payment ( Partial )",
+    //                 amount: 3500,
+    //                 method: "UPI",
+    //                 date: "20/12/2025",
+    //                 time: "09:30 AM",
+    //                 statusText: "Paid At Order Placement"
+    //             },
+    //             remaining: {
+    //                 label: "Remaining Payment",
+    //                 amount: 3500,
+    //                 method: "Cash",
+    //                 date: "20/12/2025",
+    //                 time: "09:30 AM",
+    //                 statusText: "Paid At Delivery"
+    //             }
+    //         }
+    //     },
 
-        {
-            id: "PAR-9012",
-            customerName: "Anita Desai",
-            orderId: "ORD-1239",
-            deliveryBoy: "John Doe",
-            totalAmount: 3500,
-            currency: "₹",
-            status: "Fully Paid",
-            breakdown: {
-                advance: {
-                    label: "Advance Payment ( Partial )",
-                    amount: 3500,
-                    method: "UPI",
-                    date: "20/12/2025",
-                    time: "09:30 AM",
-                    statusText: "Paid At Order Placement"
-                },
-                remaining: {
-                    label: "Remaining Payment",
-                    amount: 3500, // Based on image total collection
-                    method: "Cash",
-                    date: "20/12/2025",
-                    time: "09:30 AM",
-                    statusText: "Paid At Delivery"
-                }
-            }
-        },
-    ];
+    //     {
+    //         id: "PAR-9012",
+    //         customerName: "Anita Desai",
+    //         orderId: "ORD-1239",
+    //         deliveryBoy: "John Doe",
+    //         totalAmount: 3500,
+    //         currency: "₹",
+    //         status: "Fully Paid",
+    //         breakdown: {
+    //             advance: {
+    //                 label: "Advance Payment ( Partial )",
+    //                 amount: 3500,
+    //                 method: "UPI",
+    //                 date: "20/12/2025",
+    //                 time: "09:30 AM",
+    //                 statusText: "Paid At Order Placement"
+    //             },
+    //             remaining: {
+    //                 label: "Remaining Payment",
+    //                 amount: 3500, // Based on image total collection
+    //                 method: "Cash",
+    //                 date: "20/12/2025",
+    //                 time: "09:30 AM",
+    //                 statusText: "Paid At Delivery"
+    //             }
+    //         }
+    //     },
+    // ];
 
     // NOTE: Code for pyment type toggle button
 
@@ -206,8 +220,8 @@ const Payments = () => {
     return (
         <div className='p-6'>
             <section className="heading-and-btn-sec my-6 ">
-                <h2>Invoice Management</h2>
-                <p className='text-[#9F9F9F] text-[0.92rem]'>Manage Invoices & Inventory</p>
+                <h2>Payment</h2>
+                <p className='text-[#9F9F9F] text-[0.92rem]'>Manage Payments</p>
             </section>
 
             {/* Stats Cards */}
@@ -256,7 +270,9 @@ const Payments = () => {
                             <input
                                 className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
                                 type="text"
-                                placeholder='Search By Invoice Number or GST Number'
+                                placeholder='Search By Name, Order ID, Transaction ID'
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
                     </div>
@@ -282,7 +298,7 @@ const Payments = () => {
                                 ? [...Array(6)].map((_, i) => (
                                     <PaymentCardSkeleton key={i} />
                                 ))
-                                : transactions.map((txn) => (
+                                : filteredTransactions.map((txn) => (
                                     <OnlinePaymentCard
                                         key={txn._id || txn.id}
                                         customerName={txn.customer}
@@ -308,7 +324,7 @@ const Payments = () => {
                             ? [...Array(6)].map((_, i) => (
                                 <PaymentCardSkeleton key={i} />
                             ))
-                            : transactions.map((txn) => (
+                            : filteredTransactions.map((txn) => (
                                 <CashOnDeliveryCard
                                     key={txn._id || txn.id}
                                     transaction={{
@@ -330,12 +346,12 @@ const Payments = () => {
                 {/* --------------------------- */}
 
                 {activeTab === "Partial" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-1 gap-6">
                         {isFetching
                             ? [...Array(6)].map((_, i) => (
                                 <PaymentCardSkeleton key={i} />
                             ))
-                            : transactions.map((txn) => {
+                            : filteredTransactions.map((txn) => {
                                 const formattedTransaction = {
                                     id: txn.id,
                                     customerName: txn.customer,

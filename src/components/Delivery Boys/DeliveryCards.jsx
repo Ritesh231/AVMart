@@ -4,39 +4,44 @@ import { IoMdPerson } from "react-icons/io";
 import { MdDeliveryDining } from "react-icons/md";
 import { FaSackDollar } from "react-icons/fa6";
 import StatCard from "../StatCard";
+import { useGetAllDeliveryBoysQuery } from "../../Redux/apis/deliveryApi";
+
+export default function UserStats() {
+
+ const { data, isLoading, isError } = useGetAllDeliveryBoysQuery("pending");
+ const counts = data?.cards || {};
 
 const stats = [
   {
     title: "New Requests",
-    number: "200",
+    number: counts?.newRequests||0,
     statement: "+12% from last Month",
     icon: <FaClock  size={24}/>,
     variant: "special",
   },
   {
     title: "Delivery Boys",
-    number: "20",
+    number: counts?.deliveryBoys,
     statement: "+12% from last week",
     icon: <IoMdPerson size={24}/>,
     variant: "normal",
   },
   {
     title: "Total Deliveries",
-    number: "20",
+    number: counts?.totalDeliveries,
     statement: "+12% from last week",
     icon:  <MdDeliveryDining size={24}/>,
     variant: "normal",
   },
   {
     title: "Total Payout",
-    number: "20",
+    number: counts?.totalPayout,
     statement: "+12% from last week",
     icon:<FaSackDollar size={24}/>,
     variant: "normal",
   },
 ];
 
-export default function UserStats() {
   return (
       <section className="stat-card-sec mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

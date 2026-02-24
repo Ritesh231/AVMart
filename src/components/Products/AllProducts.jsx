@@ -57,7 +57,7 @@ const ProductGrid = () => {
     if (isError) {
         return <p>No products available</p>;
     }
-    
+
     if (isLoading) {
         return (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -67,13 +67,13 @@ const ProductGrid = () => {
             </div>
         )
     }
-      
+
     return (
         <div className="p-6 bg-white rounded-xl border border-emerald-200">
 
             {/* Search */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-                
+
                 {/* Search Bar */}
                 <div className="w-full lg:w-[40%] md:w-[50%]">
                     <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
@@ -87,7 +87,7 @@ const ProductGrid = () => {
                         />
                     </div>
                 </div>
-                
+
                 {/* Export Button */}
                 <div className='flex justify-evenly gap-2 items-center'>
                     <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
@@ -105,82 +105,85 @@ const ProductGrid = () => {
             {/* 🔹 Products Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
 
-                {filteredProducts.map((product) => (
-                    <div
-                        key={product._i}
-                        className="relative border border-emerald-200 rounded-xl p-3 hover:shadow-md transition"
-                    >
-                        {/* Active Dot */}
-                        <span className="
-  absolute top-2 right-2
-  h-5 w-5
-  bg-green-500
-  rounded-full
-  flex items-center justify-center
-  text-white
-  text-xs
-  font-bold
-">
-                            +
-                        </span>
+                {filteredProducts.map((product) => {
+                    const firstVariant = product.variants?.[0];
 
+                    return (
+                        <div
+                            key={product._id}
+                            className="relative border border-emerald-200 rounded-xl p-3 hover:shadow-md transition"
+                        >
+                            {/* Status Dot */}
+                            <span className="absolute top-2 right-2 h-3 w-3 bg-green-500 rounded-full" />
 
-                        {/* Image */}
-                        <div className="flex justify-center mb-3 bg-[#62CDB929]">
-                            <img
-                                src={product.displayImage}
-                                alt="product"
-                                className="h-24 object-contain"
-                            />
+                            {/* Image */}
+                            <div className="flex justify-center mb-3 bg-[#62CDB929]">
+                                <img
+                                    src={product.primaryImages?.[0]}
+                                    alt={product.productName}
+                                    className="h-24 object-contain"
+                                />
+                            </div>
+
+                            {/* Product Name */}
+                            <h3 className="text-sm font-semibold text-gray-800 leading-tight">
+                                {product.productName}
+                            </h3>
+
+                            {/* Price */}
+                            <div className="flex gap-2 mt-1">
+                                <p className="text-sm font-semibold text-gray-800">
+                                    ₹{firstVariant?.price || firstVariant?.originalPrice}
+                                </p>
+
+                                {firstVariant?.discountValue && (
+                                    <p className="text-sm text-gray-400 line-through">
+                                        ₹{firstVariant?.originalPrice}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Stock */}
+                            <div className="flex items-center justify-between mt-1">
+                                <p className="text-xs text-gray-600">
+                                    In Stock :
+                                    <span className="ml-1 text-green-600 font-semibold">
+                                        {firstVariant?.stock || 0}
+                                    </span>
+                                </p>
+
+                                <p className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
+                                    Qty :
+                                    <span className="ml-1 font-semibold">
+                                        {firstVariant?.quantityValue} 
+                                    </span>
+                                </p>
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="flex items-center gap-2 mt-3">
+                                <button
+                                    className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-md bg-indigo-50 text-indigo-600 text-xs font-medium"
+                                    onClick={() => {
+                                        setSelectedProduct(product);
+                                        setIsModalOpen(true);
+                                    }}
+                                >
+                                    <FaEdit size={12} />
+                                    Edit
+                                </button>
+
+                                <button
+                                    className="flex items-center justify-center p-1.5 rounded-md bg-red-50 text-red-600"
+                                    onClick={() => handleDelete(product._id)}
+                                >
+                                    <FaTrash size={12} />
+                                </button>
+                            </div>
                         </div>
-
-                        {/* Info */}
-                        <h3 className="text-sm font-semibold text-gray-800 leading-tight">
-                            {product.slug}
-                        </h3>
-
-                        <div className="flex gap-2 mt-1">
-                            <p className="text-sm text-gray-500  font-semibold ">{product.price}</p>
-                            <p className="text-sm text-gray-500 ">{product.originalPrice}</p>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-1">
-                            <p className="text-xs text-gray-600">
-                                In Stock :
-                                <span className="ml-1 text-green-600 font-semibold">100</span>
-                            </p>
-
-                            <p className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
-                                Qty :
-                                <span className="ml-1 font-semibold">100</span>
-                            </p>
-                        </div>
-
-
-                        {/* Buttons */}
-                        <div className="flex items-center gap-2 mt-3">
-                            {/* Edit – takes more space */}
-                            <button
-                                className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-md bg-indigo-50 text-indigo-600 text-xs font-medium"
-                                onClick={() => {
-                                    setSelectedProduct(product);
-                                    setIsModalOpen(true);
-                                }}
-                            >
-                                <FaEdit size={12} />
-                                Edit
-                            </button>
-
-                            {/* Delete – small */}
-                            <button className="flex items-center justify-center p-1.5 rounded-md bg-red-50 text-red-600"
-                                onClick={() => handleDelete(product._i)}>
-                                <FaTrash size={12} />
-                            </button>
-                        </div>
-
-                    </div>
-                ))}
-
+                    );
+                })}
+   
             </div>
             <EditProductModal
                 isOpen={isModalOpen}

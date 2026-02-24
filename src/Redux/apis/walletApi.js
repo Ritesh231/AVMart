@@ -7,10 +7,7 @@ export const Walletapi = baseApi.injectEndpoints({
         url: `/api/v1/admin/wallet-cashback/dashboard`,
       }),
       providesTags: ["Wallet"],
-    }),
-
-  
-    
+    }),    
   }),
 });
 
