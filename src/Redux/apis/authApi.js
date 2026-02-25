@@ -11,10 +11,17 @@ export const Authapi = baseApi.injectEndpoints({
       transformResponse: (response) => {
         return response;
       },
-    }),  
+    }),        
+    logout:builder.mutation({
+      query:(credentials)=>({
+        url:"/api/v1/adminauth/logout",
+          method: "POST", 
+          body: credentials,
+      })
+    })
   }),
 });
 
 export const { 
-  useLoginMutation,  
+  useLoginMutation, useLogoutMutation,
 } = Authapi;

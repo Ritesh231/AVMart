@@ -1,52 +1,30 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { CreditCard, Wallet, Blocks } from "lucide-react";
 
-const tabs = [
-  {
-    id: "Main Banner",
-    label: "Main Banner",
-    path: "/offers/mainbanner",
-  },
-  {
-    id: "Category Banner",
-    label: "Category Banner",
-    path: "/offers",
-  },
-  {
-    id: "Top Selling",
-    label: "Top Selling",
-    path: "/offers",
-  },
-  {
-    id: "Product",
-    label: "Product",
-    path: "/offers",
-  },
-];
-
-export default function OrderPaymentTabs() {
-  const navigate = useNavigate();
-  const location = useLocation();
+export default function OrderPaymentTabs({ activeTab, setActiveTab }) {
+  const tabs = [
+    { id: "main", label: "Main Banner" },
+    { id: "category", label: "Category Banner" },
+    { id: "mostselling", label: "Top Selling" },
+    { id: "subcategory", label: "Product" },
+  ];
   
   return (
-    <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2  md:w-fit w-full shadow-lg">
+    <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2 md:w-fit w-full shadow-lg">
       {tabs.map((tab) => {
-        const isActive = location.pathname === tab.path;
-          
+        const isActive = activeTab === tab.id;
+
         return (
           <button
             key={tab.id}
-            onClick={() => navigate(tab.path)}
-            className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300 first:ml-0
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300
               ${
                 isActive
                   ? "bg-[#00E5B0] text-white shadow-sm"
-                  : "bg-white text-[#1E264F] hover:bg-opacity-90"
+                  : "bg-white text-[#1E264F]"
               }`}
           >
-            <span className={isActive ? "text-white" : "text-[#1E264F]"}>
-              {tab.icon}
-            </span>
             {tab.label}
           </button>
         );

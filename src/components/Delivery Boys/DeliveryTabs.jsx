@@ -27,7 +27,7 @@ const tabs = [
 export default function OrderPaymentTabs() {
   const navigate = useNavigate();
   const location = useLocation();
-
+  
   return (
     <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2 md:w-fit w-full shadow-lg">
       {tabs.map((tab) => {

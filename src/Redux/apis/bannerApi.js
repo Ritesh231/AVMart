@@ -7,7 +7,7 @@ tags:["Banners"],
   endpoints: (builder) => ({
      getallbanners:builder.query({
       query:()=>({
-      url:"/api/v1/admin/BestSellerBanner"
+      url:"/api/v1/adminauth/offers?type=main/category/subcategory/mostselling"
       }),
       providesTags:["Banners"],
      }),

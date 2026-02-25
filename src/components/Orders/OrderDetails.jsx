@@ -17,7 +17,7 @@ const steps = [
 ];
 
 const OrderDetails = () => {
-
+  
   const { id } = useParams();
 
   const [getOrderDetails, { data, isLoading }] =
@@ -55,7 +55,7 @@ const OrderDetails = () => {
       done: index <= currentIndex,
     }));
   };
-
+  
   const OrderCard = ({ order }) => (
     <div className="bg-white rounded-xl shadow-sm p-6 space-y-4 border">
 
@@ -232,7 +232,7 @@ const OrderDetails = () => {
             </h2>
             <h2 className="text-base">{data?.data?.shop?.contact}</h2>
             <div className="">
-              <p className="text-2xl font-bold text-[#03C616] mt-4">${data?.data?.stats?.totalRevenue}</p>
+              <p className="text-2xl font-bold text-[#03C616] mt-4">₹{data?.data?.stats?.totalRevenue}</p>
               <p className="text-sm text-gray-500">Total Spent</p>
             </div>
           </div>

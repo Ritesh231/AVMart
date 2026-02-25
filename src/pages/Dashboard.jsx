@@ -110,9 +110,9 @@ const Dashboard = () => {
                                         <p className="text-[10px] uppercase tracking-widest opacity-60 mb-1">Account Number</p>
                                         <p className="text-sm font-medium tracking-widest text-white/90">{product?.accountNumber}</p>
                                     </div>
-                                    <button className="bg-white text-brand-navy px-6 py-2 rounded-2xl font-bold text-md hover:bg-opacity-90 transition-all shadow-lg">
+                                    {/* <button className="bg-white text-brand-navy px-6 py-2 rounded-2xl font-bold text-md hover:bg-opacity-90 transition-all shadow-lg">
                                         Withdraw
-                                    </button>
+                                    </button> */}
                                 </div>
                             </div>
                         )}

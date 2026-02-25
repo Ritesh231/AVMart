@@ -44,6 +44,10 @@ const DeliveryRequests = lazy(() =>
   import("../components/Delivery Boys/NewRequest")
 );
 
+const DeliveryBoyDetail = lazy(() =>
+  import("../components/Delivery Boys/DeliveryBoyDetailedPage")
+);
+
 /*Queries */
 const PendingQueries = lazy(() => import("../components/Queries/PendingQueries"));
 
@@ -116,14 +120,16 @@ export default function AppRouter() {
             <Route path="approved" element={<DeliveryRequests />} />
             <Route path="rejected" element={<DeliveryRequests />} />
           </Route>
-
+           
+            <Route path="/delivery/DeliveryBoyDetail/:id" element={<DeliveryBoyDetail/>}/>
+         
           {/*Offer*/}
            <Route path="/offers" element={<Offers/>}>
             <Route index element={<Navigate to="mainbanner" replace />} />
             <Route path="mainbanner" element={< MainBanner/>} />
             <Route path="add-banner" element={<AddBanner/>}/>
           </Route>
-       
+          
           {/*Wallet*/}
             <Route path="/wallet" element={<Wallet/>}>
             <Route index element={<Navigate to="WalletTable" replace />} />

@@ -22,8 +22,7 @@ const Offers = () => {
 
       <h3 className="text-[#9F9F9F] mb-6">Manage Offers</h3>
       
-      <OfferTabs />
-
+    
       {/* ================= MODAL OVERLAY ================= */}
     {openModal && (
   <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">

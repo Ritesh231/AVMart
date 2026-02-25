@@ -8,11 +8,13 @@ import { RxCrossCircled } from "react-icons/rx";
 import { MdDeliveryDining } from "react-icons/md";
 import { useLocation } from "react-router-dom";
 import { useGetAllDeliveryBoysQuery, useUpdateDeliveryStatusMutation } from "../../Redux/apis/deliveryApi";
+import { useNavigate } from "react-router-dom";
 
 export default function UsersTable() {
 
   const location = useLocation();
-
+  const navigate=useNavigate();
+  
   let status = "pending";
 
   if (location.pathname.includes("approved")) status = "approved";
@@ -172,7 +174,7 @@ export default function UsersTable() {
                       )}
 
                       {/* View always visible */}
-                      <button className="text-blue-900">
+                      <button className="text-blue-900" onClick={()=>navigate(`/delivery/DeliveryBoyDetail/${u._id}`)}>
                         <FaEye size={18} />
                       </button>
                     </div>

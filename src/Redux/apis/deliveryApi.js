@@ -34,9 +34,29 @@ export const deliveryapi = baseApi.injectEndpoints({
         body:{status},
       }),
        invalidatesTags: ["DeliveryBoys"],
-    })
+    }),
+    
+    getdeliveryProfile:builder.query({
+      query:(id)=>({
+        url:`/api/v1/adminauth/delivery-boy/${id}/profile`
+      })
+    }),
+ getDeliveryBoyDetails: builder.query({
+  query: ({ id, tab }) => ({
+    url: `/api/v1/adminauth/delivery-boy/${id}/tab`,
+    params: { tab },
+  }),
+}),
+
+getDeliveryBoyOrderDetails:builder.query({
+  query:(id)=>({
+    url:`/api/v1/adminauth/delivery-boy/order/${id}`,
+  })
+})
     
  }),
 });
 
-export const { useGetAllDeliveryBoysQuery, useGetAssignDeliveryBoysMutation,useUpdateDeliveryStatusMutation} = deliveryapi;
+export const { useGetAllDeliveryBoysQuery, useGetAssignDeliveryBoysMutation,
+  useUpdateDeliveryStatusMutation,useGetdeliveryProfileQuery,useGetDeliveryBoyDetailsQuery,
+useGetDeliveryBoyOrderDetailsQuery} = deliveryapi;

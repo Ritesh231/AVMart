@@ -13,6 +13,7 @@ import {
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal"
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetOrdersByStatusQuery("Pending");
@@ -22,6 +23,7 @@ export default function UsersTable() {
     useGetOrdersByIdMutation();
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
+  const [selectedBoyId, setSelectedBoyId] = useState(null);
 
   const [
     assignOrderStatus,
@@ -34,7 +36,8 @@ export default function UsersTable() {
   status: "approved"
 });
 
-const [assignDeliveryBoy] = useGetAssignDeliveryBoysMutation();
+const [assignDeliveryBoy, { isLoading: assigning }] =
+  useGetAssignDeliveryBoysMutation();
 
 const handleApprove = async (id) => {
   try {
@@ -46,13 +49,13 @@ const handleApprove = async (id) => {
     // Open Delivery Modal
     setSelectedOrderForDelivery(id);
     setIsDeliveryModalOpen(true);
-
+  toast.success(response?.message || "Success");
   } catch (err) {
     console.error(err);
-    alert("Failed to approve ❌");
+      toast.error(err?.data?.error || "Failed to approve ❌");
   }
 };
-
+  
   const handleReject = async (id) => {
     try {
       await assignOrderStatus({
@@ -60,28 +63,28 @@ const handleApprove = async (id) => {
         status: "cancelled",
       }).unwrap();
 
-      alert("Order Rejected ❌");
+      toast.success(response?.message || "Success");
     } catch (err) {
       console.error(err);
-      alert("Failed to reject ❌");
+      toast.error(err?.data?.message || "Failed to reject ❌");
     }
   };
 
-  const handleAssignDelivery = async (deliveryBoyId) => {
+const handleAssignDelivery = async (boyId) => {
   try {
+    setSelectedBoyId(boyId);
+
     await assignDeliveryBoy({
       orderId: selectedOrderForDelivery,
-      deliveryBoyId,
+      deliveryBoyId: boyId,
     }).unwrap();
-
-    alert("Delivery Boy Assigned Successfully ✅");
 
     setIsDeliveryModalOpen(false);
     setSelectedOrderForDelivery(null);
-
   } catch (error) {
     console.error(error);
-    alert("Failed to Assign Delivery Boy ❌");
+  } finally {
+    setSelectedBoyId(null);
   }
 };
 
@@ -276,41 +279,49 @@ const handleApprove = async (id) => {
             onClose={() => setSelectedOrderId(null)}
           />
         )}
-
-        {isDeliveryModalOpen && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-lg w-[400px] max-h-[500px] overflow-y-auto">
-
+{isDeliveryModalOpen && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white w-[400px] max-h-[500px] overflow-y-auto rounded-xl p-5">
+      
       <h2 className="text-lg font-semibold mb-4">
-        Select Delivery Boy
+        Assign Delivery Boy
       </h2>
 
-      {deliveryData?.data?.map((boy) => (
-        <div
-          key={boy._id}
-          onClick={() => handleAssignDelivery(boy._id)}
-          className="border p-3 rounded mb-2 cursor-pointer hover:bg-gray-100"
-        >
-          <p className="font-medium">{boy.Name}</p>
-          <p className="text-sm text-gray-500">
-            Orders: {boy.completeOrders}
-          </p>
-          <p className="text-sm text-gray-500">
-            Status: {boy.deliveryBoyAvailable}
-          </p>
-        </div>
-      ))}
+      {deliveryData?.data?.map((boy) => {
+        const isThisLoading =
+          assigning && selectedBoyId === boy._id;
+
+        return (
+          <div
+            key={boy._id}
+            onClick={() => !assigning && handleAssignDelivery(boy._id)}
+            className={`border p-3 rounded mb-2 cursor-pointer transition
+              ${isThisLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"}
+            `}
+          >
+            <p className="font-medium">{boy.Name}</p>
+            <p className="text-sm text-gray-500">
+              Orders: {boy.completeOrders}
+            </p>
+            <p className="text-sm text-gray-500">
+              Status: {boy.deliveryBoyAvailable}
+            </p>
+
+            {isThisLoading && (
+              <p className="text-xs text-blue-600 mt-1">
+                Assigning...
+              </p>
+            )}
+          </div>
+        );
+      })}
 
       <button
-        onClick={() => {
-          setIsDeliveryModalOpen(false);
-          setSelectedOrderForDelivery(null);
-        }}
-        className="mt-4 bg-red-500 text-white px-3 py-1 rounded"
+        onClick={() => setIsDeliveryModalOpen(false)}
+        className="mt-4 w-full bg-red-400 text-white py-2 rounded-lg"
       >
         Close
       </button>
-
     </div>
   </div>
 )}
