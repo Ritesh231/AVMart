@@ -1,16 +1,19 @@
 import React from "react";
-import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
+import { ChevronDown, Download, Search, SlidersHorizontal } from 'lucide-react'
 import { FaSearch, FaEdit, FaTrash } from "react-icons/fa";
 import ProductCategoryCards from "../Products/ProductCategorytabs"
 import { useGetallproductsQuery, useDeleteProductMutation } from "../../Redux/apis/productsApi"
 import EditProductModal from "../../components/Products/UpdateProductModel";
 import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const products = Array.from({ length: 20 });
 
 const ProductGrid = () => {
     const { data, isLoading, isError } = useGetallproductsQuery();
     const products = data?.data || [];
+    const navigate = useNavigate();
 
     const [deleteproduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
@@ -114,7 +117,14 @@ const ProductGrid = () => {
                             className="relative border border-emerald-200 rounded-xl p-3 hover:shadow-md transition"
                         >
                             {/* Status Dot */}
-                            <span className="absolute top-2 right-2 h-3 w-3 bg-green-500 rounded-full" />
+                            <span
+                                onClick={() => navigate("/AddProduct")}
+                                className="absolute top-2 right-2 h-6 w-6 bg-green-500 rounded-full 
+                   flex items-center justify-center 
+                   cursor-pointer hover:bg-green-600 transition"
+                            >
+                                <Plus size={14} className="text-white" />
+                            </span>
 
                             {/* Image */}
                             <div className="flex justify-center mb-3 bg-[#62CDB929]">
@@ -155,7 +165,7 @@ const ProductGrid = () => {
                                 <p className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
                                     Qty :
                                     <span className="ml-1 font-semibold">
-                                        {firstVariant?.quantityValue} 
+                                        {firstVariant?.quantityValue}
                                     </span>
                                 </p>
                             </div>
@@ -183,7 +193,7 @@ const ProductGrid = () => {
                         </div>
                     );
                 })}
-   
+
             </div>
             <EditProductModal
                 isOpen={isModalOpen}

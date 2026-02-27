@@ -5,9 +5,11 @@ import { Outlet } from "react-router-dom";
 
 const Offers = () => {
   const [openModal, setOpenModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("main");
 
   return (
     <div className="p-4 sm:p-6 bg-[#F8FAFC] min-h-screen relative">
+
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-xl font-semibold">Offers</h1>
@@ -21,21 +23,27 @@ const Offers = () => {
       </div>
 
       <h3 className="text-[#9F9F9F] mb-6">Manage Offers</h3>
-      
-    
-      {/* ================= MODAL OVERLAY ================= */}
-    {openModal && (
-  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    
-    {/* Modal Content */}
-    <div className="relative">
-      <AddBanner closeModal={() => setOpenModal(false)} />
-    </div>
 
-  </div>
-)}
-<Outlet/>
+      {/* Tabs */}
+      <OfferTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
 
+      {/* ✅ ONLY ONE Outlet */}
+      <Outlet context={{ activeTab, setActiveTab }} />
+
+      {/* Modal */}
+      {openModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative">
+            <AddBanner
+              activeTab={activeTab}
+              closeModal={() => setOpenModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

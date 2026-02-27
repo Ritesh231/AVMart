@@ -62,8 +62,29 @@ const WalletTable = lazy(() => import("../components/Wallet/TotalBalanceTable"))
 
 
 const Loader = () => (
-  <div className="flex items-center justify-center h-screen">
-    <span className="text-gray-500 text-sm">Loading...</span>
+  <div className="flex items-center justify-center h-screen bg-gradient-to-br from-brand-navy via-white to-black">
+    
+    <div className="flex flex-col items-center gap-6">
+      
+      {/* Logo */}
+      <img
+        src="/images/logo.svg"
+        alt="Logo"
+        className="w-48 h-48 animate-pulse"
+      />
+      
+      {/* Animated Spinner Ring */}
+      <div className="relative">
+        <div className="w-14 h-14 border-4 border-white/20 rounded-full"></div>
+        <div className="absolute top-0 left-0 w-14 h-14 border-4 border-brand-teal border-t-transparent rounded-full animate-spin"></div>
+      </div>
+
+      {/* Loading Text */}
+      <p className="text-white text-sm tracking-widest uppercase animate-pulse">
+        Loading...
+      </p>
+
+    </div>
   </div>
 );
 

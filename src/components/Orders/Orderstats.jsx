@@ -42,7 +42,7 @@ export default function UserStats() {
   if (isError) return <p>Error loading stats</p>;
 
   return (
-       <section className="stat-card-sec mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
+       <section className="stat-card-sec mb-6 ">
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {stats.map((item, index) => (
         <StatCard

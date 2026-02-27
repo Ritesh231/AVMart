@@ -13,6 +13,15 @@ const Header = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const [admin, setAdmin] = useState(null);
+
+    useEffect(() => {
+        const storedAdmin = localStorage.getItem("admin");
+        if (storedAdmin) {
+            setAdmin(JSON.parse(storedAdmin));
+        }
+    }, []);
+
     const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
     const handleLogout = async () => {
@@ -84,18 +93,18 @@ const Header = () => {
                             onClick={() => setShowDropdown(prev => !prev)}
                             className="flex items-center gap-3 border-l pl-4 md:pl-6 border-slate-200 cursor-pointer"
                         >
-                            <div className="h-10 w-10 bg-brand-navy text-white flex items-center justify-center rounded-full font-bold shadow-md">
-                                MQ
+                            <div className="h-10 w-10 bg-brand-navy text-white flex items-center justify-center rounded-full font-bold shadow-md uppercase">
+                                {admin?.email?.charAt(0)}
                             </div>
                             <div className="hidden lg:flex items-center justify-between gap-3">
-
                                 <div>
-                                    <h4 className="text-sm font-bold text-brand-navy leading-none">
-                                        Admin User
-                                    </h4>
-                                    <p className="text-[11px] text-brand-gray mt-1 uppercase tracking-wider">
-                                        admin@gmail.com
-                                    </p>
+                                <h4 className="text-sm font-bold text-brand-navy leading-none">
+                                    Admin
+                                </h4>
+
+                                <p className="text-[11px] text-brand-gray mt-1 tracking-wider">
+                                    {admin?.email}
+                                </p>
                                 </div>
                                 <RiArrowDropDownLine className="text-2xl text-brand-navy" />
                             </div>

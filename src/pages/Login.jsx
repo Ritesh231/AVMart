@@ -11,17 +11,25 @@ const Login = () => {
 
   const [login, { isLoading, isError }] = useLoginMutation();
 
-  const handleSubmit = async () => {
-    try {
-      const res = await login({ email, password }).unwrap();
-       localStorage.setItem("Admin_token",res.token);     
-      navigate("/dashboard");
-      toast.success("Login Successffully");
-    } catch (err) {
-      console.error("Login failed", err);
-      toast.error("Invalid email or password");
-    }
-  };
+const handleSubmit = async () => {
+  try {
+    const res = await login({ email, password }).unwrap();
+
+    // Store token
+    localStorage.setItem("Admin_token", res.token);
+
+    // Store admin details
+    localStorage.setItem("admin", JSON.stringify(res.admin));
+
+    navigate("/dashboard");
+
+    toast.success(res.message || "Login Successfully");
+
+  } catch (err) {
+    console.error("Login failed", err);
+    toast.error(err?.data?.error || "Invalid email or password");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A2550] to-[#62CDB9] p-4">

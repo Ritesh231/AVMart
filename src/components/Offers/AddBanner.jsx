@@ -1,10 +1,25 @@
 import React, { useState } from "react";
-import toast from "react-hot-toast";
 import { FiUploadCloud } from "react-icons/fi";
-import { useAddBannerMutation } from "../../Redux/apis/bannerApi";
+import {
+  useAddTopSellingBannerMutation,
+  useAddNormalBannerMutation,
+  useAddCategoryBannerMutation,
+  useAddSubcategoryBannerMutation,
+} from "../../Redux/apis/bannerApi";
+import { toast } from "react-toastify";
 
-const AddBanner = ({ closeModal }) => {
-  const [addBanner, { isLoading }] = useAddBannerMutation();
+const AddBanner = ({ closeModal, activeTab }) => {
+  const [addTopSelling, { isLoading: topLoading }] =
+    useAddTopSellingBannerMutation();
+
+  const [addNormal, { isLoading: normalLoading }] =
+    useAddNormalBannerMutation();
+
+  const [addCategory, { isLoading: categoryLoading }] =
+    useAddCategoryBannerMutation();
+
+  const [addSubcategory, { isLoading: subLoading }] =
+    useAddSubcategoryBannerMutation();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -48,7 +63,19 @@ const AddBanner = ({ closeModal }) => {
       data.append("displayOrder", formData.displayOrder);
       data.append("image", image);
 
-      await addBanner(data).unwrap();
+      // 🔥 Dynamic API call based on activeTab
+      if (activeTab === "main") {
+        await addNormal(data).unwrap();
+      }
+      else if (activeTab === "category") {
+        await addCategory(data).unwrap();
+      }
+      else if (activeTab === "mostselling") {
+        await addTopSelling(data).unwrap();
+      }
+      else if (activeTab === "subcategory") {
+        await addSubcategory(data).unwrap();
+      }
 
       toast.success("Banner added successfully");
       closeModal();
@@ -59,7 +86,7 @@ const AddBanner = ({ closeModal }) => {
 
   return (
     <div className="bg-white rounded-2xl w-[360px] max-h-[550px] shadow-2xl border border-cyan-100">
-      
+
       {/* HEADER */}
       <div className="px-6 py-4 rounded-2xl bg-gradient-to-r from-[#1A2550] to-[#62CDB9] text-white">
         <p className="text-xl">
@@ -70,8 +97,8 @@ const AddBanner = ({ closeModal }) => {
       {/* BODY */}
       <form onSubmit={handleSubmit} className="p-5 space-y-4">
         <div className="">
-        {/* TITLE */}
-        <div>
+          {/* TITLE */}
+          {/* <div>
           <label className="text-sm font-medium text-gray-700">Title</label>
           <input
             type="text"
@@ -82,10 +109,10 @@ const AddBanner = ({ closeModal }) => {
             onChange={handleChange}
             required
           />
-        </div>
+        </div> */}
 
-        {/* SUBTITLE */}
-        <div>
+          {/* SUBTITLE */}
+          {/* <div>
           <label className="text-sm font-medium text-gray-700">Subtitle</label>
           <input
             type="text"
@@ -95,42 +122,42 @@ const AddBanner = ({ closeModal }) => {
             value={formData.subtitle}
             onChange={handleChange}
           />
-        </div>
+        </div> */}
 
-        {/* IMAGE UPLOAD + PREVIEW */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            Banner Image
-          </label>
+          {/* IMAGE UPLOAD + PREVIEW */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">
+              Banner Image
+            </label>
 
-          <label className="relative border-2 border-dashed border-cyan-400 rounded-xl h-28 w-full flex items-center justify-center cursor-pointer hover:bg-cyan-50 transition overflow-hidden">
-            
-            {preview ? (
-              <img
-                src={preview}
-                alt="Preview"
-                className="absolute inset-0 w-full h-full object-cover"
+            <label className="relative border-2 border-dashed border-cyan-400 rounded-xl h-28 w-full flex items-center justify-center cursor-pointer hover:bg-cyan-50 transition overflow-hidden">
+
+              {preview ? (
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center text-cyan-600">
+                  <FiUploadCloud className="text-3xl mb-2" />
+                  <span className="text-xs text-gray-500">
+                    Click to upload image
+                  </span>
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
               />
-            ) : (
-              <div className="flex flex-col items-center text-cyan-600">
-                <FiUploadCloud className="text-3xl mb-2" />
-                <span className="text-xs text-gray-500">
-                  Click to upload image
-                </span>
-              </div>
-            )}
+            </label>
+          </div>
 
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageChange}
-            />
-          </label>
-        </div>
-
-        {/* DISPLAY ORDER */}
-        <div>
+          {/* DISPLAY ORDER */}
+          {/* <div>
           <label className="text-sm font-medium text-gray-700">
             Display Order
           </label>
@@ -141,21 +168,21 @@ const AddBanner = ({ closeModal }) => {
             value={formData.displayOrder}
             onChange={handleChange}
           />
-        </div>
+        </div> */}
 
-        {/* ACTIVE */}
-        <div className="flex items-center gap-3 pt-2">
-          <input
-            type="checkbox"
-            name="isActive"
-            className="toggle toggle-primary"
-            checked={formData.isActive}
-            onChange={handleChange}
-          />
-          <span className="text-sm font-medium text-gray-700">
-            Active Banner
-          </span>
-        </div>
+          {/* ACTIVE */}
+          <div className="flex items-center gap-3 pt-2">
+            <input
+              type="checkbox"
+              name="isActive"
+              className="toggle toggle-primary"
+              checked={formData.isActive}
+              onChange={handleChange}
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Active Banner
+            </span>
+          </div>
         </div>
 
         {/* ACTIONS */}
@@ -170,10 +197,14 @@ const AddBanner = ({ closeModal }) => {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={topLoading || normalLoading || categoryLoading || subLoading}
             className="px-5 py-2 text-sm rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-60"
           >
-            {isLoading ? "Adding..." : "Add Banner"}
+            {
+              topLoading || normalLoading || categoryLoading || subLoading
+                ? "Adding..."
+                : "Add Banner"
+            }
           </button>
         </div>
       </form>

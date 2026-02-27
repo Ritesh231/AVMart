@@ -22,7 +22,7 @@ export const Orderapi = baseApi.injectEndpoints({
       }),
        providesTags: ["Orders"],
     }),
-
+     
     assignOrderStatus: builder.mutation({
       query: ({ id, status }) => ({
         url: `/api/v1/admin/order/status/${id}`,
@@ -31,7 +31,6 @@ export const Orderapi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Orders"],
     }),
-
   }),
 });
 

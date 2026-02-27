@@ -17,7 +17,12 @@ import { toast } from "react-toastify";
 
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetOrdersByStatusQuery("Pending");
-  const users = data?.orders || [];
+  const users =
+    data?.orders?.filter(
+      (order) =>
+        order.OrderStatus !== "confirmed" &&
+        order.OrderStatus !== "cancelled"
+    ) || [];
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [getOrderById, { data: orderData, loading = { isLoading } }] =
     useGetOrdersByIdMutation();
@@ -33,29 +38,29 @@ export default function UsersTable() {
   const skeletonRows = Array.from({ length: 6 });
 
   const { data: deliveryData } = useGetAllDeliveryBoysQuery({
-  status: "approved"
-});
+    status: "approved"
+  });
 
-const [assignDeliveryBoy, { isLoading: assigning }] =
-  useGetAssignDeliveryBoysMutation();
+  const [assignDeliveryBoy, { isLoading: assigning }] =
+    useGetAssignDeliveryBoysMutation();
 
-const handleApprove = async (id) => {
-  try {
-    await assignOrderStatus({
-      id,
-      status: "confirmed",
-    }).unwrap();
+  const handleApprove = async (id) => {
+    try {
+      await assignOrderStatus({
+        id,
+        status: "confirmed",
+      }).unwrap();
 
-    // Open Delivery Modal
-    setSelectedOrderForDelivery(id);
-    setIsDeliveryModalOpen(true);
-  toast.success(response?.message || "Success");
-  } catch (err) {
-    console.error(err);
-      toast.error(err?.data?.error || "Failed to approve ❌");
-  }
-};
-  
+      // Open Delivery Modal
+      setSelectedOrderForDelivery(id);
+      setIsDeliveryModalOpen(true);
+      toast.success(response?.message || "Success");
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.data?.error);
+    }
+  };
+
   const handleReject = async (id) => {
     try {
       await assignOrderStatus({
@@ -70,24 +75,23 @@ const handleApprove = async (id) => {
     }
   };
 
-const handleAssignDelivery = async (boyId) => {
-  try {
-    setSelectedBoyId(boyId);
+  const handleAssignDelivery = async (boyId) => {
+    try {
+      setSelectedBoyId(boyId);
 
-    await assignDeliveryBoy({
-      orderId: selectedOrderForDelivery,
-      deliveryBoyId: boyId,
-    }).unwrap();
+      await assignDeliveryBoy({
+        orderId: selectedOrderForDelivery,
+        deliveryBoyId: boyId,
+      }).unwrap();
 
-    setIsDeliveryModalOpen(false);
-    setSelectedOrderForDelivery(null);
-  } catch (error) {
-    console.error(error);
-  } finally {
-    setSelectedBoyId(null);
-  }
-};
-
+      setIsDeliveryModalOpen(false);
+      setSelectedOrderForDelivery(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSelectedBoyId(null);
+    }
+  };
 
   return (
     <>
@@ -203,11 +207,18 @@ const handleAssignDelivery = async (boyId) => {
                   </td>
                   <td className="p-3 font-medium">{u._id?.slice(-5)}</td>
                   <td className="p-3 font-medium">{u.shopInfo?.name}</td>
-                  <td className="p-3">{u.price}</td>
+                  <td className="p-3">
+                    {u.price?.toString().includes(".")
+                      ? u.price.toString().split(".")[0] +
+                      "." +
+                      u.price.toString().split(".")[1].slice(0, 2)
+                      : u.price}
+                  </td>
+                  
                   <td className="p-3">{u.placedOn}</td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
-                      {u.items?.slice(0, 3).map((item, index) => (
+                      {u.itemsSummary?.slice(0, 3).map((item, index) => (
                         <img
                           key={index}
                           src={item.image}
@@ -226,46 +237,36 @@ const handleAssignDelivery = async (boyId) => {
                     </span>
                   </td>
                   <td className="p-3 whitespace-nowrap">
-                    {u.OrderStatus === "confirmed" ? (
-                      <span className="px-3 py-1.5 rounded-xl bg-green-100 text-green-700 font-semibold text-sm">
-                        Approved
-                      </span>
-                    ) : u.OrderStatus === "cancelled" ? (
-                      <span className="px-3 py-1.5 rounded-xl bg-red-100 text-red-600 font-semibold text-sm">
-                        Rejected
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        {/* ✅ Approve */}
-                        <button
-                          className="p-1 text-green-600 bg-white"
-                          onClick={() => handleApprove(u._id)}
-                          disabled={isUpdating}
-                        >
-                          <SiTicktick size={18} />
-                        </button>
+                    <div className="flex items-center gap-1">
+                      {/* ✅ Approve */}
+                      <button
+                        className="p-1 text-green-600 bg-white"
+                        onClick={() => handleApprove(u._id)}
+                        disabled={isUpdating}
+                      >
+                        <SiTicktick size={18} />
+                      </button>
 
-                        {/* ❌ Reject */}
-                        <button
-                          className="p-1 text-red-600 bg-white"
-                          onClick={() => handleReject(u._id)}
-                          disabled={isUpdating}
-                        >
-                          <RxCrossCircled size={18} />
-                        </button>
+                      {/* ❌ Reject */}
+                      <button
+                        className="p-1 text-red-600 bg-white"
+                        onClick={() => handleReject(u._id)}
+                        disabled={isUpdating}
+                      >
+                        <RxCrossCircled size={18} />
+                      </button>
 
-                        {/* 👁 View */}
-                        <button
-                          className="p-1 text-blue-900"
-                          onClick={async () => {
-                            setSelectedOrderId(u._id);
-                            await getOrderById(u._id);
-                          }}
-                        >
-                          <FaEye size={18} />
-                        </button>
-                      </div>
-                    )}
+                      {/* 👁 View */}
+                      <button
+                        className="p-1 text-blue-900"
+                        onClick={async () => {
+                          setSelectedOrderId(u._id);
+                          await getOrderById(u._id);
+                        }}
+                      >
+                        <FaEye size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -279,52 +280,53 @@ const handleAssignDelivery = async (boyId) => {
             onClose={() => setSelectedOrderId(null)}
           />
         )}
-{isDeliveryModalOpen && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white w-[400px] max-h-[500px] overflow-y-auto rounded-xl p-5">
-      
-      <h2 className="text-lg font-semibold mb-4">
-        Assign Delivery Boy
-      </h2>
 
-      {deliveryData?.data?.map((boy) => {
-        const isThisLoading =
-          assigning && selectedBoyId === boy._id;
+        {isDeliveryModalOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white w-[400px] max-h-[500px] overflow-y-auto rounded-xl p-5">
 
-        return (
-          <div
-            key={boy._id}
-            onClick={() => !assigning && handleAssignDelivery(boy._id)}
-            className={`border p-3 rounded mb-2 cursor-pointer transition
+              <h2 className="text-lg font-semibold mb-4">
+                Assign Delivery Boy
+              </h2>
+
+              {deliveryData?.data?.map((boy) => {
+                const isThisLoading =
+                  assigning && selectedBoyId === boy._id;
+
+                return (
+                  <div
+                    key={boy._id}
+                    onClick={() => !assigning && handleAssignDelivery(boy._id)}
+                    className={`border p-3 rounded mb-2 cursor-pointer transition
               ${isThisLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"}
             `}
-          >
-            <p className="font-medium">{boy.Name}</p>
-            <p className="text-sm text-gray-500">
-              Orders: {boy.completeOrders}
-            </p>
-            <p className="text-sm text-gray-500">
-              Status: {boy.deliveryBoyAvailable}
-            </p>
+                  >
+                    <p className="font-medium">{boy.Name}</p>
+                    <p className="text-sm text-gray-500">
+                      Orders: {boy.completeOrders}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Status: {boy.deliveryBoyAvailable}
+                    </p>
 
-            {isThisLoading && (
-              <p className="text-xs text-blue-600 mt-1">
-                Assigning...
-              </p>
-            )}
+                    {isThisLoading && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        Assigning...
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+
+              <button
+                onClick={() => setIsDeliveryModalOpen(false)}
+                className="mt-4 w-full bg-red-400 text-white py-2 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        );
-      })}
-
-      <button
-        onClick={() => setIsDeliveryModalOpen(false)}
-        className="mt-4 w-full bg-red-400 text-white py-2 rounded-lg"
-      >
-        Close
-      </button>
-    </div>
-  </div>
-)}
+        )}
       </div>
     </>
   );

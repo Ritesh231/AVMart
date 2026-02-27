@@ -12,13 +12,40 @@ tags:["Banners"],
       providesTags:["Banners"],
      }),
       
-      addBanner:builder.mutation({
+      addTopSellingBanner:builder.mutation({
          query:(body)=>({
         url:"/api/v1/admin/BestSellerBanner/add",
         method:"POST",
         body,
      }),
       invalidatesTags: ["Banners"],
+  }),
+
+  addNormalBanner:builder.mutation({
+    query:(body)=>({
+      url:`/api/v1/admin/banner/add`,
+      method:"POST",
+      body,
+    }),
+     invalidatesTags: ["Banners"],
+  }),
+
+   addCategoryBanner:builder.mutation({
+    query:(body)=>({
+      url:`/api/v1/admin/CatBanner/add`,
+      method:"POST",
+      body,
+    }),
+     invalidatesTags: ["Banners"],
+  }),
+
+  addSubcategoryBanner:builder.mutation({
+    query:(body)=>({
+      url:`/api/v1/admin/subCatBanner/add`,
+      method:"POST",
+      body,
+    }),
+     invalidatesTags: ["Banners"],
   }),
 
   deleteBanner:builder.mutation({
@@ -32,4 +59,6 @@ tags:["Banners"],
 })
 })
 
-export const { useGetallbannersQuery,useAddBannerMutation,useDeleteBannerMutation } = Bannerapi;
+export const { useGetallbannersQuery,useAddTopSellingBannerMutation,useDeleteBannerMutation,
+  useAddNormalBannerMutation,useAddCategoryBannerMutation,useAddSubcategoryBannerMutation,
+ } = Bannerapi;

@@ -19,7 +19,7 @@ import { FaShoppingCart } from "react-icons/fa";
 import AttendanceStats from "./AttendanceCard";
 import RevenueStats from "./RevenueCard";
 import OrderStats from "./OrderCard";
-import { useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery,useGetDeliveryBoyOrderDetailsQuery } from "../../Redux/apis/deliveryApi";
+import { useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery, useGetDeliveryBoyOrderDetailsQuery } from "../../Redux/apis/deliveryApi";
 import { useParams } from "react-router-dom";
 
 export default function DeliveryBoyDetails() {
@@ -39,27 +39,36 @@ export default function DeliveryBoyDetails() {
     { skip: !id }
   );
 
-const {
-  data: orderdetail,
-  isLoading: orderLoading,
-  isError: orderError,
-} = useGetDeliveryBoyOrderDetailsQuery(openOrderId, {
-  skip: !openOrderId,
-});
+  const {
+    data: orderdetail,
+    isLoading: orderLoading,
+    isError: orderError,
+  } = useGetDeliveryBoyOrderDetailsQuery(openOrderId, {
+    skip: !openOrderId,
+  });
 
-const orderData = orderdetail?.data;
+  const orderData = orderdetail?.data;
 
   const toggleOrder = (id) => {
     setOpenOrderId(openOrderId === id ? null : id);
   };
 
-  const attendanceData = tabData?.data || {};
+  const attendanceData = tabData?.data || [];
   const attendanceCount = tabData?.stats || {
-  present: 0,
-  absent: 0,
-  halfDay: 0,
-};
-  const orders = tabData?.data || [];
+    present: 0,
+    absent: 0,
+    halfDay: 0,
+  };
+  const orders =
+    tabData?.data?.filter((order) => {
+      const term = searchTerm.toLowerCase();
+
+      return (
+        order._id?.toLowerCase().includes(term) ||
+        order.deliveryStatus?.toLowerCase().includes(term) ||
+        order.paymentMethod?.toLowerCase().includes(term)
+      );
+    }) || [];
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -77,7 +86,7 @@ const orderData = orderdetail?.data;
 
           {/* Avatar */}
           <div className="w-20 h-20 rounded-full bg-indigo-900 text-white flex items-center justify-center text-2xl font-bold">
-             {profile?.name?.charAt(0)?.toUpperCase()}
+            {profile?.name?.charAt(0)?.toUpperCase()}
           </div>
 
           {/* Info */}
@@ -212,25 +221,37 @@ const orderData = orderdetail?.data;
               </thead>
 
               <tbody>
-                {attendanceData?.records?.map((item) => (
-                  <tr key={item._id} className="border-t">
-                    <td className="px-6 py-4">{item.date}</td>
-                    <td className="px-6 py-4">{item.checkIn}</td>
-                    <td className="px-6 py-4">{item.checkOut}</td>
-                    <td className="px-6 py-4">{item.workingHours}</td>
-                    <td className="px-6 py-4">
-                      <span className="bg-indigo-900 text-white px-3 py-1 rounded-full text-xs">
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {attendanceData
+                  ?.filter((item) => {
+                    const term = searchTerm.toLowerCase();
+
+                    return (
+                      item.date?.toLowerCase().includes(term) ||
+                      item.status?.toLowerCase().includes(term) ||
+                      item.workingHours?.toLowerCase().includes(term)
+                    );
+                  })
+                  ?.map((item) => (
+                    <tr key={item._id} className="border-t">
+                      <td className="px-6 py-4">
+                        {item.date?.split("T")[0]}
+                      </td>
+                      <td className="px-6 py-4">{item.checkIn}</td>
+                      <td className="px-6 py-4">{item.checkOut}</td>
+                      <td className="px-6 py-4">{item.workingHours}</td>
+                      <td className="px-6 py-4">
+                        <span className="bg-indigo-900 text-white px-3 py-1 rounded-full text-xs">
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
         </>
       )}
-
+      
       {activeTab === "revenue" && (
         <>
           {/* Revenue Summary Cards */}
@@ -283,17 +304,29 @@ const orderData = orderdetail?.data;
                   <th className="text-left px-6 py-3">Description</th>
                 </tr>
               </thead>
+
               <tbody>
-                {tabData?.data?.map((txn) => (
-                  <tr key={txn._id} className="border-t">
-                    <td className="px-6 py-4">{txn.transactionId}</td>
-                    <td className="px-6 py-4">{txn.orderId}</td>
-                    <td className="px-6 py-4">{txn.date}</td>
-                    <td className="px-6 py-4">{txn.type}</td>
-                    <td className="px-6 py-4">₹{txn.amount}</td>
-                    <td className="px-6 py-4">{txn.description}</td>
-                  </tr>
-                ))}
+                {tabData?.data
+                  ?.filter((txn) => {
+                    const term = searchTerm.toLowerCase();
+
+                    return (
+                      txn.transactionId?.toLowerCase().includes(term) ||
+                      txn.orderId?.toLowerCase().includes(term) ||
+                      txn.type?.toLowerCase().includes(term) ||
+                      txn.description?.toLowerCase().includes(term)
+                    );
+                  })
+                  ?.map((txn) => (
+                    <tr key={txn._id} className="border-t">
+                      <td className="px-6 py-4">{txn.transactionId}</td>
+                      <td className="px-6 py-4">{txn.orderId}</td>
+                      <td className="px-6 py-4">{txn.date}</td>
+                      <td className="px-6 py-4">{txn.type}</td>
+                      <td className="px-6 py-4">₹{txn.amount}</td>
+                      <td className="px-6 py-4">{txn.description}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -340,155 +373,150 @@ const orderData = orderdetail?.data;
           </div>
 
           {/* Orders List */}
-    <div className="space-y-4">
-  {orders.map((order) => {
+          <div className="space-y-4">
+            {orders.map((order) => {
 
-    const isOngoing = order.deliveryStatus === "Ongoing";
-    const isDelivered = order.deliveryStatus === "Delivered";
+              const isOngoing = order.deliveryStatus === "Ongoing";
+              const isDelivered = order.deliveryStatus === "Delivered";
 
-    return (
-      <div key={order._id} className="bg-white rounded-xl shadow-sm border overflow-hidden">
+              return (
+                <div key={order._id} className="bg-white rounded-xl shadow-sm border overflow-hidden">
 
-        {/* Header */}
-        <div
-          className="flex justify-between items-center p-5 cursor-pointer"
-          onClick={() => toggleOrder(order._id)}
-        >
-          <div className="flex items-center gap-3">
+                  {/* Header */}
+                  <div
+                    className="flex justify-between items-center p-5 cursor-pointer"
+                    onClick={() => toggleOrder(order._id)}
+                  >
+                    <div className="flex items-center gap-3">
 
-            {/* Dynamic Status Icon */}
-            {isOngoing && (
-              <div className="bg-blue-100 p-2 rounded-lg">
-                <Truck size={18} className="text-blue-600" />
-              </div>
-            )}
+                      {/* Dynamic Status Icon */}
+                      {isOngoing && (
+                        <div className="bg-blue-100 p-2 rounded-lg">
+                          <Truck size={18} className="text-blue-600" />
+                        </div>
+                      )}
 
-            {isDelivered && (
-              <div className="bg-green-100 p-2 rounded-lg">
-                <CheckCircle size={18} className="text-green-600" />
-              </div>
-            )}
+                      {isDelivered && (
+                        <div className="bg-green-100 p-2 rounded-lg">
+                          <CheckCircle size={18} className="text-green-600" />
+                        </div>
+                      )}
 
-            <div>
-              <div className="flex items-center gap-3">
-                <h3 className="font-semibold">
-                  {order._id.slice(-6).toUpperCase()}
-                </h3>
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-semibold">
+                            {order._id.slice(-6).toUpperCase()}
+                          </h3>
 
-                <span className="bg-gray-200 text-xs px-3 py-1 rounded-full">
-                  {order.deliveryStatus}
-                </span>
-              </div>
+                          <span className="bg-gray-200 text-xs px-3 py-1 rounded-full">
+                            {order.deliveryStatus}
+                          </span>
+                        </div>
 
-              <p className="text-sm text-gray-500 mt-1">
-                {order.date}
-              </p>
-            </div>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {order.date}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="font-semibold">
+                          ₹{order.grandTotal}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {order.paymentMethod}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => toggleOrder(order._id)}
+                        className="p-2 rounded-md hover:bg-gray-100 transition"
+                      >
+                        <ChevronDown
+                          size={18}
+                          className={`transition-transform duration-300 ${openOrderId === order._id ? "rotate-180" : ""
+                            }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Collapsible Content */}
+                  {openOrderId === order._id && (
+                    <div className="border-t p-5 bg-gray-50 space-y-5">
+
+                      {orderLoading && <p>Loading order details...</p>}
+
+                      {!orderLoading && orderData && (
+                        <>
+                          {/* Customer Details */}
+                          <div>
+                            <h4 className="font-medium mb-2">Customer Details</h4>
+                            <p className="text-sm font-medium">
+                              {orderData.customer?.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {orderData.customer?.phone}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {orderData.customer?.address}
+                            </p>
+                          </div>
+
+                          {/* Order Items */}
+                          <div>
+                            <h4 className="font-medium mb-2">Order Items</h4>
+
+                            {orderData.items?.map((item, index) => (
+                              <div
+                                key={index}
+                                className="text-sm flex justify-between mb-1"
+                              >
+                                <span>
+                                  {item.name} x{item.quantity}
+                                </span>
+                                <span>₹{item.itemTotal}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Bill Summary */}
+                          <div>
+                            <h4 className="font-medium mb-2">Bill Summary</h4>
+
+                            <div className="text-sm flex justify-between">
+                              <span>Subtotal</span>
+                              <span>₹{orderData.billSummary?.subtotal}</span>
+                            </div>
+
+                            <div className="text-sm flex justify-between">
+                              <span>Delivery Charge</span>
+                              <span>₹{orderData.billSummary?.deliveryCharge}</span>
+                            </div>
+
+                            <div className="text-sm flex justify-between text-green-600">
+                              <span>Paid</span>
+                              <span>₹{orderData.billSummary?.totalPaid}</span>
+                            </div>
+
+                            <div className="text-sm flex justify-between text-red-600 font-medium">
+                              <span>Remaining to collect</span>
+                              <span>
+                                ₹{orderData.billSummary?.remainingToCollect}
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-
-          <div className="flex items-center gap-4">
-
-            <div className="text-right">
-              <p className="font-semibold">
-                ₹{order.grandTotal}
-              </p>
-              <p className="text-xs text-gray-500">
-                {order.paymentMethod}
-              </p>
-            </div>
-
-            <button
-              onClick={() => toggleOrder(order._id)}
-              className="p-2 rounded-md hover:bg-gray-100 transition"
-            >
-              <ChevronDown
-                size={18}
-                className={`transition-transform duration-300 ${
-                  openOrderId === order._id ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Collapsible Content */}
-      {openOrderId === order._id && (
-  <div className="border-t p-5 bg-gray-50 space-y-5">
-
-    {orderLoading && <p>Loading order details...</p>}
-
-    {!orderLoading && orderData && (
-      <>
-        {/* Customer Details */}
-        <div>
-          <h4 className="font-medium mb-2">Customer Details</h4>
-          <p className="text-sm font-medium">
-            {orderData.customer?.name}
-          </p>
-          <p className="text-sm text-gray-500">
-            {orderData.customer?.phone}
-          </p>
-          <p className="text-sm text-gray-500">
-            {orderData.customer?.address}
-          </p>
-        </div>
-
-        {/* Order Items */}
-        <div>
-          <h4 className="font-medium mb-2">Order Items</h4>
-
-          {orderData.items?.map((item, index) => (
-            <div
-              key={index}
-              className="text-sm flex justify-between mb-1"
-            >
-              <span>
-                {item.name} x{item.quantity}
-              </span>
-              <span>₹{item.itemTotal}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Bill Summary */}
-        <div>
-          <h4 className="font-medium mb-2">Bill Summary</h4>
-
-          <div className="text-sm flex justify-between">
-            <span>Subtotal</span>
-            <span>₹{orderData.billSummary?.subtotal}</span>
-          </div>
-
-          <div className="text-sm flex justify-between">
-            <span>Delivery Charge</span>
-            <span>₹{orderData.billSummary?.deliveryCharge}</span>
-          </div>
-
-          <div className="text-sm flex justify-between text-green-600">
-            <span>Paid</span>
-            <span>₹{orderData.billSummary?.totalPaid}</span>
-          </div>
-
-          <div className="text-sm flex justify-between text-red-600 font-medium">
-            <span>Remaining to collect</span>
-            <span>
-              ₹{orderData.billSummary?.remainingToCollect}
-            </span>
-          </div>
-        </div>
-      </>
-    )}
-
-  </div>
-)}
-
-      </div>
-    );
-  })}
-</div>
         </>
       )}
-
     </div>
   );
 }

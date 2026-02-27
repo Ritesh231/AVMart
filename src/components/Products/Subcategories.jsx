@@ -142,7 +142,7 @@ export default function UsersTable() {
               ))
             ) : (
             filteredSubcategories.map((u) => (
-                <tr key={u._id} className="border-t hover:bg-gray-50">
+                <tr key={u._id} className="border-t hover:bg-gray-50 ">
                   <td className="p-3">
                     <input type="checkbox" />
                   </td>

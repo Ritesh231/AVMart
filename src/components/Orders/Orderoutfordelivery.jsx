@@ -8,27 +8,13 @@ import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi"
 
-// const users = Array.from({ length: 6 }).map((_, i) => ({
-//     id: "#12345",
-//     shop: "Medicovr Citycare Medical Shop",
-//     price: "450",
-//     placed: "20/12/2025",
-//     items: [
-//         "/images/item1.png",
-//         "/images/item2.png",
-//         "/images/item3.png",
-//     ],
-//     payment: "Online",
-//     deliveryboy: "John Doe",
-// }));
-
 export default function UsersTable() {
-    const { data, isLoading, isError } = useGetOrdersByStatusQuery("OutOfDelivery");
+    const { data, isLoading, isError } = useGetOrdersByStatusQuery("OutForDelivery");
     const users = data?.orders || [];
     const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [getOrderById, { data: orderData, isLoading: Loader }] =
         useGetOrdersByIdMutation();
-
+      
     const [activeTab, setActiveTab] = useState('Online');
     const tabs = [
         { id: 'Online', label: 'Online Payments', },
@@ -162,12 +148,10 @@ export default function UsersTable() {
 
         <td className="p-3 font-medium">{u.shopInfo?.name}</td>
 
-        <td className="p-3">₹ {u.price}</td>
+        <td className="p-3">{u.price}</td>
 
         <td className="p-3">
-          {u.createdAt
-            ? new Date(u.createdAt).toLocaleDateString()
-            : "-"}
+          {u.placedOn}
         </td>
 
         <td className="p-3">
@@ -214,7 +198,6 @@ export default function UsersTable() {
     ))}
 </tbody>
                 </table>
-
                 {selectedOrderId && (
                     <OrderDetailsModal
                         order={orderData?.order}

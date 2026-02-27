@@ -111,9 +111,9 @@ export default function AddProduct() {
       originalPrice: "",
       discountType: "",
       discountValue: "",
-      gstRate: "",
+      // gstRate: "",
       stock: "",
-      sku: "",
+      // sku: "",
       imageFiles: [], // For storing file objects
       imageUrls: [], // For storing URLs (if you have them)
       previewImages: [], // For preview
@@ -154,9 +154,9 @@ export default function AddProduct() {
         originalPrice: "",
         discountType: "percent",
         discountValue: "",
-        gstRate: "",
+        // gstRate: "",
         stock: "",
-        sku: "",
+        // sku: "",
         imageFiles: [],
         imageUrls: [],
         previewImages: [],
@@ -182,8 +182,8 @@ export default function AddProduct() {
     if (!formData.category)
       return toast.error("Category is required");
 
-    if (!formData.subcategory)
-      return toast.error("Subcategory is required");
+    // if (!formData.subcategory)
+    //   return toast.error("Subcategory is required");
 
     if (!formData.primaryImages || !formData.primaryImages[0])
       return toast.error("Primary Image is required");
@@ -207,12 +207,12 @@ export default function AddProduct() {
       if (discountValue > originalPrice) {
         return toast.error(`Variant ${i + 1}: Discount cannot exceed original price`);
       }
-
+       
       if (!v.stock)
         return toast.error(`Variant ${i + 1}: Stock required`);
 
-      if (!v.sku)
-        return toast.error(`Variant ${i + 1}: SKU required`);
+      // if (!v.sku)
+      //   return toast.error(`Variant ${i + 1}: SKU required`);
     }
 
     try {
@@ -239,9 +239,9 @@ export default function AddProduct() {
         originalPrice: Number(v.originalPrice),
         discountType: v.discountType || null,
         discountValue: Number(v.discountValue || 0),
-        gstRate: Number(v.gstRate || 0),
+        // gstRate: Number(v.gstRate || 0),
         stock: Number(v.stock),
-        sku: v.sku,
+        // sku: v.sku,
         // IMPORTANT: Send empty array for now since we don't have URLs
         // The API expects URLs, not files
         images: [] // Send empty array to avoid errors
@@ -277,9 +277,9 @@ export default function AddProduct() {
         originalPrice: "",
         discountType: "percent",
         discountValue: "",
-        gstRate: "",
+        // gstRate: "",
         stock: "",
-        sku: "",
+        // sku: "",
         imageFiles: [],
         imageUrls: [],
         previewImages: [],
@@ -350,7 +350,7 @@ export default function AddProduct() {
               label="Subcategory"
               options={filteredSubcategories}
               error={errors.subcategory?.message}
-              {...register("subcategory", { required: "Subcategory is required" })}
+              {...register("subcategory",)}
             />
 
             {/* Main Image */}
@@ -511,7 +511,7 @@ export default function AddProduct() {
                     </select>
                   </div>
 
-                  <div>
+                  {/* <div>
                     <label className="text-xs font-medium text-gray-600">
                       GST Rate
                     </label>
@@ -529,7 +529,7 @@ export default function AddProduct() {
                       <option value="18">18%</option>
                       <option value="28">28%</option>
                     </select>
-                  </div>
+                  </div> */}
 
                   <InputField
                     label="Stock"
@@ -539,13 +539,13 @@ export default function AddProduct() {
                     onChange={(e) => handleVariantChange(index, e)}
                   />
 
-                  <InputField
+                  {/* <InputField
                     label="SKU"
                     name="sku"
                     placeholder="SOAP-3PACK"
                     value={variant.sku}
                     onChange={(e) => handleVariantChange(index, e)}
-                  />
+                  /> */}
                 </div>
 
                 {/* Variant Images */}

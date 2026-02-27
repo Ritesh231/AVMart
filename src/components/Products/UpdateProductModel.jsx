@@ -44,15 +44,15 @@ useEffect(() => {
       subcategoryname: productData.subcategory?.name || "",
       status: productData.status || "active",
       slug: productData.slug || "",
-      origin: productData.origin || "",
-      shelfLife: productData.shelfLife || "",
-      storage: productData.storage || "",
+      // origin: productData.origin || "",
+      // shelfLife: productData.shelfLife || "",
+      // storage: productData.storage || "",
       primaryImage: null,
       variants: productData.variants.map(v => ({
         ...v,
         discountType: v.discountType || "percentage",
         discountValue: v.discountValue ?? 0,
-        gstRate: v.gstRate ?? 18,
+        // gstRate: v.gstRate ?? 18,
       })),
     });
 
@@ -61,7 +61,7 @@ useEffect(() => {
 }, [productData]);
 
   const QUANTITY_UNITS = ["ml", "l", "g", "kg", "piece", "dozen", "pack", "box", ""];
-  const GST_RATES = [0, 3, 5, 12, 18, 28];
+  // const GST_RATES = [0, 3, 5, 12, 18, 28];
 
   // Handle normal input
   const handleChange = (e) => {
@@ -134,9 +134,9 @@ useEffect(() => {
         originalPrice: Number(v.originalPrice),
         discountType: v.discountType || "percent",
         discountValue: Number(v.discountValue || 0),
-        gstRate: Number(v.gstRate || 18),
+        // gstRate: Number(v.gstRate || 18),
         stock: Number(v.stock),
-        sku: v.sku,
+        // sku: v.sku,
         images: v.images || [],
       }));
 
@@ -175,7 +175,7 @@ useEffect(() => {
         </div>
 
         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded-lg mt-3" />
-        <div className="grid grid-cols-3 gap-3 mt-3">
+        {/* <div className="grid grid-cols-3 gap-3 mt-3">
           <input
             name="origin"
             value={formData.origin}
@@ -199,7 +199,7 @@ useEffect(() => {
             placeholder="Storage Info"
             className="border p-2 rounded"
           />
-        </div>
+        </div> */}
 
         {/* Main Image Upload */}
         <div className="mt-4">
@@ -321,35 +321,34 @@ useEffect(() => {
                 />
 
                 {/* SKU */}
-                <input
+                {/* <input
                   value={variant.sku || ""}
                   onChange={(e) =>
                     handleVariantChange(index, "sku", e.target.value)
                   }
                   placeholder="SKU"
                   className="border p-2 rounded"
-                />
+                /> */}
 
                 {/* GST Rate Dropdown */}
-                <select
+                {/* <select
                   value={variant.gstRate ?? ""}
                   onChange={(e) =>
                     handleVariantChange(index, "gstRate", Number(e.target.value))
                   }
                   className="border p-2 rounded"
                 >
-                  {/* Placeholder option */}
+                 
                   <option value="" disabled>
                     Select GST Rate
                   </option>
 
-                  {/* Actual GST options */}
                   {GST_RATES.map((rate) => (
                     <option key={rate} value={rate}>
                       {rate}%
                     </option>
                   ))}
-                </select>
+                </select> */}
               </div>
             </div>
           ))}
