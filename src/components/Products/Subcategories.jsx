@@ -3,64 +3,76 @@ import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown
 import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
 import { MdDelete } from "react-icons/md";
-import { useGetallSubcategoriesQuery,useDeleteSubcategoryMutation } from "../../Redux/apis/productsApi"
+import { useGetallSubcategoriesQuery, useDeleteSubcategoryMutation } from "../../Redux/apis/productsApi"
 import EditSubcategoryModal from "../../components/Products/EditSubcategoryModal";
 import { useState } from "react";
 
-export default function UsersTable() {  
+export default function UsersTable() {
   const { data, isLoading, isError } = useGetallSubcategoriesQuery();
-  const [deleteSubcategory,{ isLoading: isDeleting } ]=useDeleteSubcategoryMutation();
+  const [deleteSubcategory, { isLoading: isDeleting }] = useDeleteSubcategoryMutation();
   const subcategory = data?.data || [];
+  const uniqueCategories = [
+    "All",
+    ...new Set(subcategory.map((item) => item.categoryName).filter(Boolean)),
+  ];
 
-       const [currentPage, setCurrentPage] = useState(1);
-        const ordersPerPage = 6;
-      
-        // Pagination Logic
-      const totalPages = Math.ceil(subcategory.length / ordersPerPage);
-      
-      const indexOfLastOrder = currentPage * ordersPerPage;
-      const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-      
-      const currentOrders = subcategory.slice(
-        indexOfFirstOrder,
-        indexOfLastOrder
-      );
-      
-      // Reset to page 1 when orders change
-      useState(() => {
-        setCurrentPage(1);
-      }, [subcategory.length]);
+      const [selectedCategory, setSelectedCategory] = useState("All");
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const filteredSubcategories = subcategory.filter((u) => {
+    const search = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      u.name?.toLowerCase().includes(search) ||
+      u.categoryName?.toLowerCase().includes(search) ||
+      u._id?.toLowerCase().includes(search) ||
+      u.productCount?.toString().includes(search);
+
+    const matchesCategory =
+      selectedCategory === "All" || u.categoryName === selectedCategory;
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 6;
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredSubcategories.length / ordersPerPage);
+
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+
+  const currentOrders = filteredSubcategories.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+
+  useState(() => {
+    setCurrentPage(1);
+  }, [filteredSubcategories.length]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredSubcategories=subcategory.filter((u)=>{
-    const search=searchTerm.toLowerCase();
-    return(
-      u.name?.toLowerCase().includes(search)||
-      u.categoryname?.toLowerCase().includes(search)||
-      u._id?.toLowerCase().includes(search)||
-      u.productCount?.toString().includes(search)
-    )
-  })
 
   if (isError) {
     return <p className="text-red-500">Failed to load Subcategories</p>;
   }
-  
-   const handleDelete=async(id)=>{
-       const confirmDelete = window.confirm(
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
       "Are you sure you want to delete this category?"
     );
-  
+
     if (!confirmDelete) return;
-      try{
-        await deleteSubcategory(id).unwrap();
-        toast.success("Category Deleted Successfully");
-      }catch(err){
-        toast.error("Error to delete Category",err);
-      }
+    try {
+      await deleteSubcategory(id).unwrap();
+      toast.success("Category Deleted Successfully");
+    } catch (err) {
+      toast.error("Error to delete Category", err);
     }
+  }
 
   return (
     <>
@@ -79,15 +91,33 @@ export default function UsersTable() {
             />
           </div>
         </div>
-           
+
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
           <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
           </button>
-          <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-            <p>Today’s</p> <ChevronDown size={20} />
-          </button>
+          <div className="relative">
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="appearance-none border-brand-cyan border-[1px] font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl focus:outline-none bg-white cursor-pointer"
+            >
+              {uniqueCategories.map((cat, index) => (
+                <option key={index} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            <ChevronDown
+              size={18}
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+            />
+          </div>
           <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
             <Download size={20} /> Export
           </button>
@@ -147,7 +177,7 @@ export default function UsersTable() {
                 </tr>
               ))
             ) : (
-           currentOrders.map((u) => (
+              currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50 ">
                   <td className="p-3">
                     <input type="checkbox" />
@@ -182,8 +212,8 @@ export default function UsersTable() {
                         }}>
                         <FaEdit size={18} />
                       </button>
-                      
-                      <button className="p-1 text-red-600" onClick={()=>handleDelete(u._id)}>
+
+                      <button className="p-1 text-red-600" onClick={() => handleDelete(u._id)}>
                         <MdDelete size={18} />
                       </button>
                     </div>
@@ -197,75 +227,75 @@ export default function UsersTable() {
         </table>
 
         <EditSubcategoryModal
-  isOpen={isModalOpen}
-  onClose={() => setIsModalOpen(false)}
-  subcategoryData={selectedSubcategory}
-/>
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          subcategoryData={selectedSubcategory}
+        />
 
 
-    {/* Pagination */}
-{subcategory.length > ordersPerPage && (
-  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+        {/* Pagination */}
+        {filteredSubcategories.length > ordersPerPage && (
+          <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
-    {/* Showing Info */}
-    <p className="text-sm text-gray-600">
-      Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder, subcategory.length)} of{" "}
-      {subcategory.length} orders
-    </p>
+            {/* Showing Info */}
+            <p className="text-sm text-gray-600">
+              Showing {indexOfFirstOrder + 1} to{" "}
+              {Math.min(indexOfLastOrder, filteredSubcategories.length)} of{" "}
+              {filteredSubcategories.length} orders
+            </p>
 
-    {/* Buttons */}
-    <div className="flex items-center gap-2">
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
 
-      {/* Prev */}
-      <button
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === 1
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Prev
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Prev
+              </button>
 
-      {/* Page Numbers */}
-      {[...Array(totalPages)].map((_, index) => {
-        const page = index + 1;
-        return (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              {/* Page Numbers */}
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                ? "bg-[#00E5B0] text-white shadow-md"
-                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-              }`}
-          >
-            {page}
-          </button>
-        );
-      })}
+                        ? "bg-[#00E5B0] text-white shadow-md"
+                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
 
-      {/* Next */}
-      <button
-        onClick={() =>
-          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-        }
-        disabled={currentPage === totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Next */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Next
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Next
+              </button>
 
-    </div>
-  </div>
-)}
+            </div>
+          </div>
+        )}
 
       </div>
     </>

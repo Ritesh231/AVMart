@@ -24,18 +24,20 @@ const Header = () => {
 
     const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
-    const handleLogout = async () => {
-        try {
-            await logout().unwrap();
-            localStorage.removeItem("token");
-            localStorage.removeItem("admin");
-            navigate("/");
+   const handleLogout = async () => {
+    try {
+        await logout().unwrap();
 
-        } catch (error) {
-            console.error("Logout failed:", error);
-        }
-    };
+        // ✅ Remove correct token key
+        localStorage.removeItem("Admin_token");
+        localStorage.removeItem("admin");
 
+        navigate("/", { replace: true });
+
+    } catch (error) {
+        console.error("Logout failed:", error);
+    }
+};
     const [showDropdown, setShowDropdown] = useState(false);
 
     const dropdownRef = useRef(null);

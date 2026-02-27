@@ -39,11 +39,11 @@ const OnlinePaymentCard = ({
                     Order : {orderId} <br></br> Transaction : {txnId}
                 </p>
             </div>
-
+           
             {/* Details Grid */}
             <div className="grid grid-cols-3 gap-4">
                 <div className="bg-brand-blue p-2 rounded-lg flex flex-col  justify-between items-start">
-                    <p className="text-[10px] text-brand-navy font-bold uppercase">Payment Method</p>
+                    <p className="text-[10px] text-brand-navy font-bold uppercase w-36 whitespace-nowrap">Payment Method</p>
                     <p className="text-brand-navy font-extrabold text-base">Online</p>
                 </div>
                 <div className="bg-brand-blue p-2 rounded-lg flex flex-col  justify-between items-start">

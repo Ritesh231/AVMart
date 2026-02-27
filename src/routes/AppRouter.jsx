@@ -19,10 +19,10 @@ const OrderConfirmed = lazy(() => import("../components/Orders/OrderConfirmed"))
 const OrderOutForDelivery = lazy(() =>
   import("../components/Orders/Orderoutfordelivery")
 );
+
 const OrderDelivered = lazy(() => import("../components/Orders/OrderDelivered"));
 const OrderRejected = lazy(() => import("../components/Orders/OrderRejected"));
 const OrderDetails = lazy(() => import("../components/Orders/OrderDetails"));
-
 
 /* Product */
 const AllProducts = lazy(() => import("../components/Products/AllProducts"));
@@ -51,7 +51,6 @@ const DeliveryBoyDetail = lazy(() =>
 /*Queries */
 const PendingQueries = lazy(() => import("../components/Queries/PendingQueries"));
 
-
 /*Offers*/
 const Offers = lazy(() => import("../pages/Offers"));
 const MainBanner = lazy(() => import("../components/Offers/MainBanner"));
@@ -59,6 +58,9 @@ const AddBanner=lazy(()=>import("../components/Offers/AddBanner"));
 
 /*Wallet*/
 const WalletTable = lazy(() => import("../components/Wallet/TotalBalanceTable"));
+
+/*Protected Route*/
+import ProtectedRoute from "../routes/ProtectRoute";
 
 const Loader = () => (
   <div className="flex items-center justify-center h-screen bg-white">
@@ -93,7 +95,13 @@ export default function AppRouter() {
       <Routes>
         <Route path="/" element={<Login/>} />
          
-        <Route element={<Layout />}>
+      <Route
+  element={
+    <ProtectedRoute>
+      <Layout />
+    </ProtectedRoute>
+  }
+>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/users" element={<Users />} />
           <Route path="/payments" element={<Payments />} />

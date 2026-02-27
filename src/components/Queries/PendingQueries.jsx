@@ -9,6 +9,9 @@ export default function UsersTable() {
     const [markedContacted, { isLoading: isUpdating }] = useMarkasContactedMutation();
     const [markedDeleted, { isLoading: isDeleting }] = useDeleteQueryMutation();
     const [updatingId, setUpdatingId] = useState(null);
+    const [dateFilter, setDateFilter] = useState("Last7Days");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
     
     const location = useLocation();
     let statusFilter = "Pending";
@@ -19,10 +22,43 @@ export default function UsersTable() {
         statusFilter = "Contacted";
     }
 
-    const queries = (data?.data || []).filter((q) => {
-        if (statusFilter === "All") return true;
-        return q.status === statusFilter;
-    });
+ const allQueries = (data?.data || []).filter((q) => {
+  if (statusFilter === "All") return true;
+  return q.status === statusFilter;
+});
+
+const filteredByDate = allQueries.filter((q) => {
+  if (!q.updatedAt) return false;
+
+  const queryDate = new Date(q.updatedAt);
+  const today = new Date();
+
+  if (dateFilter === "Today") {
+    return queryDate.toDateString() === today.toDateString();
+  }
+
+  if (dateFilter === "Yesterday") {
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    return queryDate.toDateString() === yesterday.toDateString();
+  }
+
+  if (dateFilter === "Last7Days") {
+    const last7 = new Date();
+    last7.setDate(today.getDate() - 7);
+    return queryDate >= last7 && queryDate <= today;
+  }
+
+  if (dateFilter === "Custom" && fromDate && toDate) {
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+    end.setHours(23, 59, 59, 999); // include full end day
+
+    return queryDate >= start && queryDate <= end;
+  }
+
+  return true;
+});
 
     const handleMarkAsContacted = async (id) => {
         try {
@@ -53,19 +89,19 @@ export default function UsersTable() {
 const queriesPerPage = 6;
 
 // Pagination Logic
-const totalPages = Math.ceil(queries.length / queriesPerPage);
+const totalPages = Math.ceil(filteredByDate.length / queriesPerPage);
 
 const indexOfLastQuery = currentPage * queriesPerPage;
 const indexOfFirstQuery = indexOfLastQuery - queriesPerPage;
 
-const currentQueries = queries.slice(
+const currentQueries = filteredByDate.slice(
   indexOfFirstQuery,
   indexOfLastQuery
 );
 
 useEffect(() => {
   setCurrentPage(1);
-}, [statusFilter, queries.length]);
+}, [statusFilter, filteredByDate.length]);
 
     return (
         <>
@@ -88,9 +124,58 @@ useEffect(() => {
                     <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                         <SlidersHorizontal size={20} />
                     </button>
-                    <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                        <p>Today’s</p> <ChevronDown size={20} />
-                    </button>
+                 <div className="flex items-center gap-3">
+
+  {/* Date Filter Dropdown */}
+  <select
+    value={dateFilter}
+    onChange={(e) => {
+      setDateFilter(e.target.value);
+      setCurrentPage(1);
+      setFromDate("");
+      setToDate("");
+    }}
+    className="border px-4 py-3 rounded-2xl bg-white font-medium"
+  >
+    <option value="Today">Today</option>
+    <option value="Yesterday">Yesterday</option>
+    <option value="Last7Days">Last 7 Days</option>
+    <option value="Custom">Custom Range</option>
+  </select>
+
+  {/* Custom Date Range */}
+  {dateFilter === "Custom" && (
+    <>
+      <input
+        type="date"
+        value={fromDate}
+        max={toDate || undefined}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (toDate && selected > toDate) {
+            setToDate("");
+          }
+          setFromDate(selected);
+        }}
+        className="border px-3 py-2 rounded-xl"
+      />
+
+      <span>to</span>
+
+      <input
+        type="date"
+        value={toDate}
+        min={fromDate || undefined}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (fromDate && selected < fromDate) return;
+          setToDate(selected);
+        }}
+        className="border px-3 py-2 rounded-xl"
+      />
+    </>
+  )}
+</div>
                     <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
                         <Download size={20} /> Export
                     </button>
@@ -226,15 +311,15 @@ useEffect(() => {
                 </table>
 
                 {/* Pagination */}
-{queries.length > queriesPerPage && (
+{filteredByDate.length > queriesPerPage && (
   <div className="flex justify-between items-center mt-6 px-4 py-4 border-t bg-white">
 
     {/* Showing Info */}
     <p className="text-sm text-gray-600">
       Showing{" "}
-      {queries.length === 0 ? 0 : indexOfFirstQuery + 1} to{" "}
-      {Math.min(indexOfLastQuery, queries.length)} of{" "}
-      {queries.length} queries
+      {filteredByDate.length === 0 ? 0 : indexOfFirstQuery + 1} to{" "}
+      {Math.min(indexOfLastQuery, filteredByDate.length)} of{" "}
+      {filteredByDate.length} queries
     </p>
 
     {/* Buttons */}

@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useEffect}from "react";
 import { ChevronDown, Download, Search, SlidersHorizontal } from 'lucide-react'
 import { FaSearch, FaEdit, FaTrash } from "react-icons/fa";
 import ProductCategoryCards from "../Products/ProductCategorytabs"
@@ -13,32 +13,52 @@ const products = Array.from({ length: 20 });
 const ProductGrid = () => {
     const { data, isLoading, isError } = useGetallproductsQuery();
     const products = data?.data || [];
+    const [selectedCategory, setSelectedCategory] = useState("All");
+       const [selectedProduct, setSelectedProduct] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("")
+    const uniqueCategories = [
+  "All",
+  ...new Set(products.map((item) => item.category?.name).filter(Boolean)),
+];
     
          const [currentPage, setCurrentPage] = useState(1);
         const ordersPerPage = 10;
+
+         const filteredProducts = products.filter((u) => {
+  const search = searchTerm.toLowerCase();
+
+  const matchesSearch =
+    u.slug?.toLowerCase().includes(search) ||
+    u.price?.toString().includes(search) ||
+    u.productName?.toLowerCase().includes(search);
+
+  const matchesCategory =
+    selectedCategory === "All" || u.category?.name === selectedCategory;
+
+  return matchesSearch && matchesCategory;
+});
       
         // Pagination Logic
-      const totalPages = Math.ceil( products.length / ordersPerPage);
+    const totalPages = Math.ceil(filteredProducts.length / ordersPerPage);
       
       const indexOfLastOrder = currentPage * ordersPerPage;
       const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
       
-      const currentOrders =  products.slice(
+    const currentOrders = filteredProducts.slice(
         indexOfFirstOrder,
         indexOfLastOrder
       );
       
       // Reset to page 1 when orders change
-      useState(() => {
-        setCurrentPage(1);
-      }, [ products.length]);
+      useEffect(() => {
+  setCurrentPage(1);
+}, [filteredProducts.length]);
     const navigate = useNavigate();
 
     const [deleteproduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [searchTerm, setSearchTerm] = useState("")
+ 
 
     const handleDelete = async (id) => {
         const confirmDelete = window.confirm(
@@ -53,13 +73,7 @@ const ProductGrid = () => {
         }
     }
 
-    const filteredProducts = products.filter((u) => {
-        const search = searchTerm.toLowerCase();
-        return (
-            u.slug?.toLowerCase().includes(search) ||
-            u.price?.toString().includes(search)
-        )
-    })
+
 
     const ProductShimmer = () => {
         return (
@@ -115,9 +129,27 @@ const ProductGrid = () => {
                     <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                         <SlidersHorizontal size={20} />
                     </button>
-                    <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                        <p>Today’s</p> <ChevronDown size={20} />
-                    </button>
+                 <div className="relative">
+  <select
+    value={selectedCategory}
+    onChange={(e) => {
+      setSelectedCategory(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="appearance-none border-brand-cyan border-[1px] font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl focus:outline-none bg-white cursor-pointer"
+  >
+    {uniqueCategories.map((cat, index) => (
+      <option key={index} value={cat}>
+        {cat}
+      </option>
+    ))}
+  </select>
+
+  <ChevronDown
+    size={18}
+    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+  />
+</div>
                     <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
                         <Download size={20} /> Export
                     </button>
@@ -222,14 +254,14 @@ const ProductGrid = () => {
 
 
     {/* Pagination */}
-{products.length > ordersPerPage && (
+{ filteredProducts.length > ordersPerPage && (
   <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
     {/* Showing Info */}
     <p className="text-sm text-gray-600">
       Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder,  products.length)} of{" "}
-      { products.length} orders
+      {Math.min(indexOfLastOrder,   filteredProducts.length)} of{" "}
+      {  filteredProducts.length} orders
     </p>
 
     {/* Buttons */}

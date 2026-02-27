@@ -9,6 +9,53 @@ import { useGetTransactionsOverviewQuery } from "../Redux/apis/paymentApi";
 const Payments = () => {
     const [activeTab, setActiveTab] = useState('Online');
     const [searchTerm, setSearchTerm] = useState("");
+    const [dateFilter, setDateFilter] = useState("All");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+
+    const filterByDate = (txnDate) => {
+        if (!txnDate) return true;
+
+        const txn = new Date(txnDate);
+        const now = new Date();
+
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+        const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        switch (dateFilter) {
+            case "Today":
+                return txn >= startOfToday && txn < startOfTomorrow;
+
+            case "Yesterday":
+                return txn >= startOfYesterday && txn < startOfToday;
+
+            case "This Month":
+                return txn >= startOfMonth;
+
+            case "Last Month":
+                return txn >= startOfLastMonth && txn <= endOfLastMonth;
+
+            case "Custom":
+                if (!fromDate || !toDate) return true;
+
+                const start = new Date(fromDate);
+                const end = new Date(toDate);
+                end.setHours(23, 59, 59, 999);
+
+                return txn >= start && txn <= end;
+
+            default:
+                return true;
+        }
+    };
+
+
 
     const tabMapping = {
         Online: "online",
@@ -25,16 +72,19 @@ const Payments = () => {
 
     const transactions = data?.list?.transactions || [];
     const filteredTransactions = transactions.filter((txn) => {
-  const search = searchTerm.toLowerCase();
+        const search = searchTerm.toLowerCase();
 
-  return (
-    txn.customer?.toLowerCase().includes(search) ||
-    txn.orderId?.toLowerCase().includes(search) ||
-    txn.shortOrderId?.toLowerCase().includes(search) ||
-    txn.txnId?.toLowerCase().includes(search) ||
-    txn.paymentDetails?.[0]?.id?.toLowerCase().includes(search)
-  );
-});
+        const matchesSearch =
+            txn.customer?.toLowerCase().includes(search) ||
+            txn.orderId?.toLowerCase().includes(search) ||
+            txn.shortOrderId?.toLowerCase().includes(search) ||
+            txn.txnId?.toLowerCase().includes(search) ||
+            txn.paymentDetails?.[0]?.id?.toLowerCase().includes(search);
+
+        const matchesDate = filterByDate(txn.dateTime);
+
+        return matchesSearch && matchesDate;
+    });
 
     const summary = data?.summary || {};
 
@@ -194,7 +244,7 @@ const Payments = () => {
                     <div className="h-6 bg-gray-300 rounded w-1/4 mb-2"></div>
                     <div className="h-4 bg-gray-300 rounded w-1/3"></div>
                 </div>
-
+            
                 {/* Skeleton Stat Cards */}
                 <section className="mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -282,9 +332,75 @@ const Payments = () => {
                         <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                             <SlidersHorizontal size={20} />
                         </button>
-                        <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                            <p>Today’s</p> <ChevronDown size={20} />
-                        </button>
+                        <div className="flex items-center gap-3">
+                            {/* Main Date Filter Dropdown */}
+                            <div className="relative">
+                                <select
+                                    value={dateFilter}
+                                    onChange={(e) => {
+                                        setDateFilter(e.target.value);
+                                        setFromDate("");
+                                        setToDate("");
+                                    }}
+                                    className="appearance-none border-brand-cyan border-[1px] font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl focus:outline-none bg-white cursor-pointer"
+                                >
+                                    <option value="All">All</option>
+                                    <option value="Today">Today</option>
+                                    <option value="Yesterday">Yesterday</option>
+                                    <option value="This Month">This Month</option>
+                                    <option value="Last Month">Last Month</option>
+                                    <option value="Custom">Custom Range</option>
+                                </select>
+
+                                <ChevronDown
+                                    size={18}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+                                />
+                            </div>
+
+                            {/* Custom Date Pickers */}
+                            {dateFilter === "Custom" && (
+                                <>
+                                    {/* From Date */}
+                                    <input
+                                        type="date"
+                                        value={fromDate}
+                                        max={toDate || undefined}   // cannot select after end date
+                                        onChange={(e) => {
+                                            const selectedFrom = e.target.value;
+
+                                            // If from date is after current to date → reset toDate
+                                            if (toDate && selectedFrom > toDate) {
+                                                setToDate("");
+                                            }
+
+                                            setFromDate(selectedFrom);
+                                        }}
+                                        className="border border-brand-soft px-3 py-2 rounded-xl"
+                                    />
+
+                                    <span className="text-gray-500">to</span>
+
+                                    {/* To Date */}
+                                    <input
+                                        type="date"
+                                        value={toDate}
+                                        min={fromDate || undefined}  // cannot select before start date
+                                        onChange={(e) => {
+                                            const selectedTo = e.target.value;
+
+                                            // Extra safety check
+                                            if (fromDate && selectedTo < fromDate) {
+                                                return;
+                                            }
+
+                                            setToDate(selectedTo);
+                                        }}
+                                        className="border border-brand-soft px-3 py-2 rounded-xl"
+                                    />
+                                </>
+                            )}
+                        </div>
                         <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
                             <Download size={20} /> Export
                         </button>

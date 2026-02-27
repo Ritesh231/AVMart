@@ -17,33 +17,43 @@ import { toast } from "react-toastify";
 
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetOrdersByStatusQuery("Pending");
-  const users =
-    data?.orders?.filter(
-      (order) =>
-        order.OrderStatus !== "confirmed" &&
-        order.OrderStatus !== "cancelled"
-    ) || [];
+  const orders = data?.orders || [];
+
+const users = orders.filter(
+  (order) =>
+    order.OrderStatus !== "confirmed" &&
+    order.OrderStatus !== "cancelled"
+);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [getOrderById, { data: orderData, loading = { isLoading } }] =
     useGetOrdersByIdMutation();
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
   const [selectedBoyId, setSelectedBoyId] = useState(null);
+  const [activeStatus, setActiveStatus] = useState("all");
   
 
    const [currentPage, setCurrentPage] = useState(1);
     const ordersPerPage = 6;
+
+
+  const filteredOrders =
+  activeStatus === "all"
+    ? users
+    : users.filter((order) =>
+        order.paymentMethod?.toLowerCase() === activeStatus
+      );
   
     // Pagination Logic
-  const totalPages = Math.ceil(users.length / ordersPerPage);
+   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
   
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   
-  const currentOrders = users.slice(
-    indexOfFirstOrder,
-    indexOfLastOrder
-  );
+const currentOrders = filteredOrders.slice(
+  indexOfFirstOrder,
+  indexOfLastOrder
+);
   
   // Reset to page 1 when orders change
   useState(() => {
@@ -60,6 +70,8 @@ export default function UsersTable() {
   const { data: deliveryData } = useGetAllDeliveryBoysQuery({
     status: "approved"
   });
+
+
 
   const [assignDeliveryBoy, { isLoading: assigning }] =
     useGetAssignDeliveryBoysMutation();
@@ -113,6 +125,7 @@ export default function UsersTable() {
     }
   };
 
+
   return (
     <>
       {/* Search & Actions */}
@@ -134,9 +147,23 @@ export default function UsersTable() {
           <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
           </button>
-          <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-            <p>Today’s</p> <ChevronDown size={20} />
-          </button>
+        <div className="relative">
+  <select
+    value={activeStatus}
+    onChange={(e) => setActiveStatus(e.target.value)}
+    className="appearance-none border border-brand-cyan font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl bg-white"
+  >
+    <option value="all">All Payments</option>
+ <option value="all">All Payments</option>
+<option value="cod">COD</option>
+<option value="partial">Partial</option>
+  </select>
+
+  <ChevronDown
+    size={18}
+    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+  />
+</div>
           <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
             <Download size={20} /> Export
           </button>
@@ -348,14 +375,14 @@ export default function UsersTable() {
           </div>
         )}
                 {/* Pagination */}
-{users.length > ordersPerPage && (
+{filteredOrders.length > ordersPerPage && (
   <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
     {/* Showing Info */}
     <p className="text-sm text-gray-600">
       Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder, users.length)} of{" "}
-      {users.length} orders
+      {Math.min(indexOfLastOrder, filteredOrders.length)} of{" "}
+      {filteredOrders.length} orders
     </p>
 
     {/* Buttons */}

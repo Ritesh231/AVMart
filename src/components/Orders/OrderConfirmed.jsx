@@ -17,22 +17,32 @@ export default function UsersTable() {
   const users = data?.orders || [];
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 6;
+  const [paymentFilter, setPaymentFilter] = useState("All");
+
+  const filteredUsers =
+  paymentFilter === "All"
+    ? users
+    : users.filter(
+        (order) =>
+          order.paymentMethod?.toLowerCase() ===
+          paymentFilter.toLowerCase()
+      );
 
   // Pagination Logic
-const totalPages = Math.ceil(users.length / ordersPerPage);
+  const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
 
 const indexOfLastOrder = currentPage * ordersPerPage;
 const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
 
-const currentOrders = users.slice(
+const currentOrders = filteredUsers.slice(
   indexOfFirstOrder,
   indexOfLastOrder
 );
 
 // Reset to page 1 when orders change
-useState(() => {
+useEffect(() => {
   setCurrentPage(1);
-}, [users.length]);
+}, [users.length, paymentFilter]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -76,9 +86,21 @@ useState(() => {
           <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
           </button>
-          <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-            <p>Today’s</p> <ChevronDown size={20} />
-          </button>
+
+       <select
+  value={paymentFilter}
+  onChange={(e) => {
+    setPaymentFilter(e.target.value);
+    setCurrentPage(1); // reset page when filter changes
+  }}
+  className="border-brand-cyan border px-4 py-3 rounded-2xl text-sm font-semibold text-brand-navy cursor-pointer"
+>
+  <option value="All">All Payments</option>
+<option value="COD">COD</option>
+  <option value="Online">Online</option>
+  <option value="Partial">Partial</option>
+</select>
+       
           <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
             <Download size={20} /> Export
           </button>
@@ -226,9 +248,9 @@ useState(() => {
 
     {/* Showing Info */}
     <p className="text-sm text-gray-600">
-      Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder, users.length)} of{" "}
-      {users.length} orders
+    Showing {indexOfFirstOrder + 1} to{" "}
+{Math.min(indexOfLastOrder, filteredUsers.length)} of{" "}
+{filteredUsers.length} orders
     </p>
 
     {/* Buttons */}

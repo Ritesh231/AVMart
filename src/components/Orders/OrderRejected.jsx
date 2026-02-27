@@ -5,45 +5,40 @@ import { BsWallet2 } from "react-icons/bs";
 import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
-import { useState } from "react";
-
-const users = Array.from({ length: 6 }).map((_, i) => ({
-    id: "#12345",
-    shop: "Medicovr Citycare Medical Shop",
-    price: "450",
-    placed: "20/12/2025",
-    items: [
-        "/images/item1.png",
-        "/images/item2.png",
-        "/images/item3.png",
-    ],
-    email: "sarahchen@gmail.com",
-    payment: "Online",
-    action: "Send to Delivery",
-}));
+import { useState,useEffect} from "react";
 
 export default function UsersTable() {
     const { data, isLoading, isError } = useGetOrdersByStatusQuery("Rejected");
     const users = data?.orders || [];
+    const [paymentFilter, setPaymentFilter] = useState("All");
+
+    const filteredUsers =
+  paymentFilter === "All"
+    ? users
+    : users.filter(
+        (order) => order.paymentMethod === paymentFilter
+      );
+
+
 
       const [currentPage, setCurrentPage] = useState(1);
         const ordersPerPage = 6;
       
         // Pagination Logic
-      const totalPages = Math.ceil(users.length / ordersPerPage);
+     const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
       
       const indexOfLastOrder = currentPage * ordersPerPage;
       const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
       
-      const currentOrders = users.slice(
+     const currentOrders = filteredUsers.slice(
         indexOfFirstOrder,
         indexOfLastOrder
       );
       
       // Reset to page 1 when orders change
-      useState(() => {
-        setCurrentPage(1);
-      }, [users.length]);
+      useEffect(() => {
+  setCurrentPage(1);
+}, [users.length, paymentFilter]);
 
     const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [getOrderById, { data: orderData, isLoading: Loader }] =
@@ -71,9 +66,26 @@ export default function UsersTable() {
                     <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                         <SlidersHorizontal size={20} />
                     </button>
-                    <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                        <p>Today’s</p> <ChevronDown size={20} />
-                    </button>
+                   <div className="relative">
+  <select
+    value={paymentFilter}
+    onChange={(e) => {
+      setPaymentFilter(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="appearance-none border border-brand-cyan font-semibold text-brand-navy px-5 py-3 pr-10 rounded-2xl bg-white cursor-pointer focus:outline-none"
+  >
+    <option value="All">All Payments</option>
+    <option value="Online">Online</option>
+    <option value="Cash">Cash On Delivery</option>
+    <option value="Partial">Partial</option>
+  </select>
+
+  <ChevronDown
+    size={18}
+    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+  />
+</div>
                     <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
                         <Download size={20} /> Export
                     </button>
@@ -225,14 +237,14 @@ export default function UsersTable() {
                 )}
 
                   {/* Pagination */}
-{users.length > ordersPerPage && (
+{filteredUsers.length > ordersPerPage && (
   <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
     {/* Showing Info */}
     <p className="text-sm text-gray-600">
       Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder, users.length)} of{" "}
-      {users.length} orders
+      {Math.min(indexOfLastOrder, filteredUsers.length)} of{" "}
+      {filteredUsers.length} orders
     </p>
 
     {/* Buttons */}

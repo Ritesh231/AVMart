@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Logo from "../../public/images/logo.svg"
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../Redux/apis/authApi"
+import { useEffect } from "react";
 import { toast } from "react-toastify";
 
 const Login = () => {
@@ -10,6 +11,26 @@ const Login = () => {
   const navigate = useNavigate();
 
   const [login, { isLoading, isError }] = useLoginMutation();
+
+  useEffect(() => {
+  const token = localStorage.getItem("Admin_token");
+
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const isExpired = payload.exp * 1000 < Date.now();
+
+      if (!isExpired) {
+        navigate("/dashboard");
+      } else {
+        localStorage.removeItem("Admin_token");
+        localStorage.removeItem("admin");
+      }
+    } catch (err) {
+      localStorage.removeItem("Admin_token");
+    }
+  }
+}, [navigate]);
 
 const handleSubmit = async () => {
   try {

@@ -1,5 +1,5 @@
 import { FaSearch, FaTrash, FaEye } from "react-icons/fa";
-import {  ChevronDown, Download, Search, SlidersHorizontal } from 'lucide-react'
+import { ChevronDown, Download, Search, SlidersHorizontal } from 'lucide-react'
 import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
 import { MdDeliveryDining } from "react-icons/md";
@@ -8,47 +8,41 @@ import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi"
 import { useState, useEffect } from "react";
 
-// const users = Array.from({ length: 6 }).map((_, i) => ({
-//   id: "#12345",
-//   shop: "Medicovr Citycare Medical Shop",
-//   price: "450",
-//   placed: "20/12/2025",
-//   items: [
-//     "/images/item1.png",
-//     "/images/item2.png",
-//     "/images/item3.png",
-//   ],
-//   payment: "Online",
-//   deliveryboy: "John Doe",
-// }));
 
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetOrdersByStatusQuery("Delivered");
   const users = data?.orders || [];
-
-       const [currentPage, setCurrentPage] = useState(1);
-        const ordersPerPage = 6;
-      
-        // Pagination Logic
-      const totalPages = Math.ceil(users.length / ordersPerPage);
-      
-      const indexOfLastOrder = currentPage * ordersPerPage;
-      const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-      
-      const currentOrders = users.slice(
-        indexOfFirstOrder,
-        indexOfLastOrder
+  const [paymentFilter, setPaymentFilter] = useState("All");
+  const filteredUsers =
+  paymentFilter === "All"
+    ? users
+    : users.filter(
+        (order) => order.paymentMethod === paymentFilter
       );
-      
-      // Reset to page 1 when orders change
-     useEffect(() => {
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 6;
+
+  // Pagination Logic
+const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
+
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+
+  const currentOrders = filteredUsers.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+
+  // Reset to page 1 when orders change
+useEffect(() => {
   setCurrentPage(1);
-}, [users.length]);
+}, [users.length, paymentFilter]);
 
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [getOrderById, { data: orderData, isLoading: Loader }] =
     useGetOrdersByIdMutation();
-   
+
   return (
     <>
       {/* Search & Actions */}
@@ -70,9 +64,28 @@ export default function UsersTable() {
           <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
           </button>
-          <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-            <p>Today’s</p> <ChevronDown size={20} />
-          </button>
+
+          <div className="relative">
+            <select
+              value={paymentFilter}
+              onChange={(e) => {
+                setPaymentFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="appearance-none border border-brand-cyan font-semibold text-brand-navy px-5 py-3 pr-10 rounded-2xl bg-white cursor-pointer focus:outline-none"
+            >
+              <option value="All">All Payments</option>
+              <option value="Online">Online</option>
+              <option value="Cash">Cash On Delivery</option>
+              <option value="Partial">Partial</option>
+            </select>
+
+            <ChevronDown
+              size={18}
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+            />
+          </div>
+
           <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
             <Download size={20} /> Export
           </button>
@@ -165,7 +178,7 @@ export default function UsersTable() {
             {/* ✅ Actual Data */}
             {!isLoading &&
               !isError &&
-               currentOrders.map((u) => (
+              currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input type="checkbox" />
@@ -178,7 +191,7 @@ export default function UsersTable() {
                   <td className="p-3">{u.price}</td>
 
                   <td className="p-3">
-                    {u.placedOn|| "-"}
+                    {u.placedOn || "-"}
                   </td>
 
                   <td className="p-3">
@@ -234,69 +247,69 @@ export default function UsersTable() {
         )}
 
 
-    {/* Pagination */}
-{users.length > ordersPerPage && (
-  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+        {/* Pagination */}
+        {filteredUsers.length > ordersPerPage && (
+          <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
-    {/* Showing Info */}
-    <p className="text-sm text-gray-600">
-      Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder, users.length)} of{" "}
-      {users.length} orders
-    </p>
+            {/* Showing Info */}
+            <p className="text-sm text-gray-600">
+              Showing {indexOfFirstOrder + 1} to{" "}
+              {Math.min(indexOfLastOrder, filteredUsers.length)} of{" "}
+              {users.length} orders
+            </p>
 
-    {/* Buttons */}
-    <div className="flex items-center gap-2">
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
 
-      {/* Prev */}
-      <button
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === 1
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Prev
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Prev
+              </button>
 
-      {/* Page Numbers */}
-      {[...Array(totalPages)].map((_, index) => {
-        const page = index + 1;
-        return (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              {/* Page Numbers */}
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                ? "bg-[#00E5B0] text-white shadow-md"
-                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-              }`}
-          >
-            {page}
-          </button>
-        );
-      })}
+                        ? "bg-[#00E5B0] text-white shadow-md"
+                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
 
-      {/* Next */}
-      <button
-        onClick={() =>
-          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-        }
-        disabled={currentPage === totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Next */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Next
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Next
+              </button>
 
-    </div>
-  </div>
-)}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

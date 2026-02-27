@@ -3,293 +3,318 @@ import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown
 import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
 import { MdDeliveryDining } from "react-icons/md";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi"
 
 export default function UsersTable() {
-    const { data, isLoading, isError } = useGetOrdersByStatusQuery("OutForDelivery");
-    const users = data?.orders || [];
+  const { data, isLoading, isError } = useGetOrdersByStatusQuery("OutForDelivery");
+  const users = data?.orders || [];
+  const [activeTab, setActiveTab] = useState('Online');
 
-       const [currentPage, setCurrentPage] = useState(1);
-        const ordersPerPage = 6;
-      
-        // Pagination Logic
-      const totalPages = Math.ceil(users.length / ordersPerPage);
-      
-      const indexOfLastOrder = currentPage * ordersPerPage;
-      const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-      
-      const currentOrders = users.slice(
-        indexOfFirstOrder,
-        indexOfLastOrder
-      );
-      
-      // Reset to page 1 when orders change
-      useState(() => {
-        setCurrentPage(1);
-      }, [users.length]);
-      
-    const [selectedOrderId, setSelectedOrderId] = useState(null);
-    const [getOrderById, { data: orderData, isLoading: Loader }] =
-        useGetOrdersByIdMutation();
-      
-    const [activeTab, setActiveTab] = useState('Online');
-    const tabs = [
-        { id: 'Online', label: 'Online Payments', },
-        { id: 'Cash', label: 'Cash On Delivery', },
-        { id: 'Partial', label: 'Partial Payments', }
-    ];
+  const filteredUsers =
+    activeTab === "Online"
+      ? users.filter((order) => order.paymentMethod === "Online")
+      : activeTab === "Cash"
+        ? users.filter((order) => order.paymentMethod === "Cash")
+        : activeTab === "Partial"
+          ? users.filter((order) => order.paymentMethod === "Partial")
+          : users;
 
-    return (
-        <>
-            {/* Search & Actions */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-                {/* Search Bar */}
-                <div className="w-full lg:w-[40%] md:w-[50%]">
-                    <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
-                        <Search className="text-brand-gray" size={20} />
-                        <input
-                            className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
-                            type="text"
-                            placeholder='Search By Orders'
-                        />
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 6;
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
+
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+
+  const currentOrders = filteredUsers.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+
+  // Reset to page 1 when orders change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [users.length, activeTab]);
+
+
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [getOrderById, { data: orderData, isLoading: Loader }] =
+    useGetOrdersByIdMutation();
+
+  const tabs = [
+    { id: 'Online', label: 'Online Payments', },
+    { id: 'Cash', label: 'Cash On Delivery', },
+    { id: 'Partial', label: 'Partial Payments', }
+  ];
+
+  return (
+    <>
+      {/* Search & Actions */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+        {/* Search Bar */}
+        <div className="w-full lg:w-[40%] md:w-[50%]">
+          <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
+            <Search className="text-brand-gray" size={20} />
+            <input
+              className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
+              type="text"
+              placeholder='Search By Orders'
+            />
+          </div>
+        </div>
+
+        {/* Export Button */}
+        <div className='flex justify-evenly gap-2 items-center'>
+          <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+            <SlidersHorizontal size={20} />
+          </button>
+          <div className="relative">
+            <select
+              value={activeTab}
+              onChange={(e) => {
+                setActiveTab(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="appearance-none border border-brand-cyan font-semibold text-brand-navy px-5 py-3 pr-10 rounded-2xl bg-white cursor-pointer focus:outline-none"
+            >
+              <option value="Online">Online Payments</option>
+              <option value="Cash">Cash On Delivery</option>
+              <option value="Partial">Partial Payments</option>
+            </select>
+            {/* Dropdown Icon */}
+            <ChevronDown
+              size={18}
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+            />
+          </div>
+          <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
+            <Download size={20} /> Export
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-xl border overflow-x-auto">
+        <table className="min-w-[900px] w-full text-sm">
+
+          <thead className="bg-[#F1F5F9] text-gray-600">
+            <tr>
+              <th className="p-3"></th>
+              <th className="p-3 text-left">Order ID</th>
+              <th className="p-3 text-left">Shop Info</th>
+              <th className="p-3 text-left">Price</th>
+              <th className="p-3 text-left">Placed On</th>
+              <th className="p-3 text-left">Items</th>
+              <th className="p-3 text-left">Payment</th>
+              <th className="p-3 text-left">Delivery Boy</th>
+              <th className="p-3 text-left">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {/* 🔄 Loading Skeleton */}
+            {isLoading &&
+              Array.from({ length: 6 }).map((_, index) => (
+                <tr key={index} className="border-t animate-pulse">
+                  <td className="p-3">
+                    <div className="h-4 w-4 bg-gray-200 rounded"></div>
+                  </td>
+
+                  <td className="p-3">
+                    <div className="h-4 w-28 bg-gray-200 rounded"></div>
+                  </td>
+
+                  <td className="p-3">
+                    <div className="h-4 w-40 bg-gray-200 rounded"></div>
+                  </td>
+
+                  <td className="p-3">
+                    <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                  </td>
+
+                  <td className="p-3">
+                    <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                  </td>
+
+                  <td className="p-3">
+                    <div className="flex gap-2">
+                      <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
+                      <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
+                      <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
                     </div>
-                </div>
+                  </td>
 
-                {/* Export Button */}
-                <div className='flex justify-evenly gap-2 items-center'>
-                    <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-                        <SlidersHorizontal size={20} />
-                    </button>
-                    <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                        <p>Today’s</p> <ChevronDown size={20} />
-                    </button>
-                    <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-                        <Download size={20} /> Export
-                    </button>
-                </div>
-            </div>
+                  <td className="p-3">
+                    <div className="h-6 w-28 bg-gray-200 rounded-xl"></div>
+                  </td>
 
-            {/* Table */}
-            <div className="bg-white rounded-xl border overflow-x-auto">
-                <table className="min-w-[900px] w-full text-sm">
+                  <td className="p-3">
+                    <div className="h-6 w-32 bg-gray-200 rounded"></div>
+                  </td>
 
-                    <thead className="bg-[#F1F5F9] text-gray-600">
-                        <tr>
-                            <th className="p-3"></th>
-                            <th className="p-3 text-left">Order ID</th>
-                            <th className="p-3 text-left">Shop Info</th>
-                            <th className="p-3 text-left">Price</th>
-                            <th className="p-3 text-left">Placed On</th>
-                            <th className="p-3 text-left">Items</th>
-                            <th className="p-3 text-left">Payment</th>
-                            <th className="p-3 text-left">Delivery Boy</th>
-                            <th className="p-3 text-left">Action</th>
-                        </tr>
-                    </thead>
+                  <td className="p-3">
+                    <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+                  </td>
+                </tr>
+              ))}
 
-                 <tbody>
-  {/* 🔄 Loading Skeleton */}
-  {isLoading &&
-    Array.from({ length: 6 }).map((_, index) => (
-      <tr key={index} className="border-t animate-pulse">
-        <td className="p-3">
-          <div className="h-4 w-4 bg-gray-200 rounded"></div>
-        </td>
+            {/* ❌ Error State */}
+            {isError && !isLoading && (
+              <tr>
+                <td colSpan="9" className="text-center p-6 text-red-500 font-semibold">
+                  Failed to load Out Of Delivery orders. Please try again.
+                </td>
+              </tr>
+            )}
 
-        <td className="p-3">
-          <div className="h-4 w-28 bg-gray-200 rounded"></div>
-        </td>
+            {/* 📭 Empty State */}
+            {!isLoading && !isError && users.length === 0 && (
+              <tr>
+                <td colSpan="9" className="text-center p-6 text-gray-500">
+                  No orders found in Out Of Delivery.
+                </td>
+              </tr>
+            )}
 
-        <td className="p-3">
-          <div className="h-4 w-40 bg-gray-200 rounded"></div>
-        </td>
+            {/* ✅ Actual Data */}
+            {!isLoading &&
+              !isError &&
+              currentOrders.map((u) => (
+                <tr key={u._id} className="border-t hover:bg-gray-50">
+                  <td className="p-3">
+                    <input type="checkbox" />
+                  </td>
 
-        <td className="p-3">
-          <div className="h-4 w-20 bg-gray-200 rounded"></div>
-        </td>
+                  <td className="p-3 font-medium">{u._id}</td>
 
-        <td className="p-3">
-          <div className="h-4 w-24 bg-gray-200 rounded"></div>
-        </td>
+                  <td className="p-3 font-medium">{u.shopInfo?.name}</td>
 
-        <td className="p-3">
-          <div className="flex gap-2">
-            <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
-            <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
-            <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
-          </div>
-        </td>
+                  <td className="p-3">{u.price}</td>
 
-        <td className="p-3">
-          <div className="h-6 w-28 bg-gray-200 rounded-xl"></div>
-        </td>
+                  <td className="p-3">
+                    {u.placedOn}
+                  </td>
 
-        <td className="p-3">
-          <div className="h-6 w-32 bg-gray-200 rounded"></div>
-        </td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      {u.itemsPreview?.slice(0, 3).map((img, index) => (
+                        <img
+                          key={index}
+                          src={img.image}
+                          alt="item"
+                          className="w-8 h-8 rounded-md object-cover border"
+                        />
+                      ))}
+                    </div>
+                  </td>
 
-        <td className="p-3">
-          <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
-        </td>
-      </tr>
-    ))}
-
-  {/* ❌ Error State */}
-  {isError && !isLoading && (
-    <tr>
-      <td colSpan="9" className="text-center p-6 text-red-500 font-semibold">
-        Failed to load Out Of Delivery orders. Please try again.
-      </td>
-    </tr>
-  )}
-
-  {/* 📭 Empty State */}
-  {!isLoading && !isError && users.length === 0 && (
-    <tr>
-      <td colSpan="9" className="text-center p-6 text-gray-500">
-        No orders found in Out Of Delivery.
-      </td>
-    </tr>
-  )}
-
-  {/* ✅ Actual Data */}
-  {!isLoading &&
-    !isError &&
- currentOrders.map((u) => (
-      <tr key={u._id} className="border-t hover:bg-gray-50">
-        <td className="p-3">
-          <input type="checkbox" />
-        </td>
-
-        <td className="p-3 font-medium">{u._id}</td>
-
-        <td className="p-3 font-medium">{u.shopInfo?.name}</td>
-
-        <td className="p-3">{u.price}</td>
-
-        <td className="p-3">
-          {u.placedOn}
-        </td>
-
-        <td className="p-3">
-          <div className="flex items-center gap-2">
-            {u.itemsPreview?.slice(0, 3).map((img, index) => (
-              <img
-                key={index}
-                src={img.image}
-                alt="item"
-                className="w-8 h-8 rounded-md object-cover border"
-              />
-            ))}
-          </div>
-        </td>
-
-        <td className="p-3">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
+                  <td className="p-3">
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
             bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
-            <BsWallet2 className="text-[#03C616]" />
-            {u.paymentMethod}
-          </span>
-        </td>
+                      <BsWallet2 className="text-[#03C616]" />
+                      {u.paymentMethod}
+                    </span>
+                  </td>
 
-        <td className="p-3">
-          <div className="flex items-center gap-2 text-[#1A2550] text-sm">
-            <MdDeliveryDining className="text-xl" />
-            {u.deliveryBoy?.name || "Not Assigned"}
-          </div>
-        </td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-2 text-[#1A2550] text-sm">
+                      <MdDeliveryDining className="text-xl" />
+                      {u.deliveryBoy?.name || "Not Assigned"}
+                    </div>
+                  </td>
 
-        <td className="p-3">
-          <button
-            className="p-1 text-blue-900"
-            title="View"
-            onClick={async () => {
-              setSelectedOrderId(u._id);
-              await getOrderById(u._id);
-            }}
-          >
-            <FaEye size={18} />
-          </button>
-        </td>
-      </tr>
-    ))}
-</tbody>
-                </table>
-                {selectedOrderId && (
-                    <OrderDetailsModal
-                        order={orderData?.order}
-                        loading={isLoading}
-                        onClose={() => setSelectedOrderId(null)}
-                    />
-                )}
+                  <td className="p-3">
+                    <button
+                      className="p-1 text-blue-900"
+                      title="View"
+                      onClick={async () => {
+                        setSelectedOrderId(u._id);
+                        await getOrderById(u._id);
+                      }}
+                    >
+                      <FaEye size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+        {selectedOrderId && (
+          <OrderDetailsModal
+            order={orderData?.order}
+            loading={isLoading}
+            onClose={() => setSelectedOrderId(null)}
+          />
+        )}
 
-                        {/* Pagination */}
-{users.length > ordersPerPage && (
-  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+        {/* Pagination */}
+        {filteredUsers.length > ordersPerPage && (
+          <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
-    {/* Showing Info */}
-    <p className="text-sm text-gray-600">
-      Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder, users.length)} of{" "}
-      {users.length} orders
-    </p>
+            {/* Showing Info */}
+            <p className="text-sm text-gray-600">
+              Showing {indexOfFirstOrder + 1} to{" "}
+              {Math.min(indexOfLastOrder, filteredUsers.length)} of{" "}
+              {filteredUsers.length} orders
+            </p>
 
-    {/* Buttons */}
-    <div className="flex items-center gap-2">
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
 
-      {/* Prev */}
-      <button
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === 1
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Prev
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Prev
+              </button>
 
-      {/* Page Numbers */}
-      {[...Array(totalPages)].map((_, index) => {
-        const page = index + 1;
-        return (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              {/* Page Numbers */}
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                ? "bg-[#00E5B0] text-white shadow-md"
-                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-              }`}
-          >
-            {page}
-          </button>
-        );
-      })}
+                        ? "bg-[#00E5B0] text-white shadow-md"
+                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
 
-      {/* Next */}
-      <button
-        onClick={() =>
-          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-        }
-        disabled={currentPage === totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Next */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Next
-      </button>
-
-    </div>
-  </div>
-)}
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Next
+              </button>
             </div>
-        </>
-    );
+          </div>
+        )}
+      </div>
+    </>
+  );
 }

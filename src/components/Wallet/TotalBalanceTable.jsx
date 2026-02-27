@@ -1,6 +1,7 @@
 
 import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import { useGetWalletQuery } from "../../Redux/apis/walletApi";
+import { useState } from "react";
 
 const users = Array.from({ length: 6 }).map((_, i) => ({
     date: "20/02/26",
@@ -12,7 +13,48 @@ const users = Array.from({ length: 6 }).map((_, i) => ({
 export default function UsersTable() {
     const { data, isLoading, isError } = useGetWalletQuery();
     const users = data?.data?.transactions || [];
+    const [dateFilter, setDateFilter] = useState("Today");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+    
+    const filteredUsers = users.filter((u) => {
+        if (!u.date) return false;
 
+        const transactionDate = new Date(u.date);
+        const today = new Date();
+
+        today.setHours(0, 0, 0, 0);
+
+        if (dateFilter === "Today") {
+            return (
+                transactionDate.toDateString() === today.toDateString()
+            );
+        }
+            
+        if (dateFilter === "Yesterday") {
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+            return (
+                transactionDate.toDateString() === yesterday.toDateString()
+            );
+        }
+
+        if (dateFilter === "Last7Days") {
+            const last7 = new Date();
+            last7.setDate(today.getDate() - 7);
+            return transactionDate >= last7 && transactionDate <= today;
+        }
+
+        if (dateFilter === "Custom" && fromDate && toDate) {
+            const start = new Date(fromDate);
+            const end = new Date(toDate);
+            end.setHours(23, 59, 59, 999);
+
+            return transactionDate >= start && transactionDate <= end;
+        }
+        return true;
+    });
+    
     return (
         <>
             {/* Search & Actions */}
@@ -34,9 +76,52 @@ export default function UsersTable() {
                     <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                         <SlidersHorizontal size={20} />
                     </button>
-                    <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                        <p>Today’s</p> <ChevronDown size={20} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={dateFilter}
+                            onChange={(e) => {
+                                setDateFilter(e.target.value);
+                                setFromDate("");
+                                setToDate("");
+                            }}
+                            className="border border-brand-cyan px-4 py-3 rounded-2xl font-semibold text-brand-navy"
+                        >
+                            <option value="Today">Today</option>
+                            <option value="Yesterday">Yesterday</option>
+                            <option value="Last7Days">Last 7 Days</option>
+                            <option value="Custom">Custom Range</option>
+                        </select>
+
+                        {dateFilter === "Custom" && (
+                            <>
+                                <input
+                                    type="date"
+                                    value={fromDate}
+                                    max={toDate || undefined}
+                                    onChange={(e) => {
+                                        const selected = e.target.value;
+                                        if (toDate && selected > toDate) setToDate("");
+                                        setFromDate(selected);
+                                    }}
+                                    className="border px-3 py-2 rounded-xl"
+                                />
+
+                                <span>to</span>
+
+                                <input
+                                    type="date"
+                                    value={toDate}
+                                    min={fromDate || undefined}
+                                    onChange={(e) => {
+                                        const selected = e.target.value;
+                                        if (fromDate && selected < fromDate) return;
+                                        setToDate(selected);
+                                    }}
+                                    className="border px-3 py-2 rounded-xl"
+                                />
+                            </>
+                        )}
+                    </div>
                     <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
                         <Download size={20} /> Export
                     </button>
@@ -46,7 +131,7 @@ export default function UsersTable() {
             {/* Table */}
             <div className="bg-white rounded-xl border overflow-x-auto">
                 <table className="min-w-[900px] w-full text-sm">
-                    
+
                     <thead className="bg-[#F1F5F9] text-gray-600">
                         <tr>
                             <th className="p-3 text-left">Date</th>
@@ -55,7 +140,7 @@ export default function UsersTable() {
                             <th className="p-3 text-left">Amount</th>
                         </tr>
                     </thead>
-                   
+
                     <tbody>
                         {isLoading ? (
                             Array.from({ length: 6 }).map((_, index) => (
@@ -75,7 +160,7 @@ export default function UsersTable() {
                                 </tr>
                             ))
                         ) : users.length > 0 ? (
-                            users.map((u) => (
+                            filteredUsers.map((u) => (
                                 <tr key={u.id} className="border-t hover:bg-gray-50">
                                     <td className="p-3 font-medium">
                                         {u.date?.split("T")[0]}

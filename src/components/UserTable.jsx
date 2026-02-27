@@ -15,6 +15,8 @@ const tabs = [
 
 export default function UsersTable() {
   const [activeTab, setActiveTab] = useState('pending');
+  const [shopTypeFilter, setShopTypeFilter] = useState("all");
+
   const [searchTerm, setSearchTerm] = useState("");
   const { data, isLoading, isError } = useGetallusersQuery();
   const users = data?.data || [];
@@ -22,31 +24,38 @@ export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 6;
 
-  const filteredUsers = users.filter((user) => {
-    const matchesStatus = user.status === activeTab;
 
-    const matchesSearch =
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.contact?.includes(searchTerm) ||
-      user.shopName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+const filteredUsers = users.filter((user) => {
+  const matchesStatus = user.status === activeTab;
 
-      // Pagination Logic
-const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const matchesSearch =
+    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.contact?.includes(searchTerm) ||
+    user.shopName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-const indexOfLastUser = currentPage * usersPerPage;
-const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const matchesShopType =
+    shopTypeFilter === "all"
+      ? true
+      : user.shopType === shopTypeFilter;
 
-const currentUsers = filteredUsers.slice(
-  indexOfFirstUser,
-  indexOfLastUser
-);
+  return matchesStatus && matchesSearch && matchesShopType;
+});
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+
+  const currentUsers = filteredUsers.slice(
+    indexOfFirstUser,
+    indexOfLastUser
+  );
 
 React.useEffect(() => {
   setCurrentPage(1);
-}, [activeTab, searchTerm]);
+}, [activeTab, searchTerm, shopTypeFilter]);
 
   const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
   const [deleteStatus, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -121,9 +130,20 @@ React.useEffect(() => {
           <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
           </button>
-          <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-            <p>Today’s</p> <ChevronDown size={20} />
-          </button>
+
+        <div className="flex items-center gap-2 border border-brand-cyan px-3 py-3 rounded-2xl bg-white">
+  <select
+    value={shopTypeFilter}
+    onChange={(e) => setShopTypeFilter(e.target.value)}
+    className="bg-transparent font-semibold text-brand-navy outline-none"
+  >
+    <option value="all">All Shop Types</option>
+    <option value="medical">Medical</option>
+    <option value="general">General</option>
+    <option value="kirana">Kirana</option>
+  </select>
+</div>
+
           <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
             <Download size={20} /> Export
           </button>
@@ -194,7 +214,7 @@ React.useEffect(() => {
                 </td>
               </tr>
             ) : (
-            currentUsers.map((u) => (
+              currentUsers.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input type="checkbox" />
@@ -280,68 +300,68 @@ React.useEffect(() => {
         </table>
 
         {/* Pagination */}
-{filteredUsers.length > usersPerPage && (
-  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white rounded-xl border">
-    
-    {/* Showing Info */}
-    <p className="text-sm text-gray-600">
-      Showing {indexOfFirstUser + 1} to{" "}
-      {Math.min(indexOfLastUser, filteredUsers.length)} of{" "}
-      {filteredUsers.length} users
-    </p>
+        {filteredUsers.length > usersPerPage && (
+          <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white rounded-xl border">
 
-    {/* Pagination Buttons */}
-    <div className="flex items-center gap-2">
+            {/* Showing Info */}
+            <p className="text-sm text-gray-600">
+              Showing {indexOfFirstUser + 1} to{" "}
+              {Math.min(indexOfLastUser, filteredUsers.length)} of{" "}
+              {filteredUsers.length} users
+            </p>
 
-      {/* Previous */}
-      <button
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+            {/* Pagination Buttons */}
+            <div className="flex items-center gap-2">
+
+              {/* Previous */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === 1
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Prev
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Prev
+              </button>
 
-      {/* Page Numbers */}
-      {[...Array(totalPages)].map((_, index) => {
-        const page = index + 1;
-        return (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              {/* Page Numbers */}
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                ? "bg-[#00E5B0] text-white shadow-md"
-                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-              }`}
-          >
-            {page}
-          </button>
-        );
-      })}
+                        ? "bg-[#00E5B0] text-white shadow-md"
+                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
 
-      {/* Next */}
-      <button
-        onClick={() =>
-          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-        }
-        disabled={currentPage === totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Next */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Next
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Next
+              </button>
 
-    </div>
-  </div>
-)}
+            </div>
+          </div>
+        )}
       </div >
     </>
   );

@@ -22,6 +22,7 @@ import OrderStats from "./OrderCard";
 import { useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery, useGetDeliveryBoyOrderDetailsQuery } from "../../Redux/apis/deliveryApi";
 import { useParams } from "react-router-dom";
 
+
 export default function DeliveryBoyDetails() {
   const [activeTab, setActiveTab] = useState("attendance");
   const [openOrderId, setOpenOrderId] = useState(null);
@@ -29,6 +30,40 @@ export default function DeliveryBoyDetails() {
   const { id } = useParams();
   const { data, isLoading, isError } = useGetdeliveryProfileQuery(id);
   const profile = data?.data || [];
+  const [statusFilter, setStatusFilter] = useState("All");
+const [dateFilter, setDateFilter] = useState("All");
+const [fromDate, setFromDate] = useState("");
+const [toDate, setToDate] = useState("");
+
+const applyDateFilter = (data, dateField = "date") => {
+  if (dateFilter === "All") return data;
+
+  return data.filter((item) => {
+    if (!item[dateField]) return false;
+
+    const itemDate = new Date(item[dateField]);
+    const today = new Date();
+
+    if (dateFilter === "Today") {
+      return itemDate.toDateString() === today.toDateString();
+    }
+
+    if (dateFilter === "Last7Days") {
+      const last7 = new Date();
+      last7.setDate(today.getDate() - 7);
+      return itemDate >= last7 && itemDate <= today;
+    }
+
+    if (dateFilter === "Custom" && fromDate && toDate) {
+      const start = new Date(fromDate);
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+      return itemDate >= start && itemDate <= end;
+    }
+
+    return true;
+  });
+};
 
   const {
     data: tabData,
@@ -69,6 +104,52 @@ export default function DeliveryBoyDetails() {
         order.paymentMethod?.toLowerCase().includes(term)
       );
     }) || [];
+
+    const filteredAttendance = applyDateFilter(attendanceData)
+  .filter((item) => {
+    const term = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      item.date?.toLowerCase().includes(term) ||
+      item.status?.toLowerCase().includes(term) ||
+      item.workingHours?.toLowerCase().includes(term);
+
+    const matchesStatus =
+      statusFilter === "All" || item.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredRevenue = applyDateFilter(tabData?.data || [])
+  .filter((txn) => {
+    const term = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      txn.transactionId?.toLowerCase().includes(term) ||
+      txn.orderId?.toLowerCase().includes(term) ||
+      txn.type?.toLowerCase().includes(term) ||
+      txn.description?.toLowerCase().includes(term);
+
+    const matchesStatus =
+      statusFilter === "All" || txn.type === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredOrders = applyDateFilter(tabData?.data || [])
+  .filter((order) => {
+    const term = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      order._id?.toLowerCase().includes(term) ||
+      order.deliveryStatus?.toLowerCase().includes(term) ||
+      order.paymentMethod?.toLowerCase().includes(term);
+
+    const matchesStatus =
+      statusFilter === "All" || order.deliveryStatus === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -178,6 +259,8 @@ export default function DeliveryBoyDetails() {
             halfDay={attendanceCount?.halfDay || 0}
           />
 
+          
+
           {/* Filter */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
             {/* Search Bar */}
@@ -199,9 +282,87 @@ export default function DeliveryBoyDetails() {
               <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
               </button>
-              <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                <p>Today’s</p> <ChevronDown size={20} />
-              </button>
+            <div className="flex flex-wrap gap-3 items-center">
+
+  {/* Status Filter */}
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+    className="border px-4 py-2 rounded-xl bg-white"
+  >
+    <option value="All">All Status</option>
+
+    {activeTab === "attendance" && (
+      <>
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="HalfDay">HalfDay</option>
+      </>
+    )}
+
+    {activeTab === "orders" && (
+      <>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Rejected">Rejected</option>
+      </>
+    )}
+
+    {activeTab === "revenue" && (
+      <>
+        <option value="Credit">Credit</option>
+        <option value="Debit">Debit</option>
+      </>
+    )}
+  </select>
+
+  {/* Date Filter */}
+  <select
+    value={dateFilter}
+    onChange={(e) => {
+      setDateFilter(e.target.value);
+      setFromDate("");
+      setToDate("");
+    }}
+    className="border px-4 py-2 rounded-xl bg-white"
+  >
+    <option value="All">All Dates</option>
+    <option value="Today">Today</option>
+    <option value="Last7Days">Last 7 Days</option>
+    <option value="Custom">Custom Range</option>
+  </select>
+
+  {/* Custom Range */}
+  {dateFilter === "Custom" && (
+    <>
+      <input
+        type="date"
+        value={fromDate}
+        max={toDate || undefined}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (toDate && selected > toDate) setToDate("");
+          setFromDate(selected);
+        }}
+        className="border px-3 py-2 rounded-xl"
+      />
+
+      <span>to</span>
+
+      <input
+        type="date"
+        value={toDate}
+        min={fromDate || undefined}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (fromDate && selected < fromDate) return;
+          setToDate(selected);
+        }}
+        className="border px-3 py-2 rounded-xl"
+      />
+    </>
+  )}
+</div>
               <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
                 <Download size={20} /> Export
               </button>
@@ -221,7 +382,7 @@ export default function DeliveryBoyDetails() {
               </thead>
 
               <tbody>
-                {attendanceData
+                {filteredAttendance
                   ?.filter((item) => {
                     const term = searchTerm.toLowerCase();
 
@@ -282,9 +443,87 @@ export default function DeliveryBoyDetails() {
               <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
               </button>
-              <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                <p>Today’s</p> <ChevronDown size={20} />
-              </button>
+            <div className="flex flex-wrap gap-3 items-center">
+
+  {/* Status Filter */}
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+    className="border px-4 py-2 rounded-xl bg-white"
+  >
+    <option value="All">All Status</option>
+
+    {activeTab === "attendance" && (
+      <>
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="HalfDay">HalfDay</option>
+      </>
+    )}
+
+    {activeTab === "orders" && (
+      <>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Rejected">Rejected</option>
+      </>
+    )}
+
+    {activeTab === "revenue" && (
+      <>
+        <option value="Credit">Credit</option>
+        <option value="Debit">Debit</option>
+      </>
+    )}
+  </select>
+
+  {/* Date Filter */}
+  <select
+    value={dateFilter}
+    onChange={(e) => {
+      setDateFilter(e.target.value);
+      setFromDate("");
+      setToDate("");
+    }}
+    className="border px-4 py-2 rounded-xl bg-white"
+  >
+    <option value="All">All Dates</option>
+    <option value="Today">Today</option>
+    <option value="Last7Days">Last 7 Days</option>
+    <option value="Custom">Custom Range</option>
+  </select>
+
+  {/* Custom Range */}
+  {dateFilter === "Custom" && (
+    <>
+      <input
+        type="date"
+        value={fromDate}
+        max={toDate || undefined}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (toDate && selected > toDate) setToDate("");
+          setFromDate(selected);
+        }}
+        className="border px-3 py-2 rounded-xl"
+      />
+
+      <span>to</span>
+
+      <input
+        type="date"
+        value={toDate}
+        min={fromDate || undefined}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (fromDate && selected < fromDate) return;
+          setToDate(selected);
+        }}
+        className="border px-3 py-2 rounded-xl"
+      />
+    </>
+  )}
+</div>
               <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
                 <Download size={20} /> Export
               </button>
@@ -306,8 +545,8 @@ export default function DeliveryBoyDetails() {
               </thead>
 
               <tbody>
-                {tabData?.data
-                  ?.filter((txn) => {
+                {filteredRevenue
+                  .filter((txn) => {
                     const term = searchTerm.toLowerCase();
 
                     return (
@@ -363,9 +602,87 @@ export default function DeliveryBoyDetails() {
               <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
               </button>
-              <button className='border-brand-cyan border-[1px] font-semibold text-brand-navy px-3 py-3 rounded-2xl flex justify-center gap-2 items-center'>
-                <p>Today’s</p> <ChevronDown size={20} />
-              </button>
+            <div className="flex flex-wrap gap-3 items-center">
+
+  {/* Status Filter */}
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+    className="border px-4 py-2 rounded-xl bg-white"
+  >
+    <option value="All">All Status</option>
+
+    {activeTab === "attendance" && (
+      <>
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="HalfDay">HalfDay</option>
+      </>
+    )}
+
+    {activeTab === "orders" && (
+      <>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Rejected">Rejected</option>
+      </>
+    )}
+
+    {activeTab === "revenue" && (
+      <>
+        <option value="Credit">Credit</option>
+        <option value="Debit">Debit</option>
+      </>
+    )}
+  </select>
+
+  {/* Date Filter */}
+  <select
+    value={dateFilter}
+    onChange={(e) => {
+      setDateFilter(e.target.value);
+      setFromDate("");
+      setToDate("");
+    }}
+    className="border px-4 py-2 rounded-xl bg-white"
+  >
+    <option value="All">All Dates</option>
+    <option value="Today">Today</option>
+    <option value="Last7Days">Last 7 Days</option>
+    <option value="Custom">Custom Range</option>
+  </select>
+
+  {/* Custom Range */}
+  {dateFilter === "Custom" && (
+    <>
+      <input
+        type="date"
+        value={fromDate}
+        max={toDate || undefined}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (toDate && selected > toDate) setToDate("");
+          setFromDate(selected);
+        }}
+        className="border px-3 py-2 rounded-xl"
+      />
+
+      <span>to</span>
+
+      <input
+        type="date"
+        value={toDate}
+        min={fromDate || undefined}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (fromDate && selected < fromDate) return;
+          setToDate(selected);
+        }}
+        className="border px-3 py-2 rounded-xl"
+      />
+    </>
+  )}
+</div>
               <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
                 <Download size={20} /> Export
               </button>
@@ -374,7 +691,7 @@ export default function DeliveryBoyDetails() {
 
           {/* Orders List */}
           <div className="space-y-4">
-            {orders.map((order) => {
+            {filteredOrders.map((order) => {
 
               const isOngoing = order.deliveryStatus === "Ongoing";
               const isDelivered = order.deliveryStatus === "Delivered";
