@@ -2,16 +2,37 @@ import { FaSearch, FaTrash, FaEye } from "react-icons/fa";
 import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
-import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
+import {useGetOrdersByStatusAssignQuery } from "../../Redux/apis/ordersApi";
 import {
   useGetAllDeliveryBoysQuery,
   useGetAssignDeliveryBoysMutation
 } from "../../Redux/apis/deliveryApi";
-import { useState } from "react";
+import { useState,useEffect } from "react";
+import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
+import OrderDetailsModal from "../Orders/OrderdetailedModal";
 
 export default function UsersTable() {
-  const { data, isLoading, isError } = useGetOrdersByStatusQuery("Confirmed");
+  const { data, isLoading, isError } = useGetOrdersByStatusAssignQuery("Assigned");
+  const [getOrderById, { data: orderData, isLoading: Loader }] = useGetOrdersByIdMutation();
   const users = data?.orders || [];
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 6;
+
+  // Pagination Logic
+const totalPages = Math.ceil(users.length / ordersPerPage);
+
+const indexOfLastOrder = currentPage * ordersPerPage;
+const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+
+const currentOrders = users.slice(
+  indexOfFirstOrder,
+  indexOfLastOrder
+);
+
+// Reset to page 1 when orders change
+useState(() => {
+  setCurrentPage(1);
+}, [users.length]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -137,7 +158,7 @@ export default function UsersTable() {
             {/* ✅ Actual Data */}
             {!isLoading &&
               !isError &&
-              users.map((u) => (
+              currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input type="checkbox" />
@@ -176,13 +197,14 @@ export default function UsersTable() {
                   
                   <td className="p-3">
                     <button
-                      onClick={() => {
+                      className="p-1 text-blue-900"
+                      title="View"
+                      onClick={async () => {
                         setSelectedOrderId(u._id);
-                        setIsModalOpen(true);
+                        await getOrderById(u._id);
                       }}
-                      className="bg-blue-950 text-white px-3 py-1 rounded"
                     >
-                      Send To Delivery
+                      <FaEye size={18} />
                     </button>
                   </td>
                 </tr>
@@ -190,43 +212,77 @@ export default function UsersTable() {
           </tbody>
         </table>
 
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg w-[400px] max-h-[500px] overflow-y-auto">
-
-              <h2 className="text-lg font-semibold mb-4">
-                Select Delivery Boy
-              </h2>
-
-              {isLoading ? (
-                <p>Loading...</p>
-              ) : (
-                deliveryData?.data?.map((boy) => (
-                  <div
-                    key={boy._id}
-                    onClick={() => handleAssign(boy._id)}
-                    className="border p-3 rounded mb-2 cursor-pointer hover:bg-gray-100"
-                  >
-                    <p className="font-medium">{boy.Name}</p>
-                    <p className="text-sm text-gray-500">
-                      Orders: {boy.completeOrders}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Status: {boy.deliveryBoyAvailable}
-                    </p>
-                  </div>
-                ))
-              )}
-
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="mt-4 bg-red-500 text-white px-3 py-1 rounded"
-              >
-                Close
-              </button>
-            </div>
-          </div>
+         {selectedOrderId && (
+          <OrderDetailsModal
+            order={orderData?.order}
+            loading={isLoading}
+            onClose={() => setSelectedOrderId(null)}
+          />
         )}
+
+        {/* Pagination */}
+{users.length > ordersPerPage && (
+  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+
+    {/* Showing Info */}
+    <p className="text-sm text-gray-600">
+      Showing {indexOfFirstOrder + 1} to{" "}
+      {Math.min(indexOfLastOrder, users.length)} of{" "}
+      {users.length} orders
+    </p>
+
+    {/* Buttons */}
+    <div className="flex items-center gap-2">
+
+      {/* Prev */}
+      <button
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === 1
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Prev
+      </button>
+
+      {/* Page Numbers */}
+      {[...Array(totalPages)].map((_, index) => {
+        const page = index + 1;
+        return (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              ${currentPage === page
+                ? "bg-[#00E5B0] text-white shadow-md"
+                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+              }`}
+          >
+            {page}
+          </button>
+        );
+      })}
+
+      {/* Next */}
+      <button
+        onClick={() =>
+          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+        }
+        disabled={currentPage === totalPages}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === totalPages
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Next
+      </button>
+
+    </div>
+  </div>
+)}
       </div>
     </>
   );

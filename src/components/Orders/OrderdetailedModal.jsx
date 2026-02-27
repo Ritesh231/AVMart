@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 function OrderDetailsModal({ order, loading, onClose }) {
   if (!order && !loading) return null;
 
-  const statusFlow = ["ordered", "assigned", "ongoing", "delivered"];
+  const statusFlow = ["ordered", "assigned",  "dispatched", "ongoing", "delivered"];
 
   const currentIndex = statusFlow.indexOf(
   order?.rawOrderStatus?.toLowerCase()

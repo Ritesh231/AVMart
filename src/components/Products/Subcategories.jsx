@@ -7,23 +7,29 @@ import { useGetallSubcategoriesQuery,useDeleteSubcategoryMutation } from "../../
 import EditSubcategoryModal from "../../components/Products/EditSubcategoryModal";
 import { useState } from "react";
 
-const users = Array.from({ length: 6 }).map((_, i) => ({
-  id: "#12345",
-  name: "Face Care",
-  price: "450",
-  placed: "20/12/2025",
-  items: [
-    "/images/item1.png",
-  ],
-  categoryname: "Online",
-  products: "145",
-  action: "Send to Delivery",
-}));
-
 export default function UsersTable() {  
   const { data, isLoading, isError } = useGetallSubcategoriesQuery();
   const [deleteSubcategory,{ isLoading: isDeleting } ]=useDeleteSubcategoryMutation();
   const subcategory = data?.data || [];
+
+       const [currentPage, setCurrentPage] = useState(1);
+        const ordersPerPage = 6;
+      
+        // Pagination Logic
+      const totalPages = Math.ceil(subcategory.length / ordersPerPage);
+      
+      const indexOfLastOrder = currentPage * ordersPerPage;
+      const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+      
+      const currentOrders = subcategory.slice(
+        indexOfFirstOrder,
+        indexOfLastOrder
+      );
+      
+      // Reset to page 1 when orders change
+      useState(() => {
+        setCurrentPage(1);
+      }, [subcategory.length]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -141,7 +147,7 @@ export default function UsersTable() {
                 </tr>
               ))
             ) : (
-            filteredSubcategories.map((u) => (
+           currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50 ">
                   <td className="p-3">
                     <input type="checkbox" />
@@ -195,6 +201,71 @@ export default function UsersTable() {
   onClose={() => setIsModalOpen(false)}
   subcategoryData={selectedSubcategory}
 />
+
+
+    {/* Pagination */}
+{subcategory.length > ordersPerPage && (
+  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+
+    {/* Showing Info */}
+    <p className="text-sm text-gray-600">
+      Showing {indexOfFirstOrder + 1} to{" "}
+      {Math.min(indexOfLastOrder, subcategory.length)} of{" "}
+      {subcategory.length} orders
+    </p>
+
+    {/* Buttons */}
+    <div className="flex items-center gap-2">
+
+      {/* Prev */}
+      <button
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === 1
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Prev
+      </button>
+
+      {/* Page Numbers */}
+      {[...Array(totalPages)].map((_, index) => {
+        const page = index + 1;
+        return (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              ${currentPage === page
+                ? "bg-[#00E5B0] text-white shadow-md"
+                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+              }`}
+          >
+            {page}
+          </button>
+        );
+      })}
+
+      {/* Next */}
+      <button
+        onClick={() =>
+          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+        }
+        disabled={currentPage === totalPages}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === totalPages
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Next
+      </button>
+
+    </div>
+  </div>
+)}
 
       </div>
     </>

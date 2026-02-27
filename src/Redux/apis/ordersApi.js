@@ -9,13 +9,21 @@ export const Orderapi = baseApi.injectEndpoints({
       providesTags: ["Orders"],
     }),
 
+     getOrdersByStatusAssign: builder.query({
+      query: (status) => ({
+        url: `api/v1/delivery/get/all?deliveryStatus=${status}`,
+      }),
+      providesTags: ["Orders"],
+    }),
+
+
     getOrdersById: builder.mutation({
       query: (id) => ({
         url: `api/v1/delivery/getorder/${id}`
       }),
       providesTags: ["Orders"],
     }),
-
+    
     getOrderDetailsById:builder.mutation({
       query:(id)=>({
         url:`/api/v1/profile/getUserDetail/${id}`
@@ -35,4 +43,5 @@ export const Orderapi = baseApi.injectEndpoints({
 });
 
 export const { useGetOrdersByStatusQuery, useGetOrdersByIdMutation, 
-  useAssignOrderStatusMutation, useGetOrderDetailsByIdMutation } = Orderapi;
+  useAssignOrderStatusMutation, useGetOrderDetailsByIdMutation,
+useGetOrdersByStatusAssignQuery } = Orderapi;

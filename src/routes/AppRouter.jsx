@@ -60,9 +60,8 @@ const AddBanner=lazy(()=>import("../components/Offers/AddBanner"));
 /*Wallet*/
 const WalletTable = lazy(() => import("../components/Wallet/TotalBalanceTable"));
 
-
 const Loader = () => (
-  <div className="flex items-center justify-center h-screen bg-gradient-to-br from-brand-navy via-white to-black">
+  <div className="flex items-center justify-center h-screen bg-white">
     
     <div className="flex flex-col items-center gap-6">
       
@@ -113,7 +112,7 @@ export default function AppRouter() {
           <Route path="/orders" element={<Orders />}>
             <Route index element={<Navigate to="pending" replace />} />
             <Route path="pending" element={<OrderPending />} />
-            <Route path="confirmed" element={<OrderConfirmed />} />
+            <Route path="assigned" element={<OrderConfirmed />} />
             <Route path="out-for-delivery" element={<OrderOutForDelivery />} />
             <Route path="delivered" element={<OrderDelivered />} />
             <Route path="rejected" element={<OrderRejected />} />

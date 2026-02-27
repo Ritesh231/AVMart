@@ -1,5 +1,5 @@
 import { FaSearch, FaTrash, FaEye, FaCheck, FaTimes } from "react-icons/fa";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import { useGetallqueriesQuery, useMarkasContactedMutation, useDeleteQueryMutation } from "../../Redux/apis/queryApi";
 import { useLocation } from "react-router-dom";
@@ -48,6 +48,24 @@ export default function UsersTable() {
             toast.error("Error to delete Query", err);
         }
     }
+
+    const [currentPage, setCurrentPage] = useState(1);
+const queriesPerPage = 6;
+
+// Pagination Logic
+const totalPages = Math.ceil(queries.length / queriesPerPage);
+
+const indexOfLastQuery = currentPage * queriesPerPage;
+const indexOfFirstQuery = indexOfLastQuery - queriesPerPage;
+
+const currentQueries = queries.slice(
+  indexOfFirstQuery,
+  indexOfLastQuery
+);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [statusFilter, queries.length]);
 
     return (
         <>
@@ -134,7 +152,7 @@ export default function UsersTable() {
                                     Failed to load queries.
                                 </td>
                             </tr>
-                        ) : queries.length === 0 ? (
+                        ) : currentQueries.length === 0 ? (
                             // No Data Found
                             <tr>
                                 <td colSpan="7" className="text-center p-6 text-red-500">
@@ -144,7 +162,7 @@ export default function UsersTable() {
                                 </td>
                             </tr>
                         ) : (
-                            queries.map((u) => (
+                           currentQueries.map((u) => (
                                 <tr key={u._id} className="border-t hover:bg-gray-50">
                                     <td className="p-3">
                                         <input type="checkbox" />
@@ -206,6 +224,71 @@ export default function UsersTable() {
                         )}
                     </tbody>
                 </table>
+
+                {/* Pagination */}
+{queries.length > queriesPerPage && (
+  <div className="flex justify-between items-center mt-6 px-4 py-4 border-t bg-white">
+
+    {/* Showing Info */}
+    <p className="text-sm text-gray-600">
+      Showing{" "}
+      {queries.length === 0 ? 0 : indexOfFirstQuery + 1} to{" "}
+      {Math.min(indexOfLastQuery, queries.length)} of{" "}
+      {queries.length} queries
+    </p>
+
+    {/* Buttons */}
+    <div className="flex items-center gap-2">
+
+      {/* Prev */}
+      <button
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === 1
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1A2550] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Prev
+      </button>
+
+      {/* Page Numbers */}
+      {[...Array(totalPages)].map((_, index) => {
+        const page = index + 1;
+        return (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              ${currentPage === page
+                ? "bg-[#00E5B0] text-white shadow-md"
+                : "bg-gray-100 text-[#1A2550] hover:bg-gray-200"
+              }`}
+          >
+            {page}
+          </button>
+        );
+      })}
+
+      {/* Next */}
+      <button
+        onClick={() =>
+          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+        }
+        disabled={currentPage === totalPages}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === totalPages
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1A2550] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Next
+      </button>
+
+    </div>
+  </div>
+)}
             </div>
         </>
     );

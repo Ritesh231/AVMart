@@ -31,6 +31,10 @@ const OrderDetails = () => {
 
   const orders = data?.data?.recentOrders || [];
 
+    const assignedOrders = orders.filter(
+    (order) => order.status === "assigned"
+  );
+
   const ongoingOrders = orders.filter(
     (order) => order.status !== "delivered"
   );

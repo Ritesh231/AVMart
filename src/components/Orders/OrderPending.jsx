@@ -29,6 +29,26 @@ export default function UsersTable() {
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
   const [selectedBoyId, setSelectedBoyId] = useState(null);
+  
+
+   const [currentPage, setCurrentPage] = useState(1);
+    const ordersPerPage = 6;
+  
+    // Pagination Logic
+  const totalPages = Math.ceil(users.length / ordersPerPage);
+  
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  
+  const currentOrders = users.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+  
+  // Reset to page 1 when orders change
+  useState(() => {
+    setCurrentPage(1);
+  }, [users.length]);
 
   const [
     assignOrderStatus,
@@ -200,7 +220,7 @@ export default function UsersTable() {
             {/* 🔹 Data Rows */}
             {!isLoading &&
               !isError &&
-              users.map((u) => (
+              currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input type="checkbox" />
@@ -327,6 +347,69 @@ export default function UsersTable() {
             </div>
           </div>
         )}
+                {/* Pagination */}
+{users.length > ordersPerPage && (
+  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+
+    {/* Showing Info */}
+    <p className="text-sm text-gray-600">
+      Showing {indexOfFirstOrder + 1} to{" "}
+      {Math.min(indexOfLastOrder, users.length)} of{" "}
+      {users.length} orders
+    </p>
+
+    {/* Buttons */}
+    <div className="flex items-center gap-2">
+
+      {/* Prev */}
+      <button
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === 1
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Prev
+      </button>
+
+      {/* Page Numbers */}
+      {[...Array(totalPages)].map((_, index) => {
+        const page = index + 1;
+        return (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              ${currentPage === page
+                ? "bg-[#00E5B0] text-white shadow-md"
+                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+              }`}
+          >
+            {page}
+          </button>
+        );
+      })}
+
+      {/* Next */}
+      <button
+        onClick={() =>
+          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+        }
+        disabled={currentPage === totalPages}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === totalPages
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Next
+      </button>
+
+    </div>
+  </div>
+)}
       </div>
     </>
   );

@@ -19,6 +19,8 @@ export default function UsersTable() {
   const { data, isLoading, isError } = useGetallusersQuery();
   const users = data?.data || [];
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 6;
 
   const filteredUsers = users.filter((user) => {
     const matchesStatus = user.status === activeTab;
@@ -30,6 +32,21 @@ export default function UsersTable() {
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
+
+      // Pagination Logic
+const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+const indexOfLastUser = currentPage * usersPerPage;
+const indexOfFirstUser = indexOfLastUser - usersPerPage;
+
+const currentUsers = filteredUsers.slice(
+  indexOfFirstUser,
+  indexOfLastUser
+);
+
+React.useEffect(() => {
+  setCurrentPage(1);
+}, [activeTab, searchTerm]);
 
   const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
   const [deleteStatus, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -177,7 +194,7 @@ export default function UsersTable() {
                 </td>
               </tr>
             ) : (
-              filteredUsers.map((u) => (
+            currentUsers.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input type="checkbox" />
@@ -261,6 +278,70 @@ export default function UsersTable() {
             )}
           </tbody>
         </table>
+
+        {/* Pagination */}
+{filteredUsers.length > usersPerPage && (
+  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white rounded-xl border">
+    
+    {/* Showing Info */}
+    <p className="text-sm text-gray-600">
+      Showing {indexOfFirstUser + 1} to{" "}
+      {Math.min(indexOfLastUser, filteredUsers.length)} of{" "}
+      {filteredUsers.length} users
+    </p>
+
+    {/* Pagination Buttons */}
+    <div className="flex items-center gap-2">
+
+      {/* Previous */}
+      <button
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === 1
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Prev
+      </button>
+
+      {/* Page Numbers */}
+      {[...Array(totalPages)].map((_, index) => {
+        const page = index + 1;
+        return (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              ${currentPage === page
+                ? "bg-[#00E5B0] text-white shadow-md"
+                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+              }`}
+          >
+            {page}
+          </button>
+        );
+      })}
+
+      {/* Next */}
+      <button
+        onClick={() =>
+          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+        }
+        disabled={currentPage === totalPages}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === totalPages
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Next
+      </button>
+
+    </div>
+  </div>
+)}
       </div >
     </>
   );

@@ -13,6 +13,25 @@ const products = Array.from({ length: 20 });
 const ProductGrid = () => {
     const { data, isLoading, isError } = useGetallproductsQuery();
     const products = data?.data || [];
+    
+         const [currentPage, setCurrentPage] = useState(1);
+        const ordersPerPage = 10;
+      
+        // Pagination Logic
+      const totalPages = Math.ceil( products.length / ordersPerPage);
+      
+      const indexOfLastOrder = currentPage * ordersPerPage;
+      const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+      
+      const currentOrders =  products.slice(
+        indexOfFirstOrder,
+        indexOfLastOrder
+      );
+      
+      // Reset to page 1 when orders change
+      useState(() => {
+        setCurrentPage(1);
+      }, [ products.length]);
     const navigate = useNavigate();
 
     const [deleteproduct, { isLoading: isDeleting }] = useDeleteProductMutation();
@@ -108,7 +127,7 @@ const ProductGrid = () => {
             {/* 🔹 Products Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
 
-                {filteredProducts.map((product) => {
+                {currentOrders.map((product) => {
                     const firstVariant = product.variants?.[0];
 
                     return (
@@ -201,6 +220,70 @@ const ProductGrid = () => {
                 productData={selectedProduct}
             />
 
+
+    {/* Pagination */}
+{products.length > ordersPerPage && (
+  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+
+    {/* Showing Info */}
+    <p className="text-sm text-gray-600">
+      Showing {indexOfFirstOrder + 1} to{" "}
+      {Math.min(indexOfLastOrder,  products.length)} of{" "}
+      { products.length} orders
+    </p>
+
+    {/* Buttons */}
+    <div className="flex items-center gap-2">
+
+      {/* Prev */}
+      <button
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === 1
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Prev
+      </button>
+
+      {/* Page Numbers */}
+      {[...Array(totalPages)].map((_, index) => {
+        const page = index + 1;
+        return (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              ${currentPage === page
+                ? "bg-[#00E5B0] text-white shadow-md"
+                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+              }`}
+          >
+            {page}
+          </button>
+        );
+      })}
+
+      {/* Next */}
+      <button
+        onClick={() =>
+          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+        }
+        disabled={currentPage === totalPages}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+          ${currentPage === totalPages
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-[#1E264F] text-white hover:bg-opacity-90"
+          }`}
+      >
+        Next
+      </button>
+
+    </div>
+  </div>
+)}
         </div>
     );
 };
