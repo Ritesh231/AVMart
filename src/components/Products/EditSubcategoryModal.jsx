@@ -71,7 +71,7 @@ export default function EditSubcategoryModal({
         console.log("Image Size (bytes):", formData.image.size);
       } else {
         console.log("No image selected");
-        console.log("Selected Image File:", formData.image);
+
       }
 
       await editSubcategory({

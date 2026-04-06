@@ -9,7 +9,7 @@ export default function MainBanner() {
   // ✅ Get activeTab from parent (Offers)
   const { activeTab } = useOutletContext();
 
-  
+
 
   /******************** API *****************************/
   const { data, isLoading, isError, refetch } = useGetallbannersQuery();
@@ -23,12 +23,16 @@ export default function MainBanner() {
   );
 
   console.log(banners);
-  
-  const handleDelete = async (id) => {
+
+  const handleDelete = async (id, type) => {
     if (!window.confirm("Delete this Banner?")) return;
 
+    console.log("ID:", id);
+    console.log("TYPE:", type);
+    console.log("TYPE OF ID:", typeof id);
+
     try {
-      await deleteBanner(id).unwrap();
+      await deleteBanner({ id, type }).unwrap();
       toast.success("Banner deleted successfully");
       refetch();
     } catch (err) {
@@ -75,7 +79,7 @@ export default function MainBanner() {
 
             <div className="absolute bottom-0 left-0 w-full flex justify-center pb-2">
               <button
-                onClick={() => handleDelete(banner._id)}
+                onClick={() => handleDelete(banner._id, banner.bannerType)}
                 className="bg-white/90 p-2 rounded-full text-red-600 shadow-md
                            hover:bg-red-600 hover:text-white transition"
               >
