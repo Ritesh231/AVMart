@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Phone,
@@ -27,6 +27,9 @@ export default function DeliveryBoyDetails() {
   const [activeTab, setActiveTab] = useState("attendance");
   const [openOrderId, setOpenOrderId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const selectAllRef = useRef(null);
   const { id } = useParams();
   const { data, isLoading, isError } = useGetdeliveryProfileQuery(id);
   const profile = data?.data || [];
@@ -150,6 +153,191 @@ const applyDateFilter = (data, dateField = "date") => {
 
     return matchesSearch && matchesStatus;
   });
+
+  const currentTabData =
+    activeTab === "attendance"
+      ? filteredAttendance
+      : activeTab === "revenue"
+      ? filteredRevenue
+      : filteredOrders;
+
+  const getItemId = (item) =>
+    item?._id || item?.transactionId || item?.orderId || item?.date;
+
+  useEffect(() => {
+    setSelectedIds([]);
+    setIsExportMenuOpen(false);
+  }, [activeTab, searchTerm, statusFilter, dateFilter, fromDate, toDate, tabData]);
+
+  const selectedFilteredCount = currentTabData.filter((item) =>
+    selectedIds.includes(getItemId(item))
+  ).length;
+  const isAllSelected =
+    currentTabData.length > 0 && selectedFilteredCount === currentTabData.length;
+  const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
+
+  const toggleSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedIds(currentTabData.map((item) => getItemId(item)));
+      return;
+    }
+    setSelectedIds([]);
+  };
+
+  const getRowsForExport = () => {
+    const selectedRows = currentTabData.filter((item) =>
+      selectedIds.includes(getItemId(item))
+    );
+    const sourceRows = selectedRows.length ? selectedRows : currentTabData;
+    if (!sourceRows.length) return [];
+
+    if (activeTab === "attendance") {
+      return sourceRows.map((item) => ({
+        Date: item.date?.split("T")[0] || "-",
+        "Check In": item.checkIn || "-",
+        "Check Out": item.checkOut || "-",
+        "Working Hours": item.workingHours || "-",
+        Status: item.status || "-"
+      }));
+    }
+
+    if (activeTab === "revenue") {
+      return sourceRows.map((txn) => ({
+        "Transaction ID": txn.transactionId || "-",
+        "Order ID": txn.orderId || "-",
+        Date: txn.date || "-",
+        Type: txn.type || "-",
+        Amount: txn.amount ?? "-",
+        Description: txn.description || "-"
+      }));
+    }
+
+    return sourceRows.map((order) => ({
+      "Order ID": order._id?.slice(-6).toUpperCase() || "-",
+      Status: order.deliveryStatus || "-",
+      Date: order.date || "-",
+      "Grand Total": order.grandTotal ?? "-",
+      "Payment Method": order.paymentMethod || "-"
+    }));
+  };
+
+  const downloadBlob = (content, fileName, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToExcel = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+    ].join("\n");
+    downloadBlob(csv, `delivery_${activeTab}_export.csv`, "text/csv;charset=utf-8;");
+    setIsExportMenuOpen(false);
+  };
+
+  const toSafeHtml = (value) =>
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const getExportHtml = (title) => {
+    const rows = getRowsForExport();
+    if (!rows.length) return "";
+    const headers = Object.keys(rows[0]);
+    const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr>${headers
+            .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
+            .join("")}</tr>`
+      )
+      .join("");
+    return `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>${toSafeHtml(title)}</h2>
+          <table border="1" cellspacing="0" cellpadding="6">
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>`;
+  };
+
+  const exportToDoc = () => {
+    const html = getExportHtml(`Delivery Boy ${activeTab} Export`);
+    if (!html) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    downloadBlob(html, `delivery_${activeTab}_export.doc`, "application/msword");
+    setIsExportMenuOpen(false);
+  };
+
+  const exportToPdf = () => {
+    const html = getExportHtml(`Delivery Boy ${activeTab} Export`);
+    if (!html) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Delivery Boy ${activeTab} Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { margin-bottom: 12px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    setIsExportMenuOpen(false);
+  };
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -279,6 +467,15 @@ const applyDateFilter = (data, dateField = "date") => {
 
             {/* Export Button */}
             <div className='flex justify-evenly gap-2 items-center'>
+              <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+                Select All
+              </label>
               <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
               </button>
@@ -363,9 +560,36 @@ const applyDateFilter = (data, dateField = "date") => {
     </>
   )}
 </div>
-              <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-                <Download size={20} /> Export
-              </button>
+              <div className="relative">
+                <button
+                  className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+                  onClick={() => setIsExportMenuOpen((prev) => !prev)}
+                >
+                  <Download size={20} /> Export
+                </button>
+                {isExportMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                    <button
+                      onClick={exportToPdf}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    >
+                      PDF
+                    </button>
+                    <button
+                      onClick={exportToDoc}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    >
+                      DOC
+                    </button>
+                    <button
+                      onClick={exportToExcel}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    >
+                      Excel
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -373,6 +597,7 @@ const applyDateFilter = (data, dateField = "date") => {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
+                  <th className="text-left px-6 py-3"></th>
                   <th className="text-left px-6 py-3">Date</th>
                   <th className="text-left px-6 py-3">Check In</th>
                   <th className="text-left px-6 py-3">Check Out</th>
@@ -394,6 +619,13 @@ const applyDateFilter = (data, dateField = "date") => {
                   })
                   ?.map((item) => (
                     <tr key={item._id} className="border-t">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(getItemId(item))}
+                          onChange={() => toggleSelection(getItemId(item))}
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         {item.date?.split("T")[0]}
                       </td>
@@ -440,6 +672,15 @@ const applyDateFilter = (data, dateField = "date") => {
 
             {/* Export Button */}
             <div className='flex justify-evenly gap-2 items-center'>
+              <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-3 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+                Select All
+              </label>
               <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
               </button>
@@ -524,9 +765,21 @@ const applyDateFilter = (data, dateField = "date") => {
     </>
   )}
 </div>
-              <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-                <Download size={20} /> Export
-              </button>
+              <div className="relative">
+                <button
+                  className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+                  onClick={() => setIsExportMenuOpen((prev) => !prev)}
+                >
+                  <Download size={20} /> Export
+                </button>
+                {isExportMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                    <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">PDF</button>
+                    <button onClick={exportToDoc} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">DOC</button>
+                    <button onClick={exportToExcel} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Excel</button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -535,6 +788,7 @@ const applyDateFilter = (data, dateField = "date") => {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
+                  <th className="text-left px-6 py-3"></th>
                   <th className="text-left px-6 py-3">Transaction ID</th>
                   <th className="text-left px-6 py-3">Order ID</th>
                   <th className="text-left px-6 py-3">Date</th>
@@ -558,6 +812,13 @@ const applyDateFilter = (data, dateField = "date") => {
                   })
                   ?.map((txn) => (
                     <tr key={txn._id} className="border-t">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(getItemId(txn))}
+                          onChange={() => toggleSelection(getItemId(txn))}
+                        />
+                      </td>
                       <td className="px-6 py-4">{txn.transactionId}</td>
                       <td className="px-6 py-4">{txn.orderId}</td>
                       <td className="px-6 py-4">{txn.date}</td>
@@ -599,6 +860,15 @@ const applyDateFilter = (data, dateField = "date") => {
 
             {/* Export Button */}
             <div className='flex justify-evenly gap-2 items-center'>
+              <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+                Select All
+              </label>
               <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
               </button>
@@ -683,9 +953,21 @@ const applyDateFilter = (data, dateField = "date") => {
     </>
   )}
 </div>
-              <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-                <Download size={20} /> Export
-              </button>
+              <div className="relative">
+                <button
+                  className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+                  onClick={() => setIsExportMenuOpen((prev) => !prev)}
+                >
+                  <Download size={20} /> Export
+                </button>
+                {isExportMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                    <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">PDF</button>
+                    <button onClick={exportToDoc} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">DOC</button>
+                    <button onClick={exportToExcel} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Excel</button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -705,6 +987,12 @@ const applyDateFilter = (data, dateField = "date") => {
                     onClick={() => toggleOrder(order._id)}
                   >
                     <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(getItemId(order))}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => toggleSelection(getItemId(order))}
+                      />
 
                       {/* Dynamic Status Icon */}
                       {isOngoing && (

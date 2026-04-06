@@ -2,21 +2,23 @@ import React, { useState } from "react";
 import {
   useAddSubcategoryMutation,
   useGetallcategoriesQuery,
-} from "../../Redux/apis/productsApi"; 
+} from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export default function AddSubcategory() {
   const [addSubcategory, { isLoading }] = useAddSubcategoryMutation();
   const { data: categoryData } = useGetallcategoriesQuery();
-    
+  const navigate = useNavigate();
+
   const categories = categoryData?.data || [];
-  
+
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
     image: null,
   });
-  
+
   const [preview, setPreview] = useState(null);
 
   /* -------------------- Handlers -------------------- */
@@ -52,6 +54,7 @@ export default function AddSubcategory() {
       await addSubcategory(data).unwrap();
 
       toast.success("Subcategory Added Successfully ✅");
+      navigate("/products/subcategories");
 
       // Reset form
       setFormData({

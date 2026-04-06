@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import {useAddCategoryMutation } from "../../Redux/apis/productsApi"; 
+import { useAddCategoryMutation } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export default function AddCategory() {
   const [addCategory, { isLoading }] = useAddCategoryMutation();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -11,7 +13,7 @@ export default function AddCategory() {
     GstRate: "",
     image: null,
   });
-  
+
   const [preview, setPreview] = useState(null);
 
   /* -------------------- Handlers -------------------- */
@@ -44,6 +46,7 @@ export default function AddCategory() {
       await addCategory(data).unwrap();
 
       toast.success("Category Added Successfully ✅");
+      navigate("/products/categories");
 
       // Reset form
       setFormData({

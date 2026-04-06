@@ -1,6 +1,6 @@
-import { FaSearch, FaTrash, FaEye, FaCheck, FaTimes } from "react-icons/fa";
-import { useState,useEffect } from "react";
-import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
+import { FaTrash } from "react-icons/fa";
+import { useState, useEffect, useRef } from "react";
+import { Download, Search, SlidersHorizontal } from 'lucide-react'
 import { useGetallqueriesQuery, useMarkasContactedMutation, useDeleteQueryMutation } from "../../Redux/apis/queryApi";
 import { useLocation } from "react-router-dom";
 
@@ -12,6 +12,10 @@ export default function UsersTable() {
     const [dateFilter, setDateFilter] = useState("Last7Days");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedQueryIds, setSelectedQueryIds] = useState([]);
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const selectAllRef = useRef(null);
     
     const location = useLocation();
     let statusFilter = "Pending";
@@ -60,6 +64,10 @@ const filteredByDate = allQueries.filter((q) => {
   return true;
 });
 
+const filteredQueries = filteredByDate.filter((q) =>
+  JSON.stringify(q || {}).toLowerCase().includes(searchTerm.toLowerCase())
+);
+
     const handleMarkAsContacted = async (id) => {
         try {
             setUpdatingId(id);
@@ -85,23 +93,181 @@ const filteredByDate = allQueries.filter((q) => {
         }
     }
 
-    const [currentPage, setCurrentPage] = useState(1);
+const [currentPage, setCurrentPage] = useState(1);
 const queriesPerPage = 6;
 
 // Pagination Logic
-const totalPages = Math.ceil(filteredByDate.length / queriesPerPage);
+const totalPages = Math.ceil(filteredQueries.length / queriesPerPage);
 
 const indexOfLastQuery = currentPage * queriesPerPage;
 const indexOfFirstQuery = indexOfLastQuery - queriesPerPage;
 
-const currentQueries = filteredByDate.slice(
+const currentQueries = filteredQueries.slice(
   indexOfFirstQuery,
   indexOfLastQuery
 );
 
 useEffect(() => {
   setCurrentPage(1);
-}, [statusFilter, filteredByDate.length]);
+}, [statusFilter, filteredQueries.length, searchTerm, dateFilter, fromDate, toDate]);
+
+useEffect(() => {
+  setSelectedQueryIds([]);
+}, [statusFilter, filteredQueries.length, searchTerm, dateFilter, fromDate, toDate]);
+
+const selectedFilteredCount = filteredQueries.filter((q) =>
+  selectedQueryIds.includes(q._id)
+).length;
+const isAllSelected =
+  filteredQueries.length > 0 && selectedFilteredCount === filteredQueries.length;
+const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+useEffect(() => {
+  if (selectAllRef.current) {
+    selectAllRef.current.indeterminate = isSomeSelected;
+  }
+}, [isSomeSelected]);
+
+const toggleQuerySelection = (id) => {
+  setSelectedQueryIds((prev) =>
+    prev.includes(id) ? prev.filter((queryId) => queryId !== id) : [...prev, id]
+  );
+};
+
+const toggleSelectAll = (checked) => {
+  if (checked) {
+    setSelectedQueryIds(filteredQueries.map((q) => q._id));
+    return;
+  }
+  setSelectedQueryIds([]);
+};
+
+const getRowsForExport = () => {
+  const selectedRows = filteredQueries.filter((q) =>
+    selectedQueryIds.includes(q._id)
+  );
+  const sourceRows = selectedRows.length > 0 ? selectedRows : filteredQueries;
+  if (!sourceRows.length) {
+    return [];
+  }
+  return sourceRows.map((q) => ({
+    Name: q.name || "-",
+    Email: q.email || "-",
+    Contact: q.contactNo || "-",
+    Message: q.message || "-",
+    Status: q.status || "-",
+    Date: q.updatedAt?.split("T")[0] || "-"
+  }));
+};
+
+const downloadBlob = (content, fileName, type) => {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const exportToExcel = () => {
+  const rows = getRowsForExport();
+  if (!rows.length) {
+    setIsExportMenuOpen(false);
+    return;
+  }
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(","),
+    ...rows.map((row) =>
+      headers
+        .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+        .join(",")
+    )
+  ].join("\n");
+  downloadBlob(csv, `queries_${statusFilter.toLowerCase()}_export.csv`, "text/csv;charset=utf-8;");
+  setIsExportMenuOpen(false);
+};
+
+const toSafeHtml = (value) =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const getExportHtml = (title) => {
+  const rows = getRowsForExport();
+  if (!rows.length) {
+    return "";
+  }
+  const headers = Object.keys(rows[0]);
+  const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
+  const tableRows = rows
+    .map(
+      (row) =>
+        `<tr>${headers
+          .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
+          .join("")}</tr>`
+    )
+    .join("");
+  return `
+    <html>
+      <head><meta charset="utf-8" /></head>
+      <body>
+        <h2>${toSafeHtml(title)}</h2>
+        <table border="1" cellspacing="0" cellpadding="6">
+          <thead><tr>${tableHead}</tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </body>
+    </html>`;
+};
+
+const exportToDoc = () => {
+  const html = getExportHtml(`${statusFilter} Queries Export`);
+  if (!html) {
+    setIsExportMenuOpen(false);
+    return;
+  }
+  downloadBlob(html, `queries_${statusFilter.toLowerCase()}_export.doc`, "application/msword");
+  setIsExportMenuOpen(false);
+};
+
+const exportToPdf = () => {
+  const html = getExportHtml(`${statusFilter} Queries Export`);
+  if (!html) {
+    setIsExportMenuOpen(false);
+    return;
+  }
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    setIsExportMenuOpen(false);
+    return;
+  }
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${statusFilter} Queries Export</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h2 { margin-bottom: 12px; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  setIsExportMenuOpen(false);
+};
 
     return (
         <>
@@ -115,6 +281,8 @@ useEffect(() => {
                             className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
                             type="text"
                             placeholder='Search By User Name and Phone no'
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
@@ -176,9 +344,36 @@ useEffect(() => {
     </>
   )}
 </div>
-                    <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-                        <Download size={20} /> Export
-                    </button>
+                    <div className="relative">
+                        <button
+                            className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+                            onClick={() => setIsExportMenuOpen((prev) => !prev)}
+                        >
+                            <Download size={20} /> Export
+                        </button>
+                        {isExportMenuOpen && (
+                            <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                                <button
+                                    onClick={exportToPdf}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                >
+                                    PDF
+                                </button>
+                                <button
+                                    onClick={exportToDoc}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                >
+                                    DOC
+                                </button>
+                                <button
+                                    onClick={exportToExcel}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                >
+                                    Excel
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -187,7 +382,14 @@ useEffect(() => {
                 <table className="min-w-[900px] w-full text-sm">
                     <thead className="bg-[#F1F5F9] text-gray-600">
                         <tr>
-                            <th className="p-3"></th>
+                            <th className="p-3">
+                                <input
+                                    ref={selectAllRef}
+                                    type="checkbox"
+                                    checked={isAllSelected}
+                                    onChange={(e) => toggleSelectAll(e.target.checked)}
+                                />
+                            </th>
                             <th className="p-3 text-left">Customer</th>
                             <th className="p-3 text-left">Contact</th>
                             <th className="p-3 text-left">Message</th>
@@ -250,7 +452,11 @@ useEffect(() => {
                            currentQueries.map((u) => (
                                 <tr key={u._id} className="border-t hover:bg-gray-50">
                                     <td className="p-3">
-                                        <input type="checkbox" />
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedQueryIds.includes(u._id)}
+                                            onChange={() => toggleQuerySelection(u._id)}
+                                        />
                                     </td>
 
                                     <td className="p-3">
@@ -311,15 +517,15 @@ useEffect(() => {
                 </table>
 
                 {/* Pagination */}
-{filteredByDate.length > queriesPerPage && (
+{filteredQueries.length > queriesPerPage && (
   <div className="flex justify-between items-center mt-6 px-4 py-4 border-t bg-white">
 
     {/* Showing Info */}
     <p className="text-sm text-gray-600">
       Showing{" "}
-      {filteredByDate.length === 0 ? 0 : indexOfFirstQuery + 1} to{" "}
-      {Math.min(indexOfLastQuery, filteredByDate.length)} of{" "}
-      {filteredByDate.length} queries
+      {filteredQueries.length === 0 ? 0 : indexOfFirstQuery + 1} to{" "}
+      {Math.min(indexOfLastQuery, filteredQueries.length)} of{" "}
+      {filteredQueries.length} queries
     </p>
 
     {/* Buttons */}

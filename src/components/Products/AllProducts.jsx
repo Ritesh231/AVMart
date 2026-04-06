@@ -1,4 +1,4 @@
-import React,{useEffect}from "react";
+import React, { useEffect, useRef } from "react";
 import { ChevronDown, Download, Search, SlidersHorizontal } from 'lucide-react'
 import { FaSearch, FaEdit, FaTrash } from "react-icons/fa";
 import ProductCategoryCards from "../Products/ProductCategorytabs"
@@ -14,8 +14,11 @@ const ProductGrid = () => {
     const { data, isLoading, isError } = useGetallproductsQuery();
     const products = data?.data || [];
     const [selectedCategory, setSelectedCategory] = useState("All");
-       const [selectedProduct, setSelectedProduct] = useState(null);
+    const [selectedProduct, setSelectedProduct] = useState(null);
     const [searchTerm, setSearchTerm] = useState("")
+    const [selectedProductIds, setSelectedProductIds] = useState([]);
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const selectAllRef = useRef(null);
     const uniqueCategories = [
   "All",
   ...new Set(products.map((item) => item.category?.name).filter(Boolean)),
@@ -53,11 +56,29 @@ const ProductGrid = () => {
       useEffect(() => {
   setCurrentPage(1);
 }, [filteredProducts.length]);
+
+  useEffect(() => {
+    setSelectedProductIds([]);
+  }, [filteredProducts.length, searchTerm, selectedCategory]);
     const navigate = useNavigate();
 
     const [deleteproduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const selectedFilteredCount = filteredProducts.filter((item) =>
+      selectedProductIds.includes(item._id)
+    ).length;
+    const isAllSelected =
+      filteredProducts.length > 0 &&
+      selectedFilteredCount === filteredProducts.length;
+    const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+    useEffect(() => {
+      if (selectAllRef.current) {
+        selectAllRef.current.indeterminate = isSomeSelected;
+      }
+    }, [isSomeSelected]);
  
 
     const handleDelete = async (id) => {
@@ -104,6 +125,160 @@ const ProductGrid = () => {
         )
     }
 
+    const toggleProductSelection = (id) => {
+      setSelectedProductIds((prev) =>
+        prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+      );
+    };
+
+    const toggleSelectAll = (checked) => {
+      if (checked) {
+        setSelectedProductIds(filteredProducts.map((item) => item._id));
+        return;
+      }
+      setSelectedProductIds([]);
+    };
+
+    const getRowsForExport = () => {
+      const selectedRows = filteredProducts.filter((item) =>
+        selectedProductIds.includes(item._id)
+      );
+      const sourceRows = selectedRows.length > 0 ? selectedRows : filteredProducts;
+
+      if (!sourceRows.length) {
+        return [];
+      }
+
+      return sourceRows.map((item) => {
+        const firstVariant = item.variants?.[0] || {};
+        return {
+          "Product ID": item._id?.slice(-5) || "-",
+          "Product Name": item.productName || "-",
+          Slug: item.slug || "-",
+          Category: item.category?.name || "-",
+          Price: firstVariant.price ?? firstVariant.originalPrice ?? "-",
+          "Original Price": firstVariant.originalPrice ?? "-",
+          Stock: firstVariant.stock ?? 0,
+          Quantity: firstVariant.quantityValue ?? "-"
+        };
+      });
+    };
+
+    const downloadBlob = (content, fileName, type) => {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+    };
+
+    const exportToExcel = () => {
+      const rows = getRowsForExport();
+      if (!rows.length) {
+        setIsExportMenuOpen(false);
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+      const csv = [
+        headers.join(","),
+        ...rows.map((row) =>
+          headers
+            .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+            .join(",")
+        )
+      ].join("\n");
+
+      downloadBlob(csv, "products_export.csv", "text/csv;charset=utf-8;");
+      setIsExportMenuOpen(false);
+    };
+
+    const toSafeHtml = (value) =>
+      String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const getExportHtml = (title) => {
+      const rows = getRowsForExport();
+      if (!rows.length) {
+        return "";
+      }
+
+      const headers = Object.keys(rows[0]);
+      const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
+      const tableRows = rows
+        .map(
+          (row) =>
+            `<tr>${headers
+              .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
+              .join("")}</tr>`
+        )
+        .join("");
+
+      return `
+        <html>
+          <head><meta charset="utf-8" /></head>
+          <body>
+            <h2>${toSafeHtml(title)}</h2>
+            <table border="1" cellspacing="0" cellpadding="6">
+              <thead><tr>${tableHead}</tr></thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </body>
+        </html>`;
+    };
+
+    const exportToDoc = () => {
+      const html = getExportHtml("Products Export");
+      if (!html) {
+        setIsExportMenuOpen(false);
+        return;
+      }
+      downloadBlob(html, "products_export.doc", "application/msword");
+      setIsExportMenuOpen(false);
+    };
+
+    const exportToPdf = () => {
+      const html = getExportHtml("Products Export");
+      if (!html) {
+        setIsExportMenuOpen(false);
+        return;
+      }
+
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        setIsExportMenuOpen(false);
+        return;
+      }
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Products Export</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              h2 { margin-bottom: 12px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background: #f2f2f2; }
+            </style>
+          </head>
+          <body>
+            ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      setIsExportMenuOpen(false);
+    };
+
     return (
         <div className="p-6 bg-white rounded-xl border border-emerald-200">
 
@@ -126,6 +301,15 @@ const ProductGrid = () => {
 
                 {/* Export Button */}
                 <div className='flex justify-evenly gap-2 items-center'>
+                    <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-3 text-sm font-semibold text-brand-navy bg-white">
+                        <input
+                          ref={selectAllRef}
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={(e) => toggleSelectAll(e.target.checked)}
+                        />
+                        Select All
+                    </label>
                     <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                         <SlidersHorizontal size={20} />
                     </button>
@@ -150,9 +334,36 @@ const ProductGrid = () => {
     className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
   />
 </div>
-                    <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
+                    <div className="relative">
+                      <button
+                        className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+                        onClick={() => setIsExportMenuOpen((prev) => !prev)}
+                      >
                         <Download size={20} /> Export
-                    </button>
+                      </button>
+                      {isExportMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                          <button
+                            onClick={exportToPdf}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                          >
+                            PDF
+                          </button>
+                          <button
+                            onClick={exportToDoc}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                          >
+                            DOC
+                          </button>
+                          <button
+                            onClick={exportToExcel}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                          >
+                            Excel
+                          </button>
+                        </div>
+                      )}
+                    </div>
                 </div>
             </div>
 
@@ -167,6 +378,12 @@ const ProductGrid = () => {
                             key={product._id}
                             className="relative border border-emerald-200 rounded-xl p-3 hover:shadow-md transition"
                         >
+                            <input
+                              type="checkbox"
+                              className="absolute top-2 left-2 z-10"
+                              checked={selectedProductIds.includes(product._id)}
+                              onChange={() => toggleProductSelection(product._id)}
+                            />
                             {/* Status Dot */}
                             <span
                                 onClick={() => navigate("/AddProduct")}

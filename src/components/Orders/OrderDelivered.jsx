@@ -1,35 +1,41 @@
-import { FaSearch, FaTrash, FaEye } from "react-icons/fa";
-import { ChevronDown, Download, Search, SlidersHorizontal } from 'lucide-react'
-import { IoFilter } from "react-icons/io5";
+import { FaEye } from "react-icons/fa";
+import { ChevronDown, Download, Search, SlidersHorizontal } from "lucide-react";
 import { BsWallet2 } from "react-icons/bs";
 import { MdDeliveryDining } from "react-icons/md";
 import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
-import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi"
-import { useState, useEffect } from "react";
+import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
+import { useEffect, useRef, useState } from "react";
 
 
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetOrdersByStatusQuery("Delivered");
   const users = data?.orders || [];
+  const [searchTerm, setSearchTerm] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All");
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const selectAllRef = useRef(null);
   const filteredUsers =
-  paymentFilter === "All"
-    ? users
-    : users.filter(
-        (order) => order.paymentMethod === paymentFilter
-      );
+    paymentFilter === "All"
+      ? users
+      : users.filter(
+          (order) => order.paymentMethod?.toLowerCase() === paymentFilter.toLowerCase()
+        );
+  const searchedUsers = filteredUsers.filter((order) =>
+    JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 6;
 
   // Pagination Logic
-const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
+const totalPages = Math.ceil(searchedUsers.length / ordersPerPage);
 
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
 
-  const currentOrders = filteredUsers.slice(
+  const currentOrders = searchedUsers.slice(
     indexOfFirstOrder,
     indexOfLastOrder
   );
@@ -37,11 +43,178 @@ const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
   // Reset to page 1 when orders change
 useEffect(() => {
   setCurrentPage(1);
-}, [users.length, paymentFilter]);
+}, [users.length, paymentFilter, searchTerm]);
+
+useEffect(() => {
+  setSelectedOrderIds([]);
+}, [users.length, paymentFilter, searchTerm]);
 
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [getOrderById, { data: orderData, isLoading: Loader }] =
     useGetOrdersByIdMutation();
+
+  const selectedFilteredCount = searchedUsers.filter((order) =>
+    selectedOrderIds.includes(order._id)
+  ).length;
+  const isAllSelected =
+    searchedUsers.length > 0 && selectedFilteredCount === searchedUsers.length;
+  const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
+
+  const toggleOrderSelection = (id) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(id) ? prev.filter((orderId) => orderId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedOrderIds(searchedUsers.map((order) => order._id));
+      return;
+    }
+    setSelectedOrderIds([]);
+  };
+
+  const getRowsForExport = () => {
+    const selectedRows = searchedUsers.filter((order) =>
+      selectedOrderIds.includes(order._id)
+    );
+    const sourceRows = selectedRows.length > 0 ? selectedRows : searchedUsers;
+
+    if (!sourceRows.length) {
+      return [];
+    }
+
+    return sourceRows.map((order) => ({
+      "Order ID": order._id || "-",
+      "Shop Name": order.shopInfo?.name || "-",
+      Price: order.price ?? "-",
+      "Placed On": order.placedOn || "-",
+      Items: order.itemsPreview?.length || order.itemsSummary?.length || 0,
+      "Payment Method": order.paymentMethod || "-",
+      "Delivery Boy": order.deliveryBoy?.name || "Not Assigned",
+      Status: order.OrderStatus || "-"
+    }));
+  };
+
+  const downloadBlob = (content, fileName, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToExcel = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+    ].join("\n");
+
+    downloadBlob(csv, "delivered_orders_export.csv", "text/csv;charset=utf-8;");
+    setIsExportMenuOpen(false);
+  };
+
+  const toSafeHtml = (value) =>
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const getExportHtml = (title) => {
+    const rows = getRowsForExport();
+    if (!rows.length) {
+      return "";
+    }
+    const headers = Object.keys(rows[0]);
+    const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr>${headers
+            .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
+            .join("")}</tr>`
+      )
+      .join("");
+
+    return `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>${toSafeHtml(title)}</h2>
+          <table border="1" cellspacing="0" cellpadding="6">
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>`;
+  };
+
+  const exportToDoc = () => {
+    const html = getExportHtml("Delivered Orders Export");
+    if (!html) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    downloadBlob(html, "delivered_orders_export.doc", "application/msword");
+    setIsExportMenuOpen(false);
+  };
+
+  const exportToPdf = () => {
+    const html = getExportHtml("Delivered Orders Export");
+    if (!html) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Delivered Orders Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { margin-bottom: 12px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    setIsExportMenuOpen(false);
+  };
 
   return (
     <>
@@ -53,6 +226,8 @@ useEffect(() => {
             <Search className="text-brand-gray" size={20} />
             <input
               className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               type="text"
               placeholder='Search By Orders'
             />
@@ -86,9 +261,36 @@ useEffect(() => {
             />
           </div>
 
-          <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-            <Download size={20} /> Export
-          </button>
+          <div className="relative">
+            <button
+              className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+            >
+              <Download size={20} /> Export
+            </button>
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                <button
+                  onClick={exportToPdf}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  PDF
+                </button>
+                <button
+                  onClick={exportToDoc}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  DOC
+                </button>
+                <button
+                  onClick={exportToExcel}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  Excel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -98,7 +300,14 @@ useEffect(() => {
 
           <thead className="bg-[#F1F5F9] text-gray-600">
             <tr>
-              <th className="p-3"></th>
+              <th className="p-3">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+              </th>
               <th className="p-3 text-left">Order ID</th>
               <th className="p-3 text-left">Shop Info</th>
               <th className="p-3 text-left">Price</th>
@@ -167,7 +376,7 @@ useEffect(() => {
             )}
 
             {/* 📭 Empty State */}
-            {!isLoading && !isError && users.length === 0 && (
+            {!isLoading && !isError && searchedUsers.length === 0 && (
               <tr>
                 <td colSpan="9" className="text-center p-6 text-gray-500">
                   No delivered orders found.
@@ -181,7 +390,11 @@ useEffect(() => {
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      checked={selectedOrderIds.includes(u._id)}
+                      onChange={() => toggleOrderSelection(u._id)}
+                    />
                   </td>
 
                   <td className="p-3 font-medium">{u._id}</td>
@@ -248,14 +461,14 @@ useEffect(() => {
 
 
         {/* Pagination */}
-        {filteredUsers.length > ordersPerPage && (
+        {searchedUsers.length > ordersPerPage && (
           <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
             {/* Showing Info */}
             <p className="text-sm text-gray-600">
               Showing {indexOfFirstOrder + 1} to{" "}
-              {Math.min(indexOfLastOrder, filteredUsers.length)} of{" "}
-              {users.length} orders
+              {Math.min(indexOfLastOrder, searchedUsers.length)} of{" "}
+              {searchedUsers.length} orders
             </p>
 
             {/* Buttons */}

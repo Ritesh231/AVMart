@@ -9,6 +9,7 @@ const PartialPaymentCard = ({ transaction }) => {
     }
      
     const { advance, remaining } = transaction.breakdown || {};
+    
 
     return (
         <div className="bg-white border-2 border-brand-soft rounded-3xl p-4 mb-4 shadow-sm transition-all overflow-hidden">
@@ -30,8 +31,9 @@ const PartialPaymentCard = ({ transaction }) => {
                 </div>
                 
                 <div className="hidden md:block bg-brand-navy text-white text-xs px-4 py-3 rounded-xl font-bold">
-                    Delivery Boy - {transaction.deliveryBoy}
+                 Delivery Boy - {transaction.deliveryBoy?.name || "Not Assigned"}
                 </div>
+                
 
                 <div className="flex items-center gap-6">
                     <div className="text-right">

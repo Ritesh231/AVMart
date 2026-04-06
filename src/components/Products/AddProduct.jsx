@@ -9,6 +9,7 @@ import {
 } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
 
 /* -------------------- Reusable Fields -------------------- */
 
@@ -70,6 +71,7 @@ export default function AddProduct() {
   const categories = categoryData?.data || [];
 
   const [preview, setPreview] = useState(null);
+  const navigate = useNavigate();
 
   /* -------------------- Main Form -------------------- */
   const {
@@ -130,18 +132,18 @@ export default function AddProduct() {
   const handleVariantImageChange = (index, e) => {
     const files = Array.from(e.target.files);
     const updated = [...variants];
-    
+
     // Store the actual file objects in imageFiles
     updated[index].imageFiles = files;
-    
+
     // Create preview URLs
     updated[index].previewImages = files.map((file) =>
       URL.createObjectURL(file)
     );
-    
+
     // For now, keep imageUrls empty since you don't have URLs yet
     updated[index].imageUrls = [];
-    
+
     setVariants(updated);
   };
 
@@ -207,7 +209,7 @@ export default function AddProduct() {
       if (discountValue > originalPrice) {
         return toast.error(`Variant ${i + 1}: Discount cannot exceed original price`);
       }
-       
+
       if (!v.stock)
         return toast.error(`Variant ${i + 1}: Stock required`);
 
@@ -228,10 +230,10 @@ export default function AddProduct() {
       submitData.append("category", formData.category);
       submitData.append("subcategory", formData.subcategory);
       submitData.append("status", formData.status);
-        
+
       // Primary image
       submitData.append("primaryImages", formData.primaryImages[0]);
-      
+
       // Format variants - Use imageUrls if available, otherwise empty array
       const formattedVariants = variants.map((v) => ({
         quantityValue: Number(v.quantityValue),
@@ -269,6 +271,8 @@ export default function AddProduct() {
 
       toast.success("Product Added Successfully ✅");
       console.log("Response:", response);
+
+      navigate("/products/all");
 
       // Reset form
       setVariants([{
@@ -486,14 +490,6 @@ export default function AddProduct() {
                     onChange={(e) => handleVariantChange(index, e)}
                   />
 
-                  <InputField
-                    label="Discount Value"
-                    name="discountValue"
-                    placeholder="Value should be Number"
-                    type="number"
-                    value={variant.discountValue}
-                    onChange={(e) => handleVariantChange(index, e)}
-                  />
 
                   <div>
                     <label className="text-xs font-medium text-gray-600">
@@ -511,6 +507,21 @@ export default function AddProduct() {
                     </select>
                   </div>
 
+                  <InputField
+                    label="Discount Value"
+                    name="discountValue"
+                    placeholder="Value should be Number"
+                    type="number"
+                    value={variant.discountValue}
+                    onChange={(e) => handleVariantChange(index, e)}
+                    min={0}
+                    max={variant.discountType === "percentage" ? 100 : undefined}
+                    onInput={(e) => {
+                      if (variant.discountType === "percentage" && e.target.value > 100) {
+                        e.target.value = 100;
+                      }
+                    }}
+                  />
                   {/* <div>
                     <label className="text-xs font-medium text-gray-600">
                       GST Rate
@@ -564,7 +575,7 @@ export default function AddProduct() {
                       className="hidden"
                       onChange={(e) => handleVariantImageChange(index, e)}
                     />
-                    
+
                     {/* Upload / Preview Box */}
                     <label
                       htmlFor={`variantImages-${index}`}

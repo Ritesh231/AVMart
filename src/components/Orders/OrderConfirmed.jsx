@@ -7,9 +7,10 @@ import {
   useGetAllDeliveryBoysQuery,
   useGetAssignDeliveryBoysMutation
 } from "../../Redux/apis/deliveryApi";
-import { useState,useEffect } from "react";
+import { useState,useEffect, useRef } from "react";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
+import { toast } from "react-toastify";
 
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetOrdersByStatusAssignQuery("Assigned");
@@ -18,15 +19,21 @@ export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 6;
   const [paymentFilter, setPaymentFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const selectAllRef = useRef(null);
 
-  const filteredUsers =
-  paymentFilter === "All"
-    ? users
-    : users.filter(
-        (order) =>
-          order.paymentMethod?.toLowerCase() ===
-          paymentFilter.toLowerCase()
-      );
+  const filteredUsers = users.filter((order) => {
+    const matchesPayment =
+      paymentFilter === "All"
+        ? true
+        : order.paymentMethod?.toLowerCase() === paymentFilter.toLowerCase();
+    const matchesSearch = JSON.stringify(order || {})
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    return matchesPayment && matchesSearch;
+  });
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
@@ -42,7 +49,11 @@ const currentOrders = filteredUsers.slice(
 // Reset to page 1 when orders change
 useEffect(() => {
   setCurrentPage(1);
-}, [users.length, paymentFilter]);
+}, [users.length, paymentFilter, searchTerm]);
+
+useEffect(() => {
+  setSelectedOrderIds([]);
+}, [users.length, paymentFilter, searchTerm]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -65,6 +76,156 @@ useEffect(() => {
     }
   };
 
+  const selectedFilteredCount = filteredUsers.filter((order) =>
+    selectedOrderIds.includes(order._id)
+  ).length;
+  const isAllSelected =
+    filteredUsers.length > 0 && selectedFilteredCount === filteredUsers.length;
+  const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
+
+  const toggleOrderSelection = (id) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(id) ? prev.filter((orderId) => orderId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedOrderIds(filteredUsers.map((order) => order._id));
+      return;
+    }
+    setSelectedOrderIds([]);
+  };
+
+  const getRowsForExport = () => {
+    const selectedRows = filteredUsers.filter((order) =>
+      selectedOrderIds.includes(order._id)
+    );
+    const sourceRows = selectedRows.length > 0 ? selectedRows : filteredUsers;
+
+    if (sourceRows.length === 0) {
+      toast.info("No confirmed orders available to export");
+      return [];
+    }
+
+    return sourceRows.map((order) => ({
+      "Order ID": order._id?.slice(-5) || "-",
+      "Shop Name": order.shopInfo?.name || "-",
+      Price: order.price ?? "-",
+      "Placed On": order.placedOn || "-",
+      Items: order.itemsPreview?.length || order.itemsSummary?.length || 0,
+      "Payment Method": order.paymentMethod || "-",
+      Status: order.OrderStatus || "-"
+    }));
+  };
+
+  const downloadBlob = (content, fileName, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToExcel = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) return;
+
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+    ].join("\n");
+
+    downloadBlob(csv, "confirmed_orders_export.csv", "text/csv;charset=utf-8;");
+    setIsExportMenuOpen(false);
+  };
+
+  const exportToDoc = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) return;
+
+    const headers = Object.keys(rows[0]);
+    const tableHead = headers.map((header) => `<th>${header}</th>`).join("");
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr>${headers.map((header) => `<td>${row[header]}</td>`).join("")}</tr>`
+      )
+      .join("");
+
+    const html = `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>Confirmed Orders Export</h2>
+          <table border="1" cellspacing="0" cellpadding="6">
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>`;
+
+    downloadBlob(html, "confirmed_orders_export.doc", "application/msword");
+    setIsExportMenuOpen(false);
+  };
+
+  const exportToPdf = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) return;
+
+    const headers = Object.keys(rows[0]);
+    const tableHead = headers.map((header) => `<th>${header}</th>`).join("");
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr>${headers.map((header) => `<td>${row[header]}</td>`).join("")}</tr>`
+      )
+      .join("");
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Confirmed Orders Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { margin-bottom: 12px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <h2>Confirmed Orders Export</h2>
+          <table>
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    setIsExportMenuOpen(false);
+  };
+
   return (
     <>
       {/* Search & Actions */}
@@ -75,6 +236,8 @@ useEffect(() => {
             <Search className="text-brand-gray" size={20} />
             <input
               className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               type="text"
               placeholder='Search By Orders'
             />
@@ -101,9 +264,37 @@ useEffect(() => {
   <option value="Partial">Partial</option>
 </select>
        
-          <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-            <Download size={20} /> Export
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+              className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+            >
+              <Download size={20} /> Export <ChevronDown size={16} />
+            </button>
+
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-20 overflow-hidden">
+                <button
+                  onClick={exportToExcel}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Export Excel
+                </button>
+                <button
+                  onClick={exportToPdf}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Export PDF
+                </button>
+                <button
+                  onClick={exportToDoc}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Export DOC
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       
@@ -113,7 +304,14 @@ useEffect(() => {
 
           <thead className="bg-[#F1F5F9] text-gray-600">
             <tr>
-              <th className="p-3"></th>
+              <th className="p-3">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+              </th>
               <th className="p-3 text-left">Order ID</th>
               <th className="p-3 text-left">Shop Info</th>
               <th className="p-3 text-left">Price</th>
@@ -183,7 +381,11 @@ useEffect(() => {
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      checked={selectedOrderIds.includes(u._id)}
+                      onChange={() => toggleOrderSelection(u._id)}
+                    />
                   </td>
 
                   <td className="p-3 font-medium">{u._id?.slice(-5)}</td>
@@ -243,7 +445,7 @@ useEffect(() => {
         )}
 
         {/* Pagination */}
-{users.length > ordersPerPage && (
+{filteredUsers.length > ordersPerPage && (
   <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
     {/* Showing Info */}

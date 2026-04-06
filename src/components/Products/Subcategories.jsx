@@ -5,7 +5,7 @@ import { BsWallet2 } from "react-icons/bs";
 import { MdDelete } from "react-icons/md";
 import { useGetallSubcategoriesQuery, useDeleteSubcategoryMutation } from "../../Redux/apis/productsApi"
 import EditSubcategoryModal from "../../components/Products/EditSubcategoryModal";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetallSubcategoriesQuery();
@@ -18,6 +18,9 @@ export default function UsersTable() {
 
       const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchTerm, setSearchTerm] = useState("");
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const [selectedSubcategoryIds, setSelectedSubcategoryIds] = useState([]);
+    const selectAllRef = useRef(null);
 
     const filteredSubcategories = subcategory.filter((u) => {
     const search = searchTerm.toLowerCase();
@@ -48,12 +51,30 @@ export default function UsersTable() {
     indexOfLastOrder
   );
 
-  useState(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [filteredSubcategories.length]);
 
+  useEffect(() => {
+    setSelectedSubcategoryIds([]);
+  }, [filteredSubcategories.length, searchTerm, selectedCategory]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+
+  const selectedFilteredCount = filteredSubcategories.filter((item) =>
+    selectedSubcategoryIds.includes(item._id)
+  ).length;
+  const isAllSelected =
+    filteredSubcategories.length > 0 &&
+    selectedFilteredCount === filteredSubcategories.length;
+  const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
 
 
   if (isError) {
@@ -73,6 +94,154 @@ export default function UsersTable() {
       toast.error("Error to delete Category", err);
     }
   }
+
+  const getRowsForExport = () => {
+    const selectedRows = filteredSubcategories.filter((item) =>
+      selectedSubcategoryIds.includes(item._id)
+    );
+    const sourceRows = selectedRows.length ? selectedRows : filteredSubcategories;
+
+    if (!sourceRows.length) {
+      return [];
+    }
+
+    return sourceRows.map((item) => ({
+      "Subcategory ID": item._id?.slice(-5) || "-",
+      "Subcategory Name": item.name || "-",
+      "Image URL": item.image || "-",
+      "Category Name": item.categoryName || "-",
+      Products: item.productCount ?? 0
+    }));
+  };
+
+  const downloadBlob = (content, fileName, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToExcel = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+    ].join("\n");
+
+    downloadBlob(csv, "subcategories_export.csv", "text/csv;charset=utf-8;");
+    setIsExportMenuOpen(false);
+  };
+
+  const toSafeHtml = (value) =>
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const getExportHtml = (title) => {
+    const rows = getRowsForExport();
+    if (!rows.length) {
+      return "";
+    }
+
+    const headers = Object.keys(rows[0]);
+    const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr>${headers
+            .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
+            .join("")}</tr>`
+      )
+      .join("");
+
+    return `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>${toSafeHtml(title)}</h2>
+          <table border="1" cellspacing="0" cellpadding="6">
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>`;
+  };
+
+  const exportToDoc = () => {
+    const html = getExportHtml("Subcategories Export");
+    if (!html) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    downloadBlob(html, "subcategories_export.doc", "application/msword");
+    setIsExportMenuOpen(false);
+  };
+
+  const exportToPdf = () => {
+    const html = getExportHtml("Subcategories Export");
+    if (!html) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Subcategories Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { margin-bottom: 12px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    setIsExportMenuOpen(false);
+  };
+
+  const toggleSubcategorySelection = (id) => {
+    setSelectedSubcategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedSubcategoryIds(filteredSubcategories.map((item) => item._id));
+      return;
+    }
+    setSelectedSubcategoryIds([]);
+  };
 
   return (
     <>
@@ -118,9 +287,36 @@ export default function UsersTable() {
               className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
             />
           </div>
-          <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-            <Download size={20} /> Export
-          </button>
+          <div className="relative">
+            <button
+              className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+            >
+              <Download size={20} /> Export
+            </button>
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                <button
+                  onClick={exportToPdf}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  PDF
+                </button>
+                <button
+                  onClick={exportToDoc}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  DOC
+                </button>
+                <button
+                  onClick={exportToExcel}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  Excel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -130,7 +326,14 @@ export default function UsersTable() {
 
           <thead className="bg-[#F1F5F9] text-gray-600">
             <tr>
-              <th className="p-3"></th>
+              <th className="p-3">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+              </th>
               <th className="p-3 text-left">Subcategory ID</th>
               <th className="p-3 text-left">Subcategory Name</th>
               <th className="p-3 text-left">Image</th>
@@ -180,7 +383,11 @@ export default function UsersTable() {
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50 ">
                   <td className="p-3">
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      checked={selectedSubcategoryIds.includes(u._id)}
+                      onChange={() => toggleSubcategorySelection(u._id)}
+                    />
                   </td>
 
                   <td className="p-3 font-medium">{u._id.slice(-5)}</td>

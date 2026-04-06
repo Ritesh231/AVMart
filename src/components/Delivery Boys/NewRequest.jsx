@@ -1,21 +1,24 @@
 import {
-  FaSearch,
   FaEye,
 } from "react-icons/fa";
-import { Search, SlidersHorizontal, Download, ChevronDown } from "lucide-react";
+import { Search, SlidersHorizontal, Download } from "lucide-react";
 import { SiTicktick } from "react-icons/si";
 import { RxCrossCircled } from "react-icons/rx";
 import { MdDeliveryDining } from "react-icons/md";
 import { useLocation } from "react-router-dom";
 import { useGetAllDeliveryBoysQuery, useUpdateDeliveryStatusMutation } from "../../Redux/apis/deliveryApi";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function UsersTable() {
 
   const location = useLocation();
   const navigate = useNavigate();
   const [vehicleFilter, setVehicleFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const selectAllRef = useRef(null);
   
   let status = "pending";
 
@@ -51,10 +54,13 @@ export default function UsersTable() {
   const ordersPerPage = 6;
 
   // Pagination Logic
-  const filteredUsers =
+  const vehicleFilteredUsers =
     vehicleFilter === "All"
       ? users
       : users.filter((u) => u.VehicleType === vehicleFilter);
+  const filteredUsers = vehicleFilteredUsers.filter((u) =>
+    JSON.stringify(u || {}).toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
 
@@ -67,9 +73,168 @@ export default function UsersTable() {
   );
 
   // Reset to page 1 when orders change
-  useState(() => {
+  useEffect(() => {
     setCurrentPage(1);
-  }, [users.length]);
+  }, [users.length, vehicleFilter, searchTerm]);
+
+  useEffect(() => {
+    setSelectedUserIds([]);
+  }, [users.length, vehicleFilter, searchTerm]);
+
+  const selectedFilteredCount = filteredUsers.filter((u) =>
+    selectedUserIds.includes(u._id)
+  ).length;
+  const isAllSelected =
+    filteredUsers.length > 0 && selectedFilteredCount === filteredUsers.length;
+  const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
+
+  const toggleUserSelection = (id) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(id) ? prev.filter((userId) => userId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedUserIds(filteredUsers.map((u) => u._id));
+      return;
+    }
+    setSelectedUserIds([]);
+  };
+
+  const getRowsForExport = () => {
+    const selectedRows = filteredUsers.filter((u) => selectedUserIds.includes(u._id));
+    const sourceRows = selectedRows.length > 0 ? selectedRows : filteredUsers;
+    if (!sourceRows.length) {
+      return [];
+    }
+    return sourceRows.map((u) => ({
+      Name: u.Name || "N/A",
+      Date: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-",
+      Contact: u.contactNo || "-",
+      Email: u.email || "-",
+      "Vehicle Type": u.VehicleType || "N/A",
+      "Vehicle No": u.VehicleNumber || "N/A",
+      Status: status
+    }));
+  };
+
+  const downloadBlob = (content, fileName, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToExcel = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+    ].join("\n");
+    downloadBlob(csv, `delivery_${status}_export.csv`, "text/csv;charset=utf-8;");
+    setIsExportMenuOpen(false);
+  };
+
+  const toSafeHtml = (value) =>
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const getExportHtml = (title) => {
+    const rows = getRowsForExport();
+    if (!rows.length) {
+      return "";
+    }
+    const headers = Object.keys(rows[0]);
+    const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr>${headers
+            .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
+            .join("")}</tr>`
+      )
+      .join("");
+    return `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>${toSafeHtml(title)}</h2>
+          <table border="1" cellspacing="0" cellpadding="6">
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>`;
+  };
+
+  const exportToDoc = () => {
+    const html = getExportHtml(`Delivery Boys (${status}) Export`);
+    if (!html) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    downloadBlob(html, `delivery_${status}_export.doc`, "application/msword");
+    setIsExportMenuOpen(false);
+  };
+
+  const exportToPdf = () => {
+    const html = getExportHtml(`Delivery Boys (${status}) Export`);
+    if (!html) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Delivery Boys (${status}) Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { margin-bottom: 12px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    setIsExportMenuOpen(false);
+  };
 
   return (
     <>
@@ -82,11 +247,21 @@ export default function UsersTable() {
               className="w-full bg-transparent outline-none"
               type="text"
               placeholder="Search By User Name and Phone no"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
         <div className="flex gap-2 items-center">
+          <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-3 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={(e) => toggleSelectAll(e.target.checked)}
+            />
+            Select All
+          </label>
           <button className="bg-brand-cyan px-3 py-3 rounded-xl">
             <SlidersHorizontal size={20} />
           </button>
@@ -106,9 +281,36 @@ export default function UsersTable() {
             ))}
           </select>
 
-          <button className="bg-brand-navy px-6 py-3 rounded-2xl text-white flex items-center gap-2">
-            <Download size={20} /> Export
-          </button>
+          <div className="relative">
+            <button
+              className="bg-brand-navy px-6 py-3 rounded-2xl text-white flex items-center gap-2"
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+            >
+              <Download size={20} /> Export
+            </button>
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                <button
+                  onClick={exportToPdf}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  PDF
+                </button>
+                <button
+                  onClick={exportToDoc}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  DOC
+                </button>
+                <button
+                  onClick={exportToExcel}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  Excel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -117,7 +319,14 @@ export default function UsersTable() {
         <table className="min-w-[900px] w-full text-sm">
           <thead className="bg-[#F1F5F9] text-gray-600">
             <tr>
-              <th className="p-3"></th>
+              <th className="p-3">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+              </th>
               <th className="p-3 text-left">Name</th>
               <th className="p-3 text-left">Date</th>
               <th className="p-3 text-left">Contact</th>
@@ -156,7 +365,11 @@ export default function UsersTable() {
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      checked={selectedUserIds.includes(u._id)}
+                      onChange={() => toggleUserSelection(u._id)}
+                    />
                   </td>
 
                   <td className="p-3 font-medium">

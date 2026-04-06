@@ -1,5 +1,5 @@
 import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import StatCard from '../components/StatCard'
 import OnlinePaymentCard from '../components/payment/OnlinePaymentCard';
 import CashOnDeliveryCard from '../components/payment/CashOnDeliveryCard';
@@ -12,6 +12,9 @@ const Payments = () => {
     const [dateFilter, setDateFilter] = useState("All");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
+    const [selectedTransactionIds, setSelectedTransactionIds] = useState([]);
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const selectAllRef = useRef(null);
 
     const filterByDate = (txnDate) => {
         if (!txnDate) return true;
@@ -85,6 +88,174 @@ const Payments = () => {
 
         return matchesSearch && matchesDate;
     });
+
+    useEffect(() => {
+        setSelectedTransactionIds([]);
+    }, [activeTab, searchTerm, dateFilter, fromDate, toDate, transactions.length]);
+
+    const selectedFilteredCount = filteredTransactions.filter((txn) =>
+        selectedTransactionIds.includes(txn._id || txn.id)
+    ).length;
+    const isAllSelected =
+        filteredTransactions.length > 0 &&
+        selectedFilteredCount === filteredTransactions.length;
+    const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+    useEffect(() => {
+        if (selectAllRef.current) {
+            selectAllRef.current.indeterminate = isSomeSelected;
+        }
+    }, [isSomeSelected]);
+
+    const toggleTransactionSelection = (id) => {
+        setSelectedTransactionIds((prev) =>
+            prev.includes(id) ? prev.filter((txnId) => txnId !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = (checked) => {
+        if (checked) {
+            setSelectedTransactionIds(filteredTransactions.map((txn) => txn._id || txn.id));
+            return;
+        }
+        setSelectedTransactionIds([]);
+    };
+
+    const getRowsForExport = () => {
+        const selectedRows = filteredTransactions.filter((txn) =>
+            selectedTransactionIds.includes(txn._id || txn.id)
+        );
+        const sourceRows = selectedRows.length > 0 ? selectedRows : filteredTransactions;
+        if (!sourceRows.length) {
+            return [];
+        }
+        return sourceRows.map((txn) => ({
+            Tab: activeTab,
+            Customer: txn.customer || "-",
+            "Order ID": txn.orderId || txn.shortOrderId || "-",
+            "Transaction ID": txn.txnId || txn.paymentDetails?.[0]?.id || "-",
+            "Payment Method": txn.paymentMethod || "-",
+            Amount: txn.amount ?? "-",
+            "Paid Online": txn.paidOnline ?? "-",
+            "Paid Cash": txn.paidCash ?? "-",
+            Remaining: txn.remaining ?? "-",
+            Status: txn.status?.replaceAll("_", " ") || "-",
+            Date: txn.dateTime ? new Date(txn.dateTime).toLocaleString() : "-",
+            "Delivery Boy": txn.deliveryBoy?.name || "Not Assigned"
+        }));
+    };
+
+    const downloadBlob = (content, fileName, type) => {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const exportToExcel = () => {
+        const rows = getRowsForExport();
+        if (!rows.length) {
+            setIsExportMenuOpen(false);
+            return;
+        }
+        const headers = Object.keys(rows[0]);
+        const csv = [
+            headers.join(","),
+            ...rows.map((row) =>
+                headers
+                    .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+                    .join(",")
+            )
+        ].join("\n");
+        downloadBlob(csv, `${activeTab.toLowerCase()}_payments_export.csv`, "text/csv;charset=utf-8;");
+        setIsExportMenuOpen(false);
+    };
+
+    const toSafeHtml = (value) =>
+        String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+
+    const getExportHtml = (title) => {
+        const rows = getRowsForExport();
+        if (!rows.length) {
+            return "";
+        }
+        const headers = Object.keys(rows[0]);
+        const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
+        const tableRows = rows
+            .map(
+                (row) =>
+                    `<tr>${headers
+                        .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
+                        .join("")}</tr>`
+            )
+            .join("");
+
+        return `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>${toSafeHtml(title)}</h2>
+          <table border="1" cellspacing="0" cellpadding="6">
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>`;
+    };
+
+    const exportToDoc = () => {
+        const html = getExportHtml(`${activeTab} Payments Export`);
+        if (!html) {
+            setIsExportMenuOpen(false);
+            return;
+        }
+        downloadBlob(html, `${activeTab.toLowerCase()}_payments_export.doc`, "application/msword");
+        setIsExportMenuOpen(false);
+    };
+
+    const exportToPdf = () => {
+        const html = getExportHtml(`${activeTab} Payments Export`);
+        if (!html) {
+            setIsExportMenuOpen(false);
+            return;
+        }
+
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+            setIsExportMenuOpen(false);
+            return;
+        }
+
+        printWindow.document.write(`
+      <html>
+        <head>
+          <title>${activeTab} Payments Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { margin-bottom: 12px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
+        </body>
+      </html>
+    `);
+
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        setIsExportMenuOpen(false);
+    };
 
     const summary = data?.summary || {};
 
@@ -329,6 +500,15 @@ const Payments = () => {
 
                     {/* Export Button */}
                     <div className='flex justify-evenly gap-2 items-center'>
+                        <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+                            <input
+                                ref={selectAllRef}
+                                type="checkbox"
+                                checked={isAllSelected}
+                                onChange={(e) => toggleSelectAll(e.target.checked)}
+                            />
+                            Select All
+                        </label>
                         <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                             <SlidersHorizontal size={20} />
                         </button>
@@ -401,9 +581,36 @@ const Payments = () => {
                                 </>
                             )}
                         </div>
-                        <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-                            <Download size={20} /> Export
-                        </button>
+                        <div className="relative">
+                            <button
+                                className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+                                onClick={() => setIsExportMenuOpen((prev) => !prev)}
+                            >
+                                <Download size={20} /> Export
+                            </button>
+                            {isExportMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                                    <button
+                                        onClick={exportToPdf}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                    >
+                                        PDF
+                                    </button>
+                                    <button
+                                        onClick={exportToDoc}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                    >
+                                        DOC
+                                    </button>
+                                    <button
+                                        onClick={exportToExcel}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                    >
+                                        Excel
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -415,16 +622,23 @@ const Payments = () => {
                                     <PaymentCardSkeleton key={i} />
                                 ))
                                 : filteredTransactions.map((txn) => (
-                                    <OnlinePaymentCard
-                                        key={txn._id || txn.id}
-                                        customerName={txn.customer}
-                                        dateTime={txn.dateTime}
-                                        orderId={txn.orderId}
-                                        txnId={txn.txnId}
-                                        paymentMethod={txn.paymentMethod}
-                                        amount={txn.amount}
-                                        status={txn.status}
-                                    />
+                                    <div key={txn._id || txn.id} className="relative">
+                                        <input
+                                            type="checkbox"
+                                            className="absolute top-3 left-3 z-10"
+                                            checked={selectedTransactionIds.includes(txn._id || txn.id)}
+                                            onChange={() => toggleTransactionSelection(txn._id || txn.id)}
+                                        />
+                                        <OnlinePaymentCard
+                                            customerName={txn.customer}
+                                            dateTime={txn.dateTime}
+                                            orderId={txn.orderId}
+                                            txnId={txn.txnId}
+                                            paymentMethod={txn.paymentMethod}
+                                            amount={txn.amount}
+                                            status={txn.status}
+                                        />
+                                    </div>
                                 ))
                             }
                         </div>
@@ -441,19 +655,26 @@ const Payments = () => {
                                 <PaymentCardSkeleton key={i} />
                             ))
                             : filteredTransactions.map((txn) => (
-                                <CashOnDeliveryCard
-                                    key={txn._id || txn.id}
-                                    transaction={{
-                                        id: txn.id,
-                                        customer: txn.customer,
-                                        date: new Date(txn.dateTime).toLocaleString(),
-                                        status: txn.status.replaceAll("_", " "),
-                                        orderId: txn.shortOrderId,
-                                        CODId: txn.paymentDetails?.[0]?.id,
-                                        deliveryBoy: txn.deliveryBoy?.name || "Not Assigned",
-                                        amount: txn.amount,
-                                    }}
-                                />
+                                <div key={txn._id || txn.id} className="relative">
+                                    <input
+                                        type="checkbox"
+                                        className="absolute top-3 left-3 z-10"
+                                        checked={selectedTransactionIds.includes(txn._id || txn.id)}
+                                        onChange={() => toggleTransactionSelection(txn._id || txn.id)}
+                                    />
+                                    <CashOnDeliveryCard
+                                        transaction={{
+                                            id: txn.id,
+                                            customer: txn.customer,
+                                            date: new Date(txn.dateTime).toLocaleString(),
+                                            status: txn.status.replaceAll("_", " "),
+                                            orderId: txn.shortOrderId,
+                                            CODId: txn.paymentDetails?.[0]?.id,
+                                            deliveryBoy: txn.deliveryBoy?.name || "Not Assigned",
+                                            amount: txn.amount,
+                                        }}
+                                    />
+                                </div>
                             ))
                         }
                     </div>
@@ -472,7 +693,7 @@ const Payments = () => {
                                     id: txn.id,
                                     customerName: txn.customer,
                                     orderId: txn.shortOrderId,
-                                    deliveryBoy: "N/A",
+                                    deliveryBoy: txn.deliveryBoy,
                                     totalAmount: txn.amount,
                                     currency: "₹",
                                     status: txn.status.replaceAll("_", " "),
@@ -497,10 +718,17 @@ const Payments = () => {
                                 };
 
                                 return (
-                                    <PartialPaymentCard
-                                        key={txn._id}
-                                        transaction={formattedTransaction}
-                                    />
+                                    <div key={txn._id || txn.id} className="relative">
+                                        <input
+                                            type="checkbox"
+                                            className="absolute top-3 left-3 z-10"
+                                            checked={selectedTransactionIds.includes(txn._id || txn.id)}
+                                            onChange={() => toggleTransactionSelection(txn._id || txn.id)}
+                                        />
+                                        <PartialPaymentCard
+                                            transaction={formattedTransaction}
+                                        />
+                                    </div>
                                 );
                             })
                         }

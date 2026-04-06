@@ -13,69 +13,78 @@ export default function EditSubcategoryModal({
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
+    categoryName: "",
     image: null,
   });
 
-useEffect(() => {
-  if (subcategoryData) {
-    setFormData({
-      name: subcategoryData.name || "",
-      categoryId: subcategoryData.CategoryId || "",
-      image: null,
-    });
+  useEffect(() => {
+    if (subcategoryData) {
+      setFormData({
+        name: subcategoryData.name || "",
+        categoryId: subcategoryData.CategoryId || "",
+        categoryName: subcategoryData.categoryName || "",
+        image: null,
+      });
 
-    setPreview(subcategoryData.image || null);
-  }
-}, [subcategoryData]);
+      setPreview(subcategoryData.image || null);
+    }
+  }, [subcategoryData]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "image") {
-      setFormData({ ...formData, image: files[0] });
+      const file = files[0];
+      setFormData({ ...formData, image: file });
+
+      // ✅ Update preview immediately
+      if (file) {
+        setPreview(URL.createObjectURL(file));
+      }
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState(null);
 
-const handleSubmit = async () => {
-  try {
-    const data = new FormData();
-    data.append("name", formData.name);
-    data.append("categoryId", formData.categoryId);
+  const handleSubmit = async () => {
+    try {
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("categoryId", formData.categoryId);
 
-    if (formData.image) {
-      data.append("image", formData.image);
+      if (formData.image) {
+        data.append("image", formData.image);
+      }
+
+      // ✅ LOG FORM DATA CONTENTS
+      console.log("---- FormData Payload ----");
+      for (let pair of data.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
+      // ✅ Specifically log image details
+      if (formData.image) {
+        console.log("Image Name:", formData.image.name);
+        console.log("Image Type:", formData.image.type);
+        console.log("Image Size (bytes):", formData.image.size);
+      } else {
+        console.log("No image selected");
+        console.log("Selected Image File:", formData.image);
+      }
+
+      await editSubcategory({
+        id: subcategoryData._id,
+        body: data,
+      }).unwrap();
+
+      toast.success("Subcategory Updated Successfully");
+      onClose();
+    } catch (err) {
+      toast.error("Update Failed");
     }
-
-    // ✅ LOG FORM DATA CONTENTS
-    console.log("---- FormData Payload ----");
-    for (let pair of data.entries()) {
-      console.log(pair[0], pair[1]);
-    }
-
-    // ✅ Specifically log image details
-    if (formData.image) {
-      console.log("Image Name:", formData.image.name);
-      console.log("Image Type:", formData.image.type);
-      console.log("Image Size (bytes):", formData.image.size);
-    } else {
-      console.log("No image selected");
-    }
-
-    await editSubcategory({
-      id: subcategoryData._id,
-      body: data,
-    }).unwrap();
-
-    toast.success("Subcategory Updated Successfully");
-    onClose();
-  } catch (err) {
-    toast.error("Update Failed");
-  }
-};
+  };
 
 
   if (!isOpen) return null;
@@ -97,43 +106,42 @@ const handleSubmit = async () => {
 
           <input
             type="text"
-            name="categoryId"
+            name="categoryName"
             value={formData.categoryName}
-            onChange={handleChange}
-            placeholder="Category ID"
-            className="w-full border p-2 rounded-lg"
+            readOnly
+            className="w-full border p-2 rounded-lg bg-gray-100"
           />
 
-        <div>
-  <label
-    htmlFor="editImage"
-    className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-indigo-500 transition"
-  >
-    {preview ? (
-      <img
-        src={preview}
-        alt="preview"
-        className="h-24 object-contain"
-      />
-    ) : (
-      <div className="flex flex-col items-center text-gray-400">
-        <IoIosCloudUpload  size={36} />
-        <span className="text-sm mt-2">
-          Click to Upload Image
-        </span>
-      </div>
-    )}
-  </label>
-   
-  <input
-    type="file"
-    id="editImage"
-    name="image"
-    accept="image/*"
-    onChange={handleChange}
-    className="hidden"
-  />
-</div>
+          <div>
+            <label
+              htmlFor="editImage"
+              className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-indigo-500 transition"
+            >
+              {preview ? (
+                <img
+                  src={preview}
+                  alt="preview"
+                  className="h-24 object-contain"
+                />
+              ) : (
+                <div className="flex flex-col items-center text-gray-400">
+                  <IoIosCloudUpload size={36} />
+                  <span className="text-sm mt-2">
+                    Click to Upload Image
+                  </span>
+                </div>
+              )}
+            </label>
+
+            <input
+              type="file"
+              id="editImage"
+              name="image"
+              accept="image/*"
+              onChange={handleChange}
+              className="hidden"
+            />
+          </div>
 
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAddBrandMutation } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export default function AddBrand() {
   const [addBrand, { isLoading }] = useAddBrandMutation();
@@ -9,8 +10,9 @@ export default function AddBrand() {
     name: "",
     logo: null,
   });
-  
+
   const [preview, setPreview] = useState(null);
+  const navigate = useNavigate();
 
   /* -------------------- Handlers -------------------- */
 
@@ -44,6 +46,7 @@ export default function AddBrand() {
       await addBrand(data).unwrap();
 
       toast.success("Brand Added Successfully ✅");
+      navigate("/products/brands");
 
       // Reset
       setFormData({

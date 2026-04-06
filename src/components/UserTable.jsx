@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import { FaSearch, FaTrash, FaEye } from "react-icons/fa";
 import { RxCrossCircled } from "react-icons/rx";
@@ -16,8 +16,11 @@ const tabs = [
 export default function UsersTable() {
   const [activeTab, setActiveTab] = useState('pending');
   const [shopTypeFilter, setShopTypeFilter] = useState("all");
-
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const selectAllRef = useRef(null);
+
   const { data, isLoading, isError } = useGetallusersQuery();
   const users = data?.data || [];
   const navigate = useNavigate();
@@ -25,22 +28,22 @@ export default function UsersTable() {
   const usersPerPage = 6;
 
 
-const filteredUsers = users.filter((user) => {
-  const matchesStatus = user.status === activeTab;
+  const filteredUsers = users.filter((user) => {
+    const matchesStatus = user.status === activeTab;
 
-  const matchesSearch =
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.contact?.includes(searchTerm) ||
-    user.shopName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.contact?.includes(searchTerm) ||
+      user.shopName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const matchesShopType =
-    shopTypeFilter === "all"
-      ? true
-      : user.shopType === shopTypeFilter;
+    const matchesShopType =
+      shopTypeFilter === "all"
+        ? true
+        : user.shopType === shopTypeFilter;
 
-  return matchesStatus && matchesSearch && matchesShopType;
-});
+    return matchesStatus && matchesSearch && matchesShopType;
+  });
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
@@ -53,9 +56,13 @@ const filteredUsers = users.filter((user) => {
     indexOfLastUser
   );
 
-React.useEffect(() => {
-  setCurrentPage(1);
-}, [activeTab, searchTerm, shopTypeFilter]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm, shopTypeFilter]);
+
+  useEffect(() => {
+    setSelectedUserIds([]);
+  }, [activeTab, searchTerm, shopTypeFilter]);
 
   const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
   const [deleteStatus, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -80,6 +87,155 @@ React.useEffect(() => {
       toast.error("Failed to delete User", error);
     }
   }
+
+  const selectedFilteredCount = filteredUsers.filter((u) =>
+    selectedUserIds.includes(u._id)
+  ).length;
+  const isAllSelected =
+    filteredUsers.length > 0 && selectedFilteredCount === filteredUsers.length;
+  const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
+
+  const toggleUserSelection = (id) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(id) ? prev.filter((userId) => userId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedUserIds(filteredUsers.map((u) => u._id));
+      return;
+    }
+    setSelectedUserIds([]);
+  };
+
+  const getRowsForExport = () => {
+    const selectedRows = filteredUsers.filter((u) => selectedUserIds.includes(u._id));
+    const sourceRows = selectedRows.length > 0 ? selectedRows : filteredUsers;
+
+    if (sourceRows.length === 0) {
+      toast.info("No users available to export");
+      return [];
+    }
+
+    return sourceRows.map((u) => ({
+      "Shop Name": u.shopName || "-",
+      "Owner Name": u.name || "-",
+      Location: u.shopAddress || "-",
+      Contact: u.contact || "-",
+      Email: u.email || "-",
+      "Shop Type": u.shopType || "-",
+      Status: u.status || "-",
+      Joined: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-"
+    }));
+  };
+
+  const downloadBlob = (content, fileName, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToExcel = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) return;
+
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) =>
+        headers
+          .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+    ].join("\n");
+
+    downloadBlob(csv, "users_export.csv", "text/csv;charset=utf-8;");
+    setIsExportMenuOpen(false);
+  };
+
+  const exportToDoc = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) return;
+
+    const headers = Object.keys(rows[0]);
+    const tableHead = headers.map((header) => `<th>${header}</th>`).join("");
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr>${headers.map((header) => `<td>${row[header]}</td>`).join("")}</tr>`
+      )
+      .join("");
+
+    const html = `
+      <html>
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>Users Export</h2>
+          <table border="1" cellspacing="0" cellpadding="6">
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>`;
+
+    downloadBlob(html, "users_export.doc", "application/msword");
+    setIsExportMenuOpen(false);
+  };
+
+  const exportToPdf = () => {
+    const rows = getRowsForExport();
+    if (!rows.length) return;
+
+    const headers = Object.keys(rows[0]);
+    const tableHead = headers.map((header) => `<th>${header}</th>`).join("");
+    const tableRows = rows
+      .map(
+        (row) =>
+          `<tr>${headers.map((header) => `<td>${row[header]}</td>`).join("")}</tr>`
+      )
+      .join("");
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Users Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { margin-bottom: 12px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <h2>Users Export</h2>
+          <table>
+            <thead><tr>${tableHead}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    setIsExportMenuOpen(false);
+  };
 
   if (isError) {
     return <p>No User Found</p>;
@@ -131,22 +287,50 @@ React.useEffect(() => {
             <SlidersHorizontal size={20} />
           </button>
 
-        <div className="flex items-center gap-2 border border-brand-cyan px-3 py-3 rounded-2xl bg-white">
-  <select
-    value={shopTypeFilter}
-    onChange={(e) => setShopTypeFilter(e.target.value)}
-    className="bg-transparent font-semibold text-brand-navy outline-none"
-  >
-    <option value="all">All Shop Types</option>
-    <option value="medical">Medical</option>
-    <option value="general">General</option>
-    <option value="kirana">Kirana</option>
-  </select>
-</div>
+          <div className="flex items-center gap-2 border border-brand-cyan px-3 py-3 rounded-2xl bg-white">
+            <select
+              value={shopTypeFilter}
+              onChange={(e) => setShopTypeFilter(e.target.value)}
+              className="bg-transparent font-semibold text-brand-navy outline-none"
+            >
+              <option value="all">All Shop Types</option>
+              <option value="medical">Medical</option>
+              <option value="general">General</option>
+              <option value="kirana">Kirana</option>
+            </select>
+          </div>
 
-          <button className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'>
-            <Download size={20} /> Export
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+              className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+            >
+              <Download size={20} /> Export <ChevronDown size={16} />
+            </button>
+
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-20 overflow-hidden">
+                <button
+                  onClick={exportToExcel}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Export Excel
+                </button>
+                <button
+                  onClick={exportToPdf}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Export PDF
+                </button>
+                <button
+                  onClick={exportToDoc}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Export DOC
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -155,7 +339,14 @@ React.useEffect(() => {
         <table className="min-w-[900px] w-full text-sm">
           <thead className="bg-[#F1F5F9] text-gray-600">
             <tr>
-              <th className="p-3"></th>
+              <th className="p-3">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+              </th>
               <th className="p-3 text-left">Shop Name</th>
               <th className="p-3 text-left">Owner Name</th>
               <th className="p-3 text-left">Location</th>
@@ -217,12 +408,16 @@ React.useEffect(() => {
               currentUsers.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      checked={selectedUserIds.includes(u._id)}
+                      onChange={() => toggleUserSelection(u._id)}
+                    />
                   </td>
 
                   <td className="p-3">
                     <div className="flex items-center gap-3">
-                      {u.shopPhoto ? (
+                      {/* {u.shopPhoto ? (
                         <img
                           src={u.shopPhoto}
                           alt={u.shopName}
@@ -232,7 +427,7 @@ React.useEffect(() => {
                         <div className="w-10 h-10 rounded-md bg-gray-200 flex items-center justify-center text-xs text-gray-500">
                           N/A
                         </div>
-                      )}
+                      )} */}
 
                       <span className="font-medium">{u.shopName}</span>
                     </div>
