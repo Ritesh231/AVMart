@@ -64,7 +64,6 @@ export default function EditSubcategoryModal({
         console.log(pair[0], pair[1]);
       }
 
-      // ✅ Specifically log image details
       if (formData.image) {
         console.log("Image Name:", formData.image.name);
         console.log("Image Type:", formData.image.type);
