@@ -20,8 +20,8 @@ export default function UsersTable() {
     paymentFilter === "All"
       ? users
       : users.filter(
-          (order) => order.paymentMethod?.toLowerCase() === paymentFilter.toLowerCase()
-        );
+        (order) => order.paymentMethod?.toLowerCase() === paymentFilter.toLowerCase()
+      );
   const searchedUsers = filteredUsers.filter((order) =>
     JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -30,7 +30,7 @@ export default function UsersTable() {
   const ordersPerPage = 6;
 
   // Pagination Logic
-const totalPages = Math.ceil(searchedUsers.length / ordersPerPage);
+  const totalPages = Math.ceil(searchedUsers.length / ordersPerPage);
 
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
@@ -41,13 +41,13 @@ const totalPages = Math.ceil(searchedUsers.length / ordersPerPage);
   );
 
   // Reset to page 1 when orders change
-useEffect(() => {
-  setCurrentPage(1);
-}, [users.length, paymentFilter, searchTerm]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [users.length, paymentFilter, searchTerm]);
 
-useEffect(() => {
-  setSelectedOrderIds([]);
-}, [users.length, paymentFilter, searchTerm]);
+  useEffect(() => {
+    setSelectedOrderIds([]);
+  }, [users.length, paymentFilter, searchTerm]);
 
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [getOrderById, { data: orderData, isLoading: Loader }] =
@@ -236,9 +236,9 @@ useEffect(() => {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
-          </button>
+          </button> */}
 
           <div className="relative">
             <select

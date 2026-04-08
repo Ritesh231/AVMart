@@ -7,6 +7,8 @@ import { FaCheck } from "react-icons/fa";
 import Orderstats from "../../components/Orders/Orderstats";
 import { useParams } from "react-router-dom";
 import { useGetOrderDetailsByIdMutation } from "../../Redux/apis/ordersApi";
+import StatCard from "../../components/StatCard";
+import { IoCartOutline } from "react-icons/io5";
 
 const steps = [
   { title: "Order Placed", done: true },
@@ -17,30 +19,67 @@ const steps = [
 ];
 
 const OrderDetails = () => {
-  
+
   const { id } = useParams();
+  const [showTracking, setShowTracking] = React.useState(false);
+  const [page, setPage] = React.useState(1);
+  const perPage = 10;
 
   const [getOrderDetails, { data, isLoading }] =
     useGetOrderDetailsByIdMutation();
 
   useEffect(() => {
     if (id) {
-      getOrderDetails(id);
+      getOrderDetails({ id, page, per_page: perPage });
     }
-  }, [id]);
+  }, [id, page]);
 
   const orders = data?.data?.recentOrders || [];
+  const pagination = data?.data?.meta?.pagination;
 
-    const assignedOrders = orders.filter(
-    (order) => order.status === "assigned"
+  const statsData = data?.data?.stats || {};
+
+  const stats = [
+    {
+      title: "Total Orders",
+      number: statsData.totalOrders || 0,
+      statement: "All orders",
+      icon: <IoCartOutline size={24} />,
+      variant: "special",
+    },
+    {
+      title: "Completed",
+      number: statsData.completedOrders || 0,
+      statement: "Delivered successfully",
+      icon: <IoCartOutline size={24} />,
+      variant: "normal",
+    },
+    {
+      title: "Approved",
+      number: statsData.approvedOrders || 0,
+      statement: "Approved orders",
+      icon: <IoCartOutline size={24} />,
+      variant: "normal",
+    },
+    {
+      title: "Rejected",
+      number: statsData.rejectedOrders || 0,
+      statement: "Rejected orders",
+      icon: <IoCartOutline size={24} />,
+      variant: "normal",
+    },
+  ];
+
+  const assignedOrders = orders.filter(
+    (order) => order.status === "Ordered"
   );
 
   const ongoingOrders = orders.filter(
-    (order) => order.status !== "delivered"
+    (order) => order.status !== "Ordered"
   );
 
   const completedOrders = orders.filter(
-    (order) => order.status === "delivered"
+    (order) => order.status === "Delivered"
   );
 
   const getTrackingSteps = (order) => {
@@ -48,10 +87,11 @@ const OrderDetails = () => {
       { key: "ordered", label: "Order Placed" },
       { key: "confirmed", label: "Order Confirmed" },
       { key: "assigned", label: "Delivery Assigned" },
+      { key: "dispatched", label: "Shipped" },
       { key: "delivered", label: "Delivered" },
     ];
 
-    const statusOrder = ["ordered", "confirmed", "assigned", "delivered"];
+    const statusOrder = ["ordered", "confirmed", "assigned", "dispatched", "delivered"];
     const currentIndex = statusOrder.indexOf(order.order_status);
 
     return steps.map((step, index) => ({
@@ -59,9 +99,11 @@ const OrderDetails = () => {
       done: index <= currentIndex,
     }));
   };
-  
+
   const OrderCard = ({ order }) => (
+
     <div className="bg-white rounded-xl shadow-sm p-6 space-y-4 border">
+
 
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -76,8 +118,8 @@ const OrderDetails = () => {
 
         <div className="text-right">
           <span className={`px-3 py-1 text-xs rounded-full ${order.status === "delivered"
-              ? "bg-green-100 text-green-600"
-              : "bg-yellow-100 text-yellow-600"
+            ? "bg-green-100 text-green-600"
+            : "bg-yellow-100 text-yellow-600"
             }`}>
             {order.deliveryStatus}
           </span>
@@ -108,33 +150,56 @@ const OrderDetails = () => {
       ))}
 
       <div className="border border-emerald-200 rounded-xl p-5 mt-6">
-        <h4 className="font-semibold mb-6">Order Tracking</h4>
-        
+        <div className="flex justify-between items-center">
+          <h4 className="font-semibold">Order Tracking</h4>
+
+          <button
+            onClick={() => setShowTracking(!showTracking)}
+            className="text-sm text-blue-600 font-medium flex items-center gap-1"
+          >
+            {showTracking ? "Hide" : "View"} Tracking
+            <span className={`transition-transform ${showTracking ? "rotate-180" : ""}`}>
+              ▼
+            </span>
+          </button>
+        </div>
+
         <div className="relative">
-          <div className="absolute left-5 top-2 h-full w-[2px] bg-slate-300"></div>
+
 
           <div className="space-y-8">
-            {getTrackingSteps(order).map((step, index) => (
-              <div key={index} className="flex items-start gap-4 relative">
-                <div
-                  className={`w-10 h-10 flex items-center justify-center rounded-full z-10
-                  ${step.done ? "bg-[#0F1E4A]" : "bg-gray-400"}
-                `}
-                >
-                  <FaCheck
-                    className={`text-sm ${step.done ? "text-emerald-400" : "text-white"
-                      }`}
-                  />
-                </div>
+            {showTracking && (
+              <div className="border border-emerald-200 rounded-xl p-5 mt-4">
 
-                <div>
-                  <p className="font-medium">{step.label}</p>
-                  <p className="text-xs text-gray-500">
-                    {step.done ? "Completed" : "Pending"}
-                  </p>
+                <div className="relative">
+                  <div className="absolute left-5 top-2 h-full w-[2px] bg-slate-300"></div>
+
+                  <div className="space-y-8">
+                    {getTrackingSteps(order).map((step, index) => (
+                      <div key={index} className="flex items-start gap-4 relative">
+                        <div
+                          className={`w-10 h-10 flex items-center justify-center rounded-full z-10
+              ${step.done ? "bg-[#0F1E4A]" : "bg-gray-400"}
+            `}
+                        >
+                          <FaCheck
+                            className={`text-sm ${step.done ? "text-emerald-400" : "text-white"
+                              }`}
+                          />
+                        </div>
+
+                        <div>
+                          <p className="font-medium">{step.label}</p>
+                          <p className="text-xs text-gray-500">
+                            {step.done ? "Completed" : "Pending"}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -225,29 +290,92 @@ const OrderDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <Orderstats />
+      <section className="stat-card-sec mb-6 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((item, index) => (
+            <StatCard
+              key={index}
+              title={item.title}
+              number={item.number}
+              statement={item.statement}
+              icon={item.icon}
+              variant={item.variant}
+            />
+          ))}
+        </div>
+      </section>
       <div className="">
 
         {/* Profile Card */}
         <div className="bg-[#E0F5F1] rounded-xl p-6 flex justify-between items-center">
-          <div>
+
+          {/* Left Section */}
+          <div className="space-y-2">
+            <p className="text-sm text-gray-500">Shop Name</p>
             <h2 className="text-lg font-semibold">
               {data?.data?.shop?.shopName}
             </h2>
-            <h2 className="text-base">{data?.data?.shop?.contact}</h2>
-            <div className="">
-              <p className="text-2xl font-bold text-[#03C616] mt-4">₹{data?.data?.stats?.totalRevenue}</p>
-              <p className="text-sm text-gray-500">Total Spent</p>
+
+            <p className="text-sm text-gray-500 mt-2">Contact</p>
+            <h2 className="text-base">
+              {data?.data?.shop?.contact}
+            </h2>
+
+            <div className="mt-4 space-y-3">
+              {/* Total Revenue */}
+              <div>
+                <p className="text-sm text-gray-500">Total Revenue</p>
+                <p className="text-2xl font-bold text-[#03C616]">
+                  ₹{data?.data?.stats?.totalRevenue || 0}
+                </p>
+              </div>
+
+              {/* Breakdown */}
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                {/* Delivered Revenue */}
+                <div className="bg-white rounded-lg p-3 border">
+                  <p className="text-xs text-gray-500">Delivered</p>
+                  <p className="text-lg font-semibold text-green-600">
+                    ₹{data?.data?.stats?.deliveredRevenue || 0}
+                  </p>
+                </div>
+
+                {/* Pending Revenue */}
+                <div className="bg-white rounded-lg p-3 border">
+                  <p className="text-xs text-gray-500">Pending</p>
+                  <p className="text-lg font-semibold text-yellow-600">
+                    ₹{data?.data?.stats?.pendingRevenue || 0}
+                  </p>
+                </div>
+
+              </div>
             </div>
           </div>
 
-          <p className="flex items-center mb-24 gap-3 text-sm text-gray-500 whitespace-nowrap">
-            <FaLocationDot className="text-xl text-[#1A2550]" />
-            <span>{data?.data?.shop?.address}</span>
+          {/* Right Section */}
+          <div className="flex flex-col gap-4 text-sm text-gray-500">
 
-            <FaCalendarAlt className="text-xl text-[#1A2550]" />
-            <span>{new Date(data?.data?.shop?.joined).toLocaleDateString()}</span>
-          </p>
+            <div className="flex items-center gap-3">
+              <FaLocationDot className="text-xl text-[#1A2550]" />
+              <div>
+                <p className="text-xs text-gray-400">Address</p>
+                <span className="text-sm text-gray-700">
+                  {data?.data?.shop?.address}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <FaCalendarAlt className="text-xl text-[#1A2550]" />
+              <div>
+                <p className="text-xs text-gray-400">Joined On</p>
+                <span className="text-sm text-gray-700">
+                  {new Date(data?.data?.shop?.joined).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+
+          </div>
         </div>
 
         {/* Tabs */}
@@ -262,8 +390,8 @@ const OrderDetails = () => {
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.value
-                  ? "bg-white text-black"
-                  : "text-white hover:bg-white/20"
+                ? "bg-white text-black"
+                : "text-white hover:bg-white/20"
                 }`}
             >
               {tab.label}
@@ -296,8 +424,6 @@ const OrderDetails = () => {
             )
           )}
 
-
-
           {/* Address Tab */}
           {activeTab === "address" && (
             <div className="bg-white rounded-xl shadow-sm p-6 border">
@@ -317,6 +443,32 @@ const OrderDetails = () => {
             </div>
           )}
         </div>
+      </div>
+      <div className="flex justify-between items-center mt-6">
+
+        {/* Previous Button */}
+        <button
+          onClick={() => setPage((prev) => prev - 1)}
+          disabled={!pagination?.has_prev_page}
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+
+        {/* Page Info */}
+        <p className="text-sm text-gray-600">
+          Page {pagination?.page} of {pagination?.total_pages}
+        </p>
+
+        {/* Next Button */}
+        <button
+          onClick={() => setPage((prev) => prev + 1)}
+          disabled={!pagination?.has_next_page}
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+
       </div>
     </div>
   );

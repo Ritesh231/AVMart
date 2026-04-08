@@ -14,13 +14,13 @@ export default function UsersTable() {
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
-  
+
   const filteredUsers =
     paymentFilter === "All"
       ? users
       : users.filter(
-          (order) => order.paymentMethod?.toLowerCase() === paymentFilter.toLowerCase()
-        );
+        (order) => order.paymentMethod?.toLowerCase() === paymentFilter.toLowerCase()
+      );
 
   const searchedUsers = filteredUsers.filter((order) =>
     JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
@@ -218,7 +218,7 @@ export default function UsersTable() {
   return (
     <>
 
-            {/* Search & Actions */}
+      {/* Search & Actions */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
         {/* Search Bar */}
         <div className="w-full lg:w-[40%] md:w-[50%]">
@@ -236,9 +236,9 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
-          </button>
+          </button> */}
           <div className="relative">
             <select
               value={paymentFilter}
@@ -292,7 +292,7 @@ export default function UsersTable() {
         </div>
       </div>
 
-            {/* Table */}
+      {/* Table */}
       <div className="bg-white rounded-xl border overflow-x-auto">
         <table className="min-w-[900px] w-full text-sm">
 
@@ -317,200 +317,200 @@ export default function UsersTable() {
             </tr>
           </thead>
 
-                    <tbody>
-                        {/* 🔄 Skeleton Loading */}
-                        {isLoading &&
-                            Array.from({ length: 6 }).map((_, index) => (
-                                <tr key={index} className="border-t animate-pulse">
-                                    <td className="p-3">
-                                        <div className="h-4 w-4 bg-gray-200 rounded"></div>
-                                    </td>
+          <tbody>
+            {/* 🔄 Skeleton Loading */}
+            {isLoading &&
+              Array.from({ length: 6 }).map((_, index) => (
+                <tr key={index} className="border-t animate-pulse">
+                  <td className="p-3">
+                    <div className="h-4 w-4 bg-gray-200 rounded"></div>
+                  </td>
 
-                                    <td className="p-3">
-                                        <div className="h-4 w-20 bg-gray-200 rounded"></div>
-                                    </td>
+                  <td className="p-3">
+                    <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                  </td>
 
-                                    <td className="p-3">
-                                        <div className="h-4 w-40 bg-gray-200 rounded"></div>
-                                    </td>
+                  <td className="p-3">
+                    <div className="h-4 w-40 bg-gray-200 rounded"></div>
+                  </td>
 
-                                    <td className="p-3">
-                                        <div className="h-4 w-16 bg-gray-200 rounded"></div>
-                                    </td>
+                  <td className="p-3">
+                    <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                  </td>
 
-                                    <td className="p-3">
-                                        <div className="h-4 w-24 bg-gray-200 rounded"></div>
-                                    </td>
+                  <td className="p-3">
+                    <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                  </td>
 
-                                    <td className="p-3">
-                                        <div className="flex gap-2">
-                                            <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
-                                            <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
-                                            <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
-                                        </div>
-                                    </td>
+                  <td className="p-3">
+                    <div className="flex gap-2">
+                      <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
+                      <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
+                      <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
+                    </div>
+                  </td>
 
-                                    <td className="p-3">
-                                        <div className="h-6 w-24 bg-gray-200 rounded-xl"></div>
-                                    </td>
+                  <td className="p-3">
+                    <div className="h-6 w-24 bg-gray-200 rounded-xl"></div>
+                  </td>
 
-                                    <td className="p-3">
-                                        <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
-                                    </td>
-                                </tr>
-                            ))}
+                  <td className="p-3">
+                    <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+                  </td>
+                </tr>
+              ))}
 
-                        {/* ❌ Error State */}
-                        {isError && !isLoading && (
-                            <tr>
-                                <td colSpan="8" className="text-center p-6 text-red-500 font-semibold">
-                                    Failed to load rejected orders. Please try again.
-                                </td>
-                            </tr>
-                        )}
+            {/* ❌ Error State */}
+            {isError && !isLoading && (
+              <tr>
+                <td colSpan="8" className="text-center p-6 text-red-500 font-semibold">
+                  Failed to load rejected orders. Please try again.
+                </td>
+              </tr>
+            )}
 
-                        {/* 📭 Empty State */}
-                        {!isLoading && !isError && searchedUsers.length === 0 && (
-                            <tr>
-                                <td colSpan="8" className="text-center p-6 text-gray-500">
-                                    No rejected orders found.
-                                </td>
-                            </tr>
-                        )}
+            {/* 📭 Empty State */}
+            {!isLoading && !isError && searchedUsers.length === 0 && (
+              <tr>
+                <td colSpan="8" className="text-center p-6 text-gray-500">
+                  No rejected orders found.
+                </td>
+              </tr>
+            )}
 
-                        {/* ✅ Actual Data */}
-                        {!isLoading &&
-                            !isError &&
-                            currentOrders.map((u) => (
-                                <tr key={u._id} className="border-t hover:bg-gray-50">
-                                    <td className="p-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedOrderIds.includes(u._id)}
-                                            onChange={() => toggleOrderSelection(u._id)}
-                                        />
-                                    </td>
-
-                                    <td className="p-3 font-medium">{u._id?.slice(-5)}</td>
-
-                                    <td className="p-3 font-medium">{u.shopInfo?.name}</td>
-
-                                    <td className="p-3">{u.price}</td>
-
-                                    <td className="p-3">
-                                       {u.placedOn}
-                                    </td>
-
-                                    <td className="p-3">
-                                        <div className="flex items-center gap-2">
-                                            {u.itemsPreview?.slice(0, 3).map((img, index) => (
-                                                <img
-                                                    key={index}
-                                                    src={img.image}
-                                                    alt="item"
-                                                    className="w-8 h-8 rounded-md object-cover border"
-                                                />
-                                            ))}
-                                        </div>
-                                    </td>
-
-                                    <td className="p-3">
-                                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
-            bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
-                                            <BsWallet2 className="text-[#03C616]" />
-                                            {u.paymentMethod}
-                                        </span>
-                                    </td>
-
-                                    <td className="p-3">
-                                        <button
-                                            className="p-1 text-blue-900"
-                                            title="View"
-                                            onClick={async () => {
-                                                setSelectedOrderId(u._id);
-                                                await getOrderById(u._id);
-                                            }}
-                                        >
-                                            <FaEye size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                    </tbody>
-
-                </table>
-                {selectedOrderId && (
-                    <OrderDetailsModal
-                        order={orderData?.order}
-                        loading={isLoading}
-                        onClose={() => setSelectedOrderId(null)}
+            {/* ✅ Actual Data */}
+            {!isLoading &&
+              !isError &&
+              currentOrders.map((u) => (
+                <tr key={u._id} className="border-t hover:bg-gray-50">
+                  <td className="p-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedOrderIds.includes(u._id)}
+                      onChange={() => toggleOrderSelection(u._id)}
                     />
-                )}
+                  </td>
 
-                  {/* Pagination */}
-{searchedUsers.length > ordersPerPage && (
-  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+                  <td className="p-3 font-medium">{u._id?.slice(-5)}</td>
 
-    {/* Showing Info */}
-    <p className="text-sm text-gray-600">
-      Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder, searchedUsers.length)} of{" "}
-      {searchedUsers.length} orders
-    </p>
+                  <td className="p-3 font-medium">{u.shopInfo?.name}</td>
 
-    {/* Buttons */}
-    <div className="flex items-center gap-2">
+                  <td className="p-3">{u.price}</td>
 
-      {/* Prev */}
-      <button
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+                  <td className="p-3">
+                    {u.placedOn}
+                  </td>
+
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      {u.itemsPreview?.slice(0, 3).map((img, index) => (
+                        <img
+                          key={index}
+                          src={img.image}
+                          alt="item"
+                          className="w-8 h-8 rounded-md object-cover border"
+                        />
+                      ))}
+                    </div>
+                  </td>
+
+                  <td className="p-3">
+                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
+            bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
+                      <BsWallet2 className="text-[#03C616]" />
+                      {u.paymentMethod}
+                    </span>
+                  </td>
+
+                  <td className="p-3">
+                    <button
+                      className="p-1 text-blue-900"
+                      title="View"
+                      onClick={async () => {
+                        setSelectedOrderId(u._id);
+                        await getOrderById(u._id);
+                      }}
+                    >
+                      <FaEye size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+
+        </table>
+        {selectedOrderId && (
+          <OrderDetailsModal
+            order={orderData?.order}
+            loading={isLoading}
+            onClose={() => setSelectedOrderId(null)}
+          />
+        )}
+
+        {/* Pagination */}
+        {searchedUsers.length > ordersPerPage && (
+          <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+
+            {/* Showing Info */}
+            <p className="text-sm text-gray-600">
+              Showing {indexOfFirstOrder + 1} to{" "}
+              {Math.min(indexOfLastOrder, searchedUsers.length)} of{" "}
+              {searchedUsers.length} orders
+            </p>
+
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
+
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === 1
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Prev
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Prev
+              </button>
 
-      {/* Page Numbers */}
-      {[...Array(totalPages)].map((_, index) => {
-        const page = index + 1;
-        return (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              {/* Page Numbers */}
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                ? "bg-[#00E5B0] text-white shadow-md"
-                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-              }`}
-          >
-            {page}
-          </button>
-        );
-      })}
+                        ? "bg-[#00E5B0] text-white shadow-md"
+                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
 
-      {/* Next */}
-      <button
-        onClick={() =>
-          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-        }
-        disabled={currentPage === totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Next */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Next
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Next
+              </button>
 
-    </div>
-  </div>
-)}
             </div>
-        </>
-    );
+          </div>
+        )}
+      </div>
+    </>
+  );
 }

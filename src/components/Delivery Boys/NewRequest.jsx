@@ -19,7 +19,7 @@ export default function UsersTable() {
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
-  
+
   let status = "pending";
 
   if (location.pathname.includes("approved")) status = "approved";
@@ -262,9 +262,9 @@ export default function UsersTable() {
             />
             Select All
           </label>
-          <button className="bg-brand-cyan px-3 py-3 rounded-xl">
+          {/* <button className="bg-brand-cyan px-3 py-3 rounded-xl">
             <SlidersHorizontal size={20} />
-          </button>
+          </button> */}
 
           <select
             value={vehicleFilter}

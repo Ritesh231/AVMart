@@ -10,6 +10,8 @@ const OnlinePaymentCard = ({
     amount,
     status
 }) => {
+
+
     return (
         <div className="bg-white border-2 border-brand-soft rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow w-full max-w-md">
             {/* Header Section */}
@@ -39,7 +41,7 @@ const OnlinePaymentCard = ({
                     Order : {orderId} <br></br> Transaction : {txnId}
                 </p>
             </div>
-           
+
             {/* Details Grid */}
             <div className="grid grid-cols-3 gap-4">
                 <div className="bg-brand-blue p-2 rounded-lg flex flex-col  justify-between items-start">

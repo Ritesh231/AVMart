@@ -15,6 +15,8 @@ const Payments = () => {
     const [selectedTransactionIds, setSelectedTransactionIds] = useState([]);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const selectAllRef = useRef(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
 
     const filterByDate = (txnDate) => {
         if (!txnDate) return true;
@@ -58,8 +60,6 @@ const Payments = () => {
         }
     };
 
-
-
     const tabMapping = {
         Online: "online",
         Cash: "cod",
@@ -89,6 +89,15 @@ const Payments = () => {
         return matchesSearch && matchesDate;
     });
 
+    const totalItems = filteredTransactions.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+
     useEffect(() => {
         setSelectedTransactionIds([]);
     }, [activeTab, searchTerm, dateFilter, fromDate, toDate, transactions.length]);
@@ -115,7 +124,7 @@ const Payments = () => {
 
     const toggleSelectAll = (checked) => {
         if (checked) {
-            setSelectedTransactionIds(filteredTransactions.map((txn) => txn._id || txn.id));
+            setSelectedTransactionIds(paginatedTransactions.map((txn) => txn._id || txn.id));
             return;
         }
         setSelectedTransactionIds([]);
@@ -415,7 +424,7 @@ const Payments = () => {
                     <div className="h-6 bg-gray-300 rounded w-1/4 mb-2"></div>
                     <div className="h-4 bg-gray-300 rounded w-1/3"></div>
                 </div>
-            
+
                 {/* Skeleton Stat Cards */}
                 <section className="mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -509,9 +518,9 @@ const Payments = () => {
                             />
                             Select All
                         </label>
-                        <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+                        {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                             <SlidersHorizontal size={20} />
-                        </button>
+                        </button> */}
                         <div className="flex items-center gap-3">
                             {/* Main Date Filter Dropdown */}
                             <div className="relative">
@@ -621,7 +630,7 @@ const Payments = () => {
                                 ? [...Array(6)].map((_, i) => (
                                     <PaymentCardSkeleton key={i} />
                                 ))
-                                : filteredTransactions.map((txn) => (
+                                : paginatedTransactions.map((txn) => (
                                     <div key={txn._id || txn.id} className="relative">
                                         <input
                                             type="checkbox"
@@ -654,7 +663,7 @@ const Payments = () => {
                             ? [...Array(6)].map((_, i) => (
                                 <PaymentCardSkeleton key={i} />
                             ))
-                            : filteredTransactions.map((txn) => (
+                            : paginatedTransactions.map((txn) => (
                                 <div key={txn._id || txn.id} className="relative">
                                     <input
                                         type="checkbox"
@@ -688,7 +697,7 @@ const Payments = () => {
                             ? [...Array(6)].map((_, i) => (
                                 <PaymentCardSkeleton key={i} />
                             ))
-                            : filteredTransactions.map((txn) => {
+                            : paginatedTransactions.map((txn) => {
                                 const formattedTransaction = {
                                     id: txn.id,
                                     customerName: txn.customer,
@@ -735,6 +744,41 @@ const Payments = () => {
                     </div>
                 )}
             </section >
+
+            <div className="flex justify-between items-center mt-6">
+                <p className="text-sm text-gray-500">
+                    Showing {startIndex + 1} - {Math.min(endIndex, totalItems)} of {totalItems}
+                </p>
+
+                <div className="flex gap-2">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((prev) => prev - 1)}
+                        className="px-3 py-1 border rounded disabled:opacity-50"
+                    >
+                        Prev
+                    </button>
+
+                    {[...Array(totalPages)].map((_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => setCurrentPage(i + 1)}
+                            className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-brand-cyan text-white" : ""
+                                }`}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+
+                    <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((prev) => prev + 1)}
+                        className="px-3 py-1 border rounded disabled:opacity-50"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
         </div>
     )
 }

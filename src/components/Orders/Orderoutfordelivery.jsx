@@ -246,9 +246,9 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-            <SlidersHorizontal size={20} />
-          </button>
+          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+                <SlidersHorizontal size={20} />
+              </button> */}
           <div className="relative">
             <select
               value={activeTab}

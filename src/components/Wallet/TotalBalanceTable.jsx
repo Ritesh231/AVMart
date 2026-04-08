@@ -13,7 +13,7 @@ export default function UsersTable() {
     const [selectedTransactionIds, setSelectedTransactionIds] = useState([]);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const selectAllRef = useRef(null);
-    
+
     const dateFilteredUsers = users.filter((u) => {
         if (!u.date) return false;
 
@@ -27,7 +27,7 @@ export default function UsersTable() {
                 transactionDate.toDateString() === today.toDateString()
             );
         }
-            
+
         if (dateFilter === "Yesterday") {
             const yesterday = new Date();
             yesterday.setDate(today.getDate() - 1);
@@ -209,7 +209,7 @@ export default function UsersTable() {
         printWindow.print();
         setIsExportMenuOpen(false);
     };
-    
+
     return (
         <>
             {/* Search & Actions */}
@@ -230,9 +230,9 @@ export default function UsersTable() {
 
                 {/* Export Button */}
                 <div className='flex justify-evenly gap-2 items-center'>
-                    <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+                    {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                         <SlidersHorizontal size={20} />
-                    </button>
+                    </button> */}
                     <div className="flex items-center gap-2">
                         <select
                             value={dateFilter}

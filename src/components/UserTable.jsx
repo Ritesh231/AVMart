@@ -283,9 +283,9 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
-          </button>
+          </button> */}
 
           <div className="flex items-center gap-2 border border-brand-cyan px-3 py-3 rounded-2xl bg-white">
             <select

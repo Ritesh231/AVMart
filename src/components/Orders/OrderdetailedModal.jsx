@@ -3,11 +3,11 @@ import { X } from "lucide-react";
 function OrderDetailsModal({ order, loading, onClose }) {
   if (!order && !loading) return null;
 
-  const statusFlow = ["ordered", "assigned",  "dispatched", "ongoing", "delivered"];
+  const statusFlow = ["ordered", "assigned", "dispatched", "ongoing", "delivered"];
 
   const currentIndex = statusFlow.indexOf(
-  order?.rawOrderStatus?.toLowerCase()
-);
+    order?.rawStatus?.toLowerCase()
+  );
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -103,58 +103,56 @@ function OrderDetailsModal({ order, loading, onClose }) {
           </div>
 
           {/* Timeline */}
-  <div className="border rounded-xl p-4 bg-gray-50">
-  <p className="font-semibold text-sm mb-4">Order Timeline</p>
+          <div className="border rounded-xl p-4 bg-gray-50">
+            <p className="font-semibold text-sm mb-4">Order Timeline</p>
 
-  {statusFlow.map((step, i) => {
-    const isCompleted = i <= currentIndex;
-    const isLast = i === statusFlow.length - 1;
+            {statusFlow.map((step, i) => {
+              const isCompleted = i <= currentIndex;
+              const isLast = i === statusFlow.length - 1;
 
-    return (
-      <div key={i} className="relative flex items-start gap-4">
+              return (
+                <div key={i} className="relative flex items-start gap-4">
 
-        {/* Vertical Line */}
-        {!isLast && (
-          <div
-            className={`absolute left-[11px] top-6 w-[2px] h-full
+                  {/* Vertical Line */}
+                  {!isLast && (
+                    <div
+                      className={`absolute left-[11px] top-6 w-[2px] h-full
               ${isCompleted ? "bg-green-500" : "bg-gray-300"}
             `}
-          ></div>
-        )}
+                    ></div>
+                  )}
 
-        {/* Circle */}
-        <div
-          className={`z-10 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold
-            ${
-              isCompleted
-                ? "bg-blue-900 text-green-300"
-                : "border-2 border-gray-300 bg-white"
-            }
+                  {/* Circle */}
+                  <div
+                    className={`z-10 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold
+            ${isCompleted
+                        ? "bg-blue-900 text-green-300"
+                        : "border-2 border-gray-300 bg-white"
+                      }
           `}
-        >
-          {isCompleted && "✓"}
-        </div>
+                  >
+                    {isCompleted && "✓"}
+                  </div>
 
-        {/* Text */}
-        <div className="pb-6">
-          <p
-            className={`text-sm font-medium capitalize ${
-              isCompleted ? "text-black" : "text-gray-400"
-            }`}
-          >
-            {step}
-          </p>
+                  {/* Text */}
+                  <div className="pb-6">
+                    <p
+                      className={`text-sm font-medium capitalize ${isCompleted ? "text-black" : "text-gray-400"
+                        }`}
+                    >
+                      {step}
+                    </p>
 
-          {isCompleted && (
-            <p className="text-xs text-gray-500">
-              {new Date(order?.createdAt).toLocaleString()}
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  })}
-</div>
+                    {isCompleted && (
+                      <p className="text-xs text-gray-500">
+                        {new Date(order?.createdAt).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

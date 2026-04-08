@@ -19,12 +19,12 @@ export default function UsersTable() {
   const { data, isLoading, isError } = useGetOrdersByStatusQuery("Pending");
   const orders = data?.orders || [];
 
-const users = orders.filter(
-  (order) =>
-    order.OrderStatus !== "confirmed" &&
-    order.OrderStatus !== "cancelled"
-);
-  
+  const users = orders.filter(
+    (order) =>
+      order.OrderStatus !== "confirmed" &&
+      order.OrderStatus !== "cancelled"
+  );
+
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [getOrderById, { data: orderData, loading = { isLoading } }] =
     useGetOrdersByIdMutation();
@@ -36,32 +36,32 @@ const users = orders.filter(
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 6;
 
   const filteredOrders =
-  activeStatus === "all"
-    ? users
-    : users.filter((order) =>
+    activeStatus === "all"
+      ? users
+      : users.filter((order) =>
         order.paymentMethod?.toLowerCase() === activeStatus
       );
 
   const searchedOrders = filteredOrders.filter((order) =>
     JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
-    // Pagination Logic
-   const totalPages = Math.ceil(searchedOrders.length / ordersPerPage);
-  
+
+  // Pagination Logic
+  const totalPages = Math.ceil(searchedOrders.length / ordersPerPage);
+
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  
-const currentOrders = searchedOrders.slice(
-  indexOfFirstOrder,
-  indexOfLastOrder
-);
-  
+
+  const currentOrders = searchedOrders.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+
   // Reset to page 1 when orders change
   useEffect(() => {
     setCurrentPage(1);
@@ -75,7 +75,7 @@ const currentOrders = searchedOrders.slice(
     assignOrderStatus,
     { isLoading: isUpdating }
   ] = useAssignOrderStatusMutation();
-  
+
   const skeletonRows = Array.from({ length: 6 });
 
   const { data: deliveryData } = useGetAllDeliveryBoysQuery({
@@ -115,7 +115,7 @@ const currentOrders = searchedOrders.slice(
       toast.error(err?.data?.message || "Failed to reject ❌");
     }
   };
-  
+
   const handleAssignDelivery = async (boyId) => {
     try {
       setSelectedBoyId(boyId);
@@ -182,7 +182,7 @@ const currentOrders = searchedOrders.slice(
       Status: order.OrderStatus || "-"
     }));
   };
-  
+
   const downloadBlob = (content, fileName, type) => {
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
@@ -304,26 +304,26 @@ const currentOrders = searchedOrders.slice(
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
-          </button>
-        <div className="relative">
-  <select
-    value={activeStatus}
-    onChange={(e) => setActiveStatus(e.target.value)}
-    className="appearance-none border border-brand-cyan font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl bg-white"
-  >
-    <option value="all">All Payments</option>
- <option value="all">All Payments</option>
-<option value="cod">COD</option>
-<option value="partial">Partial</option>
-  </select>
+          </button> */}
+          <div className="relative">
+            <select
+              value={activeStatus}
+              onChange={(e) => setActiveStatus(e.target.value)}
+              className="appearance-none border border-brand-cyan font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl bg-white"
+            >
+              <option value="all">All Payments</option>
+              <option value="all">All Payments</option>
+              <option value="cod">COD</option>
+              <option value="partial">Partial</option>
+            </select>
 
-  <ChevronDown
-    size={18}
-    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
-  />
-</div>
+            <ChevronDown
+              size={18}
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+            />
+          </div>
           <div className="relative">
             <button
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
@@ -460,7 +460,7 @@ const currentOrders = searchedOrders.slice(
                       u.price.toString().split(".")[1].slice(0, 2)
                       : u.price}
                   </td>
-                  
+
                   <td className="p-3">{u.placedOn}</td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
@@ -573,69 +573,69 @@ const currentOrders = searchedOrders.slice(
             </div>
           </div>
         )}
-                {/* Pagination */}
-{searchedOrders.length > ordersPerPage && (
-  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+        {/* Pagination */}
+        {searchedOrders.length > ordersPerPage && (
+          <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
-    {/* Showing Info */}
-    <p className="text-sm text-gray-600">
-      Showing {indexOfFirstOrder + 1} to{" "}
-      {Math.min(indexOfLastOrder, searchedOrders.length)} of{" "}
-      {searchedOrders.length} orders
-    </p>
+            {/* Showing Info */}
+            <p className="text-sm text-gray-600">
+              Showing {indexOfFirstOrder + 1} to{" "}
+              {Math.min(indexOfLastOrder, searchedOrders.length)} of{" "}
+              {searchedOrders.length} orders
+            </p>
 
-    {/* Buttons */}
-    <div className="flex items-center gap-2">
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
 
-      {/* Prev */}
-      <button
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === 1
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Prev
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Prev
+              </button>
 
-      {/* Page Numbers */}
-      {[...Array(totalPages)].map((_, index) => {
-        const page = index + 1;
-        return (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              {/* Page Numbers */}
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                ? "bg-[#00E5B0] text-white shadow-md"
-                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-              }`}
-          >
-            {page}
-          </button>
-        );
-      })}
+                        ? "bg-[#00E5B0] text-white shadow-md"
+                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
 
-      {/* Next */}
-      <button
-        onClick={() =>
-          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-        }
-        disabled={currentPage === totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Next */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Next
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Next
+              </button>
 
-    </div>
-  </div>
-)}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

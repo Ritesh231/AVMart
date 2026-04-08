@@ -2,12 +2,12 @@ import { FaSearch, FaTrash, FaEye } from "react-icons/fa";
 import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
-import {useGetOrdersByStatusAssignQuery } from "../../Redux/apis/ordersApi";
+import { useGetOrdersByStatusAssignQuery } from "../../Redux/apis/ordersApi";
 import {
   useGetAllDeliveryBoysQuery,
   useGetAssignDeliveryBoysMutation
 } from "../../Redux/apis/deliveryApi";
-import { useState,useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { toast } from "react-toastify";
@@ -38,22 +38,22 @@ export default function UsersTable() {
   // Pagination Logic
   const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
 
-const indexOfLastOrder = currentPage * ordersPerPage;
-const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
 
-const currentOrders = filteredUsers.slice(
-  indexOfFirstOrder,
-  indexOfLastOrder
-);
+  const currentOrders = filteredUsers.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
 
-// Reset to page 1 when orders change
-useEffect(() => {
-  setCurrentPage(1);
-}, [users.length, paymentFilter, searchTerm]);
+  // Reset to page 1 when orders change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [users.length, paymentFilter, searchTerm]);
 
-useEffect(() => {
-  setSelectedOrderIds([]);
-}, [users.length, paymentFilter, searchTerm]);
+  useEffect(() => {
+    setSelectedOrderIds([]);
+  }, [users.length, paymentFilter, searchTerm]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -246,24 +246,24 @@ useEffect(() => {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
             <SlidersHorizontal size={20} />
-          </button>
+          </button> */}
 
-       <select
-  value={paymentFilter}
-  onChange={(e) => {
-    setPaymentFilter(e.target.value);
-    setCurrentPage(1); // reset page when filter changes
-  }}
-  className="border-brand-cyan border px-4 py-3 rounded-2xl text-sm font-semibold text-brand-navy cursor-pointer"
->
-  <option value="All">All Payments</option>
-<option value="COD">COD</option>
-  <option value="Online">Online</option>
-  <option value="Partial">Partial</option>
-</select>
-       
+          <select
+            value={paymentFilter}
+            onChange={(e) => {
+              setPaymentFilter(e.target.value);
+              setCurrentPage(1); // reset page when filter changes
+            }}
+            className="border-brand-cyan border px-4 py-3 rounded-2xl text-sm font-semibold text-brand-navy cursor-pointer"
+          >
+            <option value="All">All Payments</option>
+            <option value="COD">COD</option>
+            <option value="Online">Online</option>
+            <option value="Partial">Partial</option>
+          </select>
+
           <div className="relative">
             <button
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
@@ -297,7 +297,7 @@ useEffect(() => {
           </div>
         </div>
       </div>
-      
+
       {/* Table */}
       <div className="bg-white rounded-xl border overflow-x-auto">
         <table className="min-w-[900px] w-full text-sm">
@@ -418,7 +418,7 @@ useEffect(() => {
                       {u.paymentMethod}
                     </span>
                   </td>
-                  
+
                   <td className="p-3">
                     <button
                       className="p-1 text-blue-900"
@@ -436,7 +436,7 @@ useEffect(() => {
           </tbody>
         </table>
 
-         {selectedOrderId && (
+        {selectedOrderId && (
           <OrderDetailsModal
             order={orderData?.order}
             loading={isLoading}
@@ -445,68 +445,68 @@ useEffect(() => {
         )}
 
         {/* Pagination */}
-{filteredUsers.length > ordersPerPage && (
-  <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+        {filteredUsers.length > ordersPerPage && (
+          <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
-    {/* Showing Info */}
-    <p className="text-sm text-gray-600">
-    Showing {indexOfFirstOrder + 1} to{" "}
-{Math.min(indexOfLastOrder, filteredUsers.length)} of{" "}
-{filteredUsers.length} orders
-    </p>
+            {/* Showing Info */}
+            <p className="text-sm text-gray-600">
+              Showing {indexOfFirstOrder + 1} to{" "}
+              {Math.min(indexOfLastOrder, filteredUsers.length)} of{" "}
+              {filteredUsers.length} orders
+            </p>
 
-    {/* Buttons */}
-    <div className="flex items-center gap-2">
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
 
-      {/* Prev */}
-      <button
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Prev */}
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === 1
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Prev
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Prev
+              </button>
 
-      {/* Page Numbers */}
-      {[...Array(totalPages)].map((_, index) => {
-        const page = index + 1;
-        return (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+              {/* Page Numbers */}
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                ? "bg-[#00E5B0] text-white shadow-md"
-                : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-              }`}
-          >
-            {page}
-          </button>
-        );
-      })}
+                        ? "bg-[#00E5B0] text-white shadow-md"
+                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
 
-      {/* Next */}
-      <button
-        onClick={() =>
-          setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-        }
-        disabled={currentPage === totalPages}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+              {/* Next */}
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-[#1E264F] text-white hover:bg-opacity-90"
-          }`}
-      >
-        Next
-      </button>
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                  }`}
+              >
+                Next
+              </button>
 
-    </div>
-  </div>
-)}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

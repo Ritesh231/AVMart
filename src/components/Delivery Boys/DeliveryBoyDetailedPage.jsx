@@ -34,39 +34,39 @@ export default function DeliveryBoyDetails() {
   const { data, isLoading, isError } = useGetdeliveryProfileQuery(id);
   const profile = data?.data || [];
   const [statusFilter, setStatusFilter] = useState("All");
-const [dateFilter, setDateFilter] = useState("All");
-const [fromDate, setFromDate] = useState("");
-const [toDate, setToDate] = useState("");
+  const [dateFilter, setDateFilter] = useState("All");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
-const applyDateFilter = (data, dateField = "date") => {
-  if (dateFilter === "All") return data;
+  const applyDateFilter = (data, dateField = "date") => {
+    if (dateFilter === "All") return data;
 
-  return data.filter((item) => {
-    if (!item[dateField]) return false;
+    return data.filter((item) => {
+      if (!item[dateField]) return false;
 
-    const itemDate = new Date(item[dateField]);
-    const today = new Date();
+      const itemDate = new Date(item[dateField]);
+      const today = new Date();
 
-    if (dateFilter === "Today") {
-      return itemDate.toDateString() === today.toDateString();
-    }
+      if (dateFilter === "Today") {
+        return itemDate.toDateString() === today.toDateString();
+      }
 
-    if (dateFilter === "Last7Days") {
-      const last7 = new Date();
-      last7.setDate(today.getDate() - 7);
-      return itemDate >= last7 && itemDate <= today;
-    }
+      if (dateFilter === "Last7Days") {
+        const last7 = new Date();
+        last7.setDate(today.getDate() - 7);
+        return itemDate >= last7 && itemDate <= today;
+      }
 
-    if (dateFilter === "Custom" && fromDate && toDate) {
-      const start = new Date(fromDate);
-      const end = new Date(toDate);
-      end.setHours(23, 59, 59, 999);
-      return itemDate >= start && itemDate <= end;
-    }
+      if (dateFilter === "Custom" && fromDate && toDate) {
+        const start = new Date(fromDate);
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        return itemDate >= start && itemDate <= end;
+      }
 
-    return true;
-  });
-};
+      return true;
+    });
+  };
 
   const {
     data: tabData,
@@ -108,58 +108,58 @@ const applyDateFilter = (data, dateField = "date") => {
       );
     }) || [];
 
-    const filteredAttendance = applyDateFilter(attendanceData)
-  .filter((item) => {
-    const term = searchTerm.toLowerCase();
+  const filteredAttendance = applyDateFilter(attendanceData)
+    .filter((item) => {
+      const term = searchTerm.toLowerCase();
 
-    const matchesSearch =
-      item.date?.toLowerCase().includes(term) ||
-      item.status?.toLowerCase().includes(term) ||
-      item.workingHours?.toLowerCase().includes(term);
+      const matchesSearch =
+        item.date?.toLowerCase().includes(term) ||
+        item.status?.toLowerCase().includes(term) ||
+        item.workingHours?.toLowerCase().includes(term);
 
-    const matchesStatus =
-      statusFilter === "All" || item.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "All" || item.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
 
   const filteredRevenue = applyDateFilter(tabData?.data || [])
-  .filter((txn) => {
-    const term = searchTerm.toLowerCase();
+    .filter((txn) => {
+      const term = searchTerm.toLowerCase();
 
-    const matchesSearch =
-      txn.transactionId?.toLowerCase().includes(term) ||
-      txn.orderId?.toLowerCase().includes(term) ||
-      txn.type?.toLowerCase().includes(term) ||
-      txn.description?.toLowerCase().includes(term);
+      const matchesSearch =
+        txn.transactionId?.toLowerCase().includes(term) ||
+        txn.orderId?.toLowerCase().includes(term) ||
+        txn.type?.toLowerCase().includes(term) ||
+        txn.description?.toLowerCase().includes(term);
 
-    const matchesStatus =
-      statusFilter === "All" || txn.type === statusFilter;
+      const matchesStatus =
+        statusFilter === "All" || txn.type === statusFilter;
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
 
   const filteredOrders = applyDateFilter(tabData?.data || [])
-  .filter((order) => {
-    const term = searchTerm.toLowerCase();
+    .filter((order) => {
+      const term = searchTerm.toLowerCase();
 
-    const matchesSearch =
-      order._id?.toLowerCase().includes(term) ||
-      order.deliveryStatus?.toLowerCase().includes(term) ||
-      order.paymentMethod?.toLowerCase().includes(term);
+      const matchesSearch =
+        order._id?.toLowerCase().includes(term) ||
+        order.deliveryStatus?.toLowerCase().includes(term) ||
+        order.paymentMethod?.toLowerCase().includes(term);
 
-    const matchesStatus =
-      statusFilter === "All" || order.deliveryStatus === statusFilter;
+      const matchesStatus =
+        statusFilter === "All" || order.deliveryStatus === statusFilter;
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
 
   const currentTabData =
     activeTab === "attendance"
       ? filteredAttendance
       : activeTab === "revenue"
-      ? filteredRevenue
-      : filteredOrders;
+        ? filteredRevenue
+        : filteredOrders;
 
   const getItemId = (item) =>
     item?._id || item?.transactionId || item?.orderId || item?.date;
@@ -447,7 +447,7 @@ const applyDateFilter = (data, dateField = "date") => {
             halfDay={attendanceCount?.halfDay || 0}
           />
 
-          
+
 
           {/* Filter */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
@@ -479,87 +479,87 @@ const applyDateFilter = (data, dateField = "date") => {
               <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
               </button>
-            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex flex-wrap gap-3 items-center">
 
-  {/* Status Filter */}
-  <select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-    className="border px-4 py-2 rounded-xl bg-white"
-  >
-    <option value="All">All Status</option>
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="border px-4 py-2 rounded-xl bg-white"
+                >
+                  <option value="All">All Status</option>
 
-    {activeTab === "attendance" && (
-      <>
-        <option value="Present">Present</option>
-        <option value="Absent">Absent</option>
-        <option value="HalfDay">HalfDay</option>
-      </>
-    )}
+                  {activeTab === "attendance" && (
+                    <>
+                      <option value="Present">Present</option>
+                      <option value="Absent">Absent</option>
+                      <option value="HalfDay">HalfDay</option>
+                    </>
+                  )}
 
-    {activeTab === "orders" && (
-      <>
-        <option value="Ongoing">Ongoing</option>
-        <option value="Delivered">Delivered</option>
-        <option value="Rejected">Rejected</option>
-      </>
-    )}
+                  {activeTab === "orders" && (
+                    <>
+                      <option value="Ongoing">Ongoing</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Rejected">Rejected</option>
+                    </>
+                  )}
 
-    {activeTab === "revenue" && (
-      <>
-        <option value="Credit">Credit</option>
-        <option value="Debit">Debit</option>
-      </>
-    )}
-  </select>
+                  {activeTab === "revenue" && (
+                    <>
+                      <option value="Credit">Credit</option>
+                      <option value="Debit">Debit</option>
+                    </>
+                  )}
+                </select>
 
-  {/* Date Filter */}
-  <select
-    value={dateFilter}
-    onChange={(e) => {
-      setDateFilter(e.target.value);
-      setFromDate("");
-      setToDate("");
-    }}
-    className="border px-4 py-2 rounded-xl bg-white"
-  >
-    <option value="All">All Dates</option>
-    <option value="Today">Today</option>
-    <option value="Last7Days">Last 7 Days</option>
-    <option value="Custom">Custom Range</option>
-  </select>
+                {/* Date Filter */}
+                <select
+                  value={dateFilter}
+                  onChange={(e) => {
+                    setDateFilter(e.target.value);
+                    setFromDate("");
+                    setToDate("");
+                  }}
+                  className="border px-4 py-2 rounded-xl bg-white"
+                >
+                  <option value="All">All Dates</option>
+                  <option value="Today">Today</option>
+                  <option value="Last7Days">Last 7 Days</option>
+                  <option value="Custom">Custom Range</option>
+                </select>
 
-  {/* Custom Range */}
-  {dateFilter === "Custom" && (
-    <>
-      <input
-        type="date"
-        value={fromDate}
-        max={toDate || undefined}
-        onChange={(e) => {
-          const selected = e.target.value;
-          if (toDate && selected > toDate) setToDate("");
-          setFromDate(selected);
-        }}
-        className="border px-3 py-2 rounded-xl"
-      />
+                {/* Custom Range */}
+                {dateFilter === "Custom" && (
+                  <>
+                    <input
+                      type="date"
+                      value={fromDate}
+                      max={toDate || undefined}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        if (toDate && selected > toDate) setToDate("");
+                        setFromDate(selected);
+                      }}
+                      className="border px-3 py-2 rounded-xl"
+                    />
 
-      <span>to</span>
+                    <span>to</span>
 
-      <input
-        type="date"
-        value={toDate}
-        min={fromDate || undefined}
-        onChange={(e) => {
-          const selected = e.target.value;
-          if (fromDate && selected < fromDate) return;
-          setToDate(selected);
-        }}
-        className="border px-3 py-2 rounded-xl"
-      />
-    </>
-  )}
-</div>
+                    <input
+                      type="date"
+                      value={toDate}
+                      min={fromDate || undefined}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        if (fromDate && selected < fromDate) return;
+                        setToDate(selected);
+                      }}
+                      className="border px-3 py-2 rounded-xl"
+                    />
+                  </>
+                )}
+              </div>
               <div className="relative">
                 <button
                   className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
@@ -644,7 +644,7 @@ const applyDateFilter = (data, dateField = "date") => {
           </div>
         </>
       )}
-      
+
       {activeTab === "revenue" && (
         <>
           {/* Revenue Summary Cards */}
@@ -684,87 +684,87 @@ const applyDateFilter = (data, dateField = "date") => {
               <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
               </button>
-            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex flex-wrap gap-3 items-center">
 
-  {/* Status Filter */}
-  <select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-    className="border px-4 py-2 rounded-xl bg-white"
-  >
-    <option value="All">All Status</option>
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="border px-4 py-2 rounded-xl bg-white"
+                >
+                  <option value="All">All Status</option>
 
-    {activeTab === "attendance" && (
-      <>
-        <option value="Present">Present</option>
-        <option value="Absent">Absent</option>
-        <option value="HalfDay">HalfDay</option>
-      </>
-    )}
+                  {activeTab === "attendance" && (
+                    <>
+                      <option value="Present">Present</option>
+                      <option value="Absent">Absent</option>
+                      <option value="HalfDay">HalfDay</option>
+                    </>
+                  )}
 
-    {activeTab === "orders" && (
-      <>
-        <option value="Ongoing">Ongoing</option>
-        <option value="Delivered">Delivered</option>
-        <option value="Rejected">Rejected</option>
-      </>
-    )}
+                  {activeTab === "orders" && (
+                    <>
+                      <option value="Ongoing">Ongoing</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Rejected">Rejected</option>
+                    </>
+                  )}
 
-    {activeTab === "revenue" && (
-      <>
-        <option value="Credit">Credit</option>
-        <option value="Debit">Debit</option>
-      </>
-    )}
-  </select>
+                  {activeTab === "revenue" && (
+                    <>
+                      <option value="Credit">Credit</option>
+                      <option value="Debit">Debit</option>
+                    </>
+                  )}
+                </select>
 
-  {/* Date Filter */}
-  <select
-    value={dateFilter}
-    onChange={(e) => {
-      setDateFilter(e.target.value);
-      setFromDate("");
-      setToDate("");
-    }}
-    className="border px-4 py-2 rounded-xl bg-white"
-  >
-    <option value="All">All Dates</option>
-    <option value="Today">Today</option>
-    <option value="Last7Days">Last 7 Days</option>
-    <option value="Custom">Custom Range</option>
-  </select>
+                {/* Date Filter */}
+                <select
+                  value={dateFilter}
+                  onChange={(e) => {
+                    setDateFilter(e.target.value);
+                    setFromDate("");
+                    setToDate("");
+                  }}
+                  className="border px-4 py-2 rounded-xl bg-white"
+                >
+                  <option value="All">All Dates</option>
+                  <option value="Today">Today</option>
+                  <option value="Last7Days">Last 7 Days</option>
+                  <option value="Custom">Custom Range</option>
+                </select>
 
-  {/* Custom Range */}
-  {dateFilter === "Custom" && (
-    <>
-      <input
-        type="date"
-        value={fromDate}
-        max={toDate || undefined}
-        onChange={(e) => {
-          const selected = e.target.value;
-          if (toDate && selected > toDate) setToDate("");
-          setFromDate(selected);
-        }}
-        className="border px-3 py-2 rounded-xl"
-      />
+                {/* Custom Range */}
+                {dateFilter === "Custom" && (
+                  <>
+                    <input
+                      type="date"
+                      value={fromDate}
+                      max={toDate || undefined}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        if (toDate && selected > toDate) setToDate("");
+                        setFromDate(selected);
+                      }}
+                      className="border px-3 py-2 rounded-xl"
+                    />
 
-      <span>to</span>
+                    <span>to</span>
 
-      <input
-        type="date"
-        value={toDate}
-        min={fromDate || undefined}
-        onChange={(e) => {
-          const selected = e.target.value;
-          if (fromDate && selected < fromDate) return;
-          setToDate(selected);
-        }}
-        className="border px-3 py-2 rounded-xl"
-      />
-    </>
-  )}
-</div>
+                    <input
+                      type="date"
+                      value={toDate}
+                      min={fromDate || undefined}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        if (fromDate && selected < fromDate) return;
+                        setToDate(selected);
+                      }}
+                      className="border px-3 py-2 rounded-xl"
+                    />
+                  </>
+                )}
+              </div>
               <div className="relative">
                 <button
                   className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
@@ -869,90 +869,90 @@ const applyDateFilter = (data, dateField = "date") => {
                 />
                 Select All
               </label>
-              <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+              {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
-              </button>
-            <div className="flex flex-wrap gap-3 items-center">
+              </button> */}
+              <div className="flex flex-wrap gap-3 items-center">
 
-  {/* Status Filter */}
-  <select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-    className="border px-4 py-2 rounded-xl bg-white"
-  >
-    <option value="All">All Status</option>
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="border px-4 py-2 rounded-xl bg-white"
+                >
+                  <option value="All">All Status</option>
 
-    {activeTab === "attendance" && (
-      <>
-        <option value="Present">Present</option>
-        <option value="Absent">Absent</option>
-        <option value="HalfDay">HalfDay</option>
-      </>
-    )}
+                  {activeTab === "attendance" && (
+                    <>
+                      <option value="Present">Present</option>
+                      <option value="Absent">Absent</option>
+                      <option value="HalfDay">HalfDay</option>
+                    </>
+                  )}
 
-    {activeTab === "orders" && (
-      <>
-        <option value="Ongoing">Ongoing</option>
-        <option value="Delivered">Delivered</option>
-        <option value="Rejected">Rejected</option>
-      </>
-    )}
+                  {activeTab === "orders" && (
+                    <>
+                      <option value="Ongoing">Ongoing</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Rejected">Rejected</option>
+                    </>
+                  )}
 
-    {activeTab === "revenue" && (
-      <>
-        <option value="Credit">Credit</option>
-        <option value="Debit">Debit</option>
-      </>
-    )}
-  </select>
+                  {activeTab === "revenue" && (
+                    <>
+                      <option value="Credit">Credit</option>
+                      <option value="Debit">Debit</option>
+                    </>
+                  )}
+                </select>
 
-  {/* Date Filter */}
-  <select
-    value={dateFilter}
-    onChange={(e) => {
-      setDateFilter(e.target.value);
-      setFromDate("");
-      setToDate("");
-    }}
-    className="border px-4 py-2 rounded-xl bg-white"
-  >
-    <option value="All">All Dates</option>
-    <option value="Today">Today</option>
-    <option value="Last7Days">Last 7 Days</option>
-    <option value="Custom">Custom Range</option>
-  </select>
+                {/* Date Filter */}
+                <select
+                  value={dateFilter}
+                  onChange={(e) => {
+                    setDateFilter(e.target.value);
+                    setFromDate("");
+                    setToDate("");
+                  }}
+                  className="border px-4 py-2 rounded-xl bg-white"
+                >
+                  <option value="All">All Dates</option>
+                  <option value="Today">Today</option>
+                  <option value="Last7Days">Last 7 Days</option>
+                  <option value="Custom">Custom Range</option>
+                </select>
 
-  {/* Custom Range */}
-  {dateFilter === "Custom" && (
-    <>
-      <input
-        type="date"
-        value={fromDate}
-        max={toDate || undefined}
-        onChange={(e) => {
-          const selected = e.target.value;
-          if (toDate && selected > toDate) setToDate("");
-          setFromDate(selected);
-        }}
-        className="border px-3 py-2 rounded-xl"
-      />
+                {/* Custom Range */}
+                {dateFilter === "Custom" && (
+                  <>
+                    <input
+                      type="date"
+                      value={fromDate}
+                      max={toDate || undefined}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        if (toDate && selected > toDate) setToDate("");
+                        setFromDate(selected);
+                      }}
+                      className="border px-3 py-2 rounded-xl"
+                    />
 
-      <span>to</span>
+                    <span>to</span>
 
-      <input
-        type="date"
-        value={toDate}
-        min={fromDate || undefined}
-        onChange={(e) => {
-          const selected = e.target.value;
-          if (fromDate && selected < fromDate) return;
-          setToDate(selected);
-        }}
-        className="border px-3 py-2 rounded-xl"
-      />
-    </>
-  )}
-</div>
+                    <input
+                      type="date"
+                      value={toDate}
+                      min={fromDate || undefined}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        if (fromDate && selected < fromDate) return;
+                        setToDate(selected);
+                      }}
+                      className="border px-3 py-2 rounded-xl"
+                    />
+                  </>
+                )}
+              </div>
               <div className="relative">
                 <button
                   className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
