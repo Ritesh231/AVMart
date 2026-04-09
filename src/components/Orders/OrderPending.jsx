@@ -124,11 +124,12 @@ export default function UsersTable() {
         orderId: selectedOrderForDelivery,
         deliveryBoyId: boyId,
       }).unwrap();
-
+      toast.success("Delivery boy assigned successfully");
       setIsDeliveryModalOpen(false);
       setSelectedOrderForDelivery(null);
     } catch (error) {
       console.error(error);
+      toast.error("Failed to assign delivery boy ❌");
     } finally {
       setSelectedBoyId(null);
     }

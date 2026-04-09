@@ -18,12 +18,12 @@ export default function UsersTable() {
   const selectAllRef = useRef(null);
 
   const location = useLocation();
-  let statusFilter = "Pending";
+  let statusFilter = "Contacted";
 
   if (location.pathname.includes("all")) {
     statusFilter = "All";
-  } else if (location.pathname.includes("contacted")) {
-    statusFilter = "Contacted";
+  } else if (location.pathname.includes("pending")) {
+    statusFilter = "Pending";
   }
 
   const allQueries = (data?.data || []).filter((q) => {
@@ -325,7 +325,7 @@ export default function UsersTable() {
                     }
                     setFromDate(selected);
                   }}
-                  className="border px-3 py-2 rounded-xl"
+                  className="border px-3 py-3 rounded-xl"
                 />
 
                 <span>to</span>
@@ -339,7 +339,7 @@ export default function UsersTable() {
                     if (fromDate && selected < fromDate) return;
                     setToDate(selected);
                   }}
-                  className="border px-3 py-2 rounded-xl"
+                  className="border px-3 py-3 rounded-xl"
                 />
               </>
             )}

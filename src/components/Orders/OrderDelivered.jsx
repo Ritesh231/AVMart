@@ -7,7 +7,6 @@ import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import { useEffect, useRef, useState } from "react";
 
-
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetOrdersByStatusQuery("Delivered");
   const users = data?.orders || [];

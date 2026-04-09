@@ -54,7 +54,6 @@ const Payments = () => {
                 end.setHours(23, 59, 59, 999);
 
                 return txn >= start && txn <= end;
-
             default:
                 return true;
         }
@@ -308,13 +307,13 @@ const Payments = () => {
             icon: <BadgeIndianRupee size={24} />,
             special: false
         },
-        {
-            title: "Partial Payments",
-            number: summary?.partial || "0",
-            statement: "+ 12 % from last week",
-            icon: <BadgeIndianRupee size={24} />,
-            special: false
-        },
+        // {
+        //     title: "Partial Payments",
+        //     number: summary?.partial || "0",
+        //     statement: "+ 12 % from last week",
+        //     icon: <BadgeIndianRupee size={24} />,
+        //     special: false
+        // },
         {
             title: "Total Revenue",
             number: summary?.totalRevenue || "0",
@@ -456,7 +455,7 @@ const Payments = () => {
 
             {/* Stats Cards */}
             <section className="stat-card-sec mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {paymentTypeStat.map((stat, index) => (
                         <StatCard
                             key={index}

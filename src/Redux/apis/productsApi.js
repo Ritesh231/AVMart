@@ -83,10 +83,10 @@ export const Productsapi = baseApi.injectEndpoints({
     }),
 
     editCategory: builder.mutation({
-      query: ({ id, ...body }) => ({
+      query: ({ id, formData }) => ({
         url: `/api/v1/admin/categories/update/${id}`,
         method: "PUT",
-        body,
+        body: formData,
       }),
       invalidatesTags: ["Categories"],
     }),

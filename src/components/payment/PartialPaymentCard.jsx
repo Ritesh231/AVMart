@@ -7,9 +7,9 @@ const PartialPaymentCard = ({ transaction }) => {
     if (!transaction || !transaction.breakdown) {
         return <div className="p-4 border border-red-200 rounded-xl bg-red-50 text-red-500">Error: Transaction data missing</div>;
     }
-     
+
     const { advance, remaining } = transaction.breakdown || {};
-    
+
 
     return (
         <div className="bg-white border-2 border-brand-soft rounded-3xl p-4 mb-4 shadow-sm transition-all overflow-hidden">
@@ -29,11 +29,11 @@ const PartialPaymentCard = ({ transaction }) => {
                         </p>
                     </div>
                 </div>
-                
+
                 <div className="hidden md:block bg-brand-navy text-white text-xs px-4 py-3 rounded-xl font-bold">
-                 Delivery Boy - {transaction.deliveryBoy?.name || "Not Assigned"}
+                    Delivery Boy - {transaction.deliveryBoy?.name || "Not Assigned"}
                 </div>
-                
+
 
                 <div className="flex items-center gap-6">
                     <div className="text-right">
@@ -72,7 +72,6 @@ const PartialPaymentCard = ({ transaction }) => {
                                 <p className="text-brand-navy font-extrabold text-2xl mt-1">
                                     {transaction.currency}{advance.amount + remaining.amount} / {transaction.currency}{transaction.totalAmount}
                                 </p>
-
                             </div>
                             <div className="mt-4 w-full bg-[#E6FCEE] text-green-600 text-[10px] font-bold py-2 rounded-xl text-center uppercase">
                                 {transaction.status}

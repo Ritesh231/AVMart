@@ -26,7 +26,7 @@ const TransactionItem = ({ data }) => {
 
             {/* Dynamic Amount Styling */}
             <div className={`text-md font-bold whitespace-nowrap ${isCredited ? 'text-green-500' : 'text-red-500'}`}>
-                {isCredited ? '+' : '-'}₹{data.amount}
+                {isCredited ? '+' : '-'}₹{Number(data.amount).toFixed(2)}
             </div>
         </div>
     );

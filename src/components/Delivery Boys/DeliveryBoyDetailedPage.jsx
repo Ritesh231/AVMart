@@ -837,6 +837,7 @@ export default function DeliveryBoyDetails() {
         <>
           {/* Top Summary Cards */}
           <OrderStats
+            total={tabData?.stats?.totalOrders}
             ongoing={tabData?.stats?.ongoing || 0}
             completed={tabData?.stats?.completed || 0}
             rejected={tabData?.stats?.rejected || 0}

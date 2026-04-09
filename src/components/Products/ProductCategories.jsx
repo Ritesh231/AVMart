@@ -8,7 +8,6 @@ import { BsStar } from "react-icons/bs";
 import CategoryCard from "./CategoryCards";
 import { useGetallcategoriesQuery } from "../../Redux/apis/productsApi";
 
-
 const tabs = [
   { name: "Categories", icon: <BiCategory /> },
   { name: "Sub Categories", icon: <MdSubdirectoryArrowRight /> },
@@ -16,11 +15,20 @@ const tabs = [
   { name: "Brands", icon: <BsStar /> },
 ];
 
-
 export default function ProductCategories() {
 
   const { data, isLoading, isError } = useGetallcategoriesQuery();
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
   const categories = data?.data ?? [];
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const paginatedCategories = categories.slice(startIndex, endIndex);
+
+  const totalPages = Math.ceil(categories.length / limit);
 
   const CategoryShimmer = () => (
     <div className="p-4 rounded-xl border bg-white animate-pulse">
@@ -53,14 +61,73 @@ export default function ProductCategories() {
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {categories.map((category) => (
+        {paginatedCategories.map((category) => (
           <CategoryCard
             key={category._id}
             category={category}
           />
         ))}
       </div>
+      {categories.length > limit && (
+        <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t rounded-xl">
 
+          {/* Showing Info */}
+          <p className="text-sm text-gray-600">
+            Showing {startIndex + 1} to{" "}
+            {Math.min(endIndex, categories.length)} of{" "}
+            {categories.length} categories
+          </p>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-2">
+
+            {/* Prev */}
+            <button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+        ${page === 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                }`}
+            >
+              Prev
+            </button>
+
+            {/* Page Numbers */}
+            {[...Array(totalPages)].map((_, index) => {
+              const p = index + 1;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+            ${page === p
+                      ? "bg-[#00E5B0] text-white shadow-md"
+                      : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                    }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+
+            {/* Next */}
+            <button
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+        ${page === totalPages
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                }`}
+            >
+              Next
+            </button>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

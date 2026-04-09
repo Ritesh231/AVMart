@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useUpdateProductMutation } from "../../Redux/apis/productsApi";
+import {
+  useUpdateProductMutation, useGetallSubcategoriesQuery, useGetallBrandsQuery,
+  useGetallcategoriesQuery,
+} from "../../Redux/apis/productsApi";
 
 export default function EditProductModal({
   isOpen,
@@ -8,7 +11,14 @@ export default function EditProductModal({
   productData,
 }) {
   const [updateProduct, { isLoading }] = useUpdateProductMutation();
-  
+  const { data: subcategoryData } = useGetallSubcategoriesQuery();
+  const { data: brandData } = useGetallBrandsQuery();
+  const { data: categoryData } = useGetallcategoriesQuery();
+
+  const subcategories = subcategoryData?.data || [];
+  const brands = brandData?.data || [];
+  const categories = categoryData?.data || [];
+
   const [formData, setFormData] = useState({
     productName: "",
     subtext: "",
@@ -25,40 +35,44 @@ export default function EditProductModal({
     primaryImage: null,
     variants: [],
   });
-   
+
+  const filteredSubcategories = subcategories.filter(
+    (sub) => sub.CategoryId === formData.category
+  );
+
   const [previewImage, setPreviewImage] = useState(null);
 
-useEffect(() => {
-  if (productData) {
-    setFormData({
-      productName: productData.productName || "",
-      subtext: productData.subtext || "",
-      description: productData.description || "",
-      keyFeatures: productData.keyFeatures || [],
-      wholesaleAdvantage: productData.wholesaleAdvantage || "",
-      brand: productData.brand?._id || "",
-      brandname: productData.brand?.name || "",
-      category: productData.category?._id || "",
-      categoryname: productData.category?.name || "",
-      subcategory: productData.subcategory?._id || "",
-      subcategoryname: productData.subcategory?.name || "",
-      status: productData.status || "active",
-      slug: productData.slug || "",
-      // origin: productData.origin || "",
-      // shelfLife: productData.shelfLife || "",
-      // storage: productData.storage || "",
-      primaryImage: null,
-      variants: productData.variants.map(v => ({
-        ...v,
-        discountType: v.discountType || "percentage",
-        discountValue: v.discountValue ?? 0,
-        // gstRate: v.gstRate ?? 18,
-      })),
-    });
+  useEffect(() => {
+    if (productData) {
+      setFormData({
+        productName: productData.productName || "",
+        subtext: productData.subtext || "",
+        description: productData.description || "",
+        keyFeatures: productData.keyFeatures || [],
+        wholesaleAdvantage: productData.wholesaleAdvantage || "",
+        brand: productData.brand?._id || "",
+        brandname: productData.brand?.name || "",
+        category: productData.category?._id || "",
+        categoryname: productData.category?.name || "",
+        subcategory: productData.subcategory?._id || "",
+        subcategoryname: productData.subcategory?.name || "",
+        status: productData.status || "active",
+        slug: productData.slug || "",
+        // origin: productData.origin || "",
+        // shelfLife: productData.shelfLife || "",
+        // storage: productData.storage || "",
+        primaryImage: null,
+        variants: productData.variants.map(v => ({
+          ...v,
+          discountType: v.discountType || "percentage",
+          discountValue: v.discountValue ?? 0,
+          // gstRate: v.gstRate ?? 18,
+        })),
+      });
 
-    setPreviewImage(productData.primaryImages?.[0] || null);
-  }
-}, [productData]);
+      setPreviewImage(productData.primaryImages?.[0] || null);
+    }
+  }, [productData]);
 
   const QUANTITY_UNITS = ["ml", "l", "g", "kg", "piece", "dozen", "pack", "box", ""];
   // const GST_RATES = [0, 3, 5, 12, 18, 28];
@@ -91,7 +105,7 @@ useEffect(() => {
 
     setFormData({ ...formData, variants: updatedVariants });
   };
-  
+
   const addVariant = () => {
     setFormData({
       ...formData,
@@ -168,9 +182,56 @@ useEffect(() => {
         <div className="grid grid-cols-2 gap-3">
           <input name="productName" value={formData.productName} onChange={handleChange} placeholder="Product Name" className="border p-2 rounded-lg" />
           <input name="slug" value={formData.slug} onChange={handleChange} placeholder="Slug" className="border p-2 rounded-lg" />
-          <input name="brand" value={formData.brandname} onChange={handleChange} placeholder="Brand ID" className="border p-2 rounded-lg" />
-          <input name="category" value={formData.categoryname} onChange={handleChange} placeholder="Category ID" className="border p-2 rounded-lg" />
-          <input name="subcategory" value={formData.subcategoryname} onChange={handleChange} placeholder="Subcategory ID" className="border p-2 rounded-lg" />
+          {/* Brand */}
+          <select
+            name="brand"
+            value={formData.brand}
+            onChange={handleChange}
+            className="border p-2 rounded-lg"
+          >
+            <option value="">Select Brand</option>
+            {brands.map((b) => (
+              <option key={b._id} value={b._id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Category */}
+          <select
+            name="category"
+            value={formData.category}
+            onChange={(e) => {
+              setFormData({
+                ...formData,
+                category: e.target.value,
+                subcategory: "" // reset subcategory when category changes
+              });
+            }}
+            className="border p-2 rounded-lg"
+          >
+            <option value="">Select Category</option>
+            {categories.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Subcategory */}
+          <select
+            name="subcategory"
+            value={formData.subcategory}
+            onChange={handleChange}
+            className="border p-2 rounded-lg"
+          >
+            <option value="">Select Subcategory</option>
+            {filteredSubcategories.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
           <input name="status" value={formData.status} onChange={handleChange} placeholder="Status" className="border p-2 rounded-lg" />
         </div>
 
@@ -265,7 +326,7 @@ useEffect(() => {
                   placeholder="Original Price"
                   className="border p-2 rounded"
                 />
-                 
+
                 {/* Discount Value */}
                 <div className="flex items-center gap-2">
                   {/* Discount Value Input */}
@@ -287,7 +348,7 @@ useEffect(() => {
                       className={`border p-2 rounded w-full ${variant.discountType === "percentage" ? "pr-8" : ""
                         }`} // Add padding-right for % sign
                     />
-                    
+
                     {/* % sign inside input */}
                     {variant.discountType === "percentage" && (
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
@@ -295,7 +356,7 @@ useEffect(() => {
                       </span>
                     )}
                   </div>
-                  
+
                   {/* Discount Type Dropdown */}
                   <select
                     value={variant.discountType || "percentage"}

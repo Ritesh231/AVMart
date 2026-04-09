@@ -1,6 +1,7 @@
 import { MdMessage } from "react-icons/md";
 import StatCard from "../StatCard";
 import { useGetallqueriesQuery } from "../../Redux/apis/queryApi";
+import StatCardSkeleton from "../statcardskeleton";
 
 export default function UserStats() {
   const { data, isLoading, isError } = useGetallqueriesQuery();
@@ -42,22 +43,26 @@ export default function UserStats() {
     },
   ];
 
-  if (isLoading) return <p>Loading...</p>;
-  if (isError) return <p>Error loading data</p>;
+
+  if (isError) return <p>No Data Found</p>;
 
   return (
     <section className="stat-card-sec mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {stats.map((item, index) => (
-          <StatCard
-            key={index}
-            title={item.title}
-            number={item.number}
-            statement={item.statement}
-            icon={item.icon}
-            variant={item.variant}
-          />
-        ))}
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, index) => (
+            <StatCardSkeleton key={index} />
+          ))
+          : stats.map((item, index) => (
+            <StatCard
+              key={index}
+              title={item.title}
+              number={item.number}
+              statement={item.statement}
+              icon={item.icon}
+              variant={item.variant}
+            />
+          ))}
       </div>
     </section>
   );

@@ -307,17 +307,17 @@ const OrderDetails = () => {
       <div className="">
 
         {/* Profile Card */}
-        <div className="bg-[#E0F5F1] rounded-xl p-6 flex justify-between items-center">
+        <div className="bg-[#E0F5F1] rounded-xl p-4 md:p-6 flex flex-col md:flex-row md:justify-between md:items-start gap-6">
 
-          {/* Left Section */}
-          <div className="space-y-2">
+          {/* LEFT SECTION */}
+          <div className="space-y-2 flex-1 min-w-0">
             <p className="text-sm text-gray-500">Shop Name</p>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-lg font-semibold break-words">
               {data?.data?.shop?.shopName}
             </h2>
 
             <p className="text-sm text-gray-500 mt-2">Contact</p>
-            <h2 className="text-base">
+            <h2 className="text-base break-words">
               {data?.data?.shop?.contact}
             </h2>
 
@@ -325,52 +325,55 @@ const OrderDetails = () => {
               {/* Total Revenue */}
               <div>
                 <p className="text-sm text-gray-500">Total Revenue</p>
-                <p className="text-2xl font-bold text-[#03C616]">
-                  ₹{data?.data?.stats?.totalRevenue || 0}
+                <p className="text-xl md:text-2xl font-bold text-[#03C616]">
+                  ₹{Number(data?.data?.stats?.totalRevenue || 0).toFixed(2)}
                 </p>
               </div>
 
               {/* Breakdown */}
-              <div className="grid grid-cols-2 gap-4 mt-3">
-                {/* Delivered Revenue */}
-                <div className="bg-white rounded-lg p-3 border">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                {/* Delivered */}
+                <div className="bg-white rounded-lg p-3 border w-64">
                   <p className="text-xs text-gray-500">Delivered</p>
                   <p className="text-lg font-semibold text-green-600">
-                    ₹{data?.data?.stats?.deliveredRevenue || 0}
+                    ₹{Number(data?.data?.stats?.deliveredRevenue || 0).toFixed(2)}
                   </p>
                 </div>
 
-                {/* Pending Revenue */}
-                <div className="bg-white rounded-lg p-3 border">
+                {/* Pending */}
+                <div className="bg-white rounded-lg p-3 border w-64">
                   <p className="text-xs text-gray-500">Pending</p>
                   <p className="text-lg font-semibold text-yellow-600">
-                    ₹{data?.data?.stats?.pendingRevenue || 0}
+                    ₹{Number(data?.data?.stats?.pendingRevenue || 0).toFixed(2)}
                   </p>
                 </div>
-
               </div>
             </div>
           </div>
 
-          {/* Right Section */}
-          <div className="flex flex-col gap-4 text-sm text-gray-500">
+          {/* RIGHT SECTION */}
+          <div className="flex flex-col gap-4 text-sm text-gray-500 w-full md:w-[300px] flex-shrink-0">
 
-            <div className="flex items-center gap-3">
-              <FaLocationDot className="text-xl text-[#1A2550]" />
+            {/* Address */}
+            <div className="flex items-start gap-3">
+              <FaLocationDot className="text-xl text-[#1A2550] mt-1" />
               <div>
                 <p className="text-xs text-gray-400">Address</p>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-700 break-words">
                   {data?.data?.shop?.address}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <FaCalendarAlt className="text-xl text-[#1A2550]" />
+            {/* Joined */}
+            <div className="flex items-start gap-3">
+              <FaCalendarAlt className="text-xl text-[#1A2550] mt-1" />
               <div>
                 <p className="text-xs text-gray-400">Joined On</p>
                 <span className="text-sm text-gray-700">
-                  {new Date(data?.data?.shop?.joined).toLocaleDateString()}
+                  {data?.data?.shop?.joined
+                    ? new Date(data.data.shop.joined).toLocaleDateString()
+                    : "-"}
                 </span>
               </div>
             </div>
@@ -379,24 +382,26 @@ const OrderDetails = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-3 bg-[#1A2550] p-3 w-fit mt-4 rounded-lg">
-          {[
-            { label: "Ongoing Orders", value: "ongoing" },
-            { label: "Completed Orders", value: "completed" },
-            { label: "Addresses", value: "address" },
-            { label: "Personal Details", value: "personal" },
-          ].map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.value
-                ? "bg-white text-black"
-                : "text-white hover:bg-white/20"
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="w-full overflow-x-auto">
+          <div className="flex gap-3 bg-[#1A2550] p-3 w-max rounded-lg">
+            {[
+              { label: "Ongoing Orders", value: "ongoing" },
+              { label: "Completed Orders", value: "completed" },
+              { label: "Addresses", value: "address" },
+              { label: "Personal Details", value: "personal" },
+            ].map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${activeTab === tab.value
+                  ? "bg-white text-black"
+                  : "text-white hover:bg-white/20"
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Order Card */}

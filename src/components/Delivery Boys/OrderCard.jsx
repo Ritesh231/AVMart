@@ -6,8 +6,15 @@ export default function OrderStats({
   ongoing = 2,
   completed = 3,
   rejected = 1,
+  total = 6,
 }) {
   const stats = [
+    {
+      title: "Total",
+      number: total,
+      statement: "Total orders",
+      icon: <Truck size={24} />,
+    },
     {
       title: "Ongoing",
       number: ongoing,
@@ -30,7 +37,7 @@ export default function OrderStats({
 
   return (
     <section className="mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((item, index) => (
           <StatCard
             key={index}

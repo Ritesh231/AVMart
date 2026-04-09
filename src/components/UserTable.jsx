@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
-import { FaSearch, FaTrash, FaEye } from "react-icons/fa";
+import { ChevronDown, Download, Search } from 'lucide-react'
+import { FaTrash, FaEye } from "react-icons/fa";
 import { RxCrossCircled } from "react-icons/rx";
 import { SiTicktick } from "react-icons/si";
 import { useGetallusersQuery, useUpdateStatusMutation, useDeleteUserMutation } from "../Redux/apis/userApi"
@@ -21,56 +21,60 @@ export default function UsersTable() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
 
-  const { data, isLoading, isError } = useGetallusersQuery();
-  const users = data?.data || [];
-  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 6;
+  const [usersPerPage] = useState(10);
 
+  // Only send page and status to API (not shopType and search since they're handled client-side)
+  const queryParams = {
+    page: currentPage,
+    limit: usersPerPage,
+    status: activeTab,
+    // Remove shopType and search from API params if backend doesn't support them
+  };
 
+  const { data, isLoading, isError, refetch } = useGetallusersQuery(queryParams);
+
+  const users = data?.data || [];
+  const paginationMeta = data?.meta?.pagination || {};
+
+  const navigate = useNavigate();
+  const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
+  const [deleteStatus, { isLoading: isDeleting }] = useDeleteUserMutation();
+
+  // Apply client-side filtering for shopType and search
   const filteredUsers = users.filter((user) => {
-    const matchesStatus = user.status === activeTab;
+    // Filter by shop type
+    const matchesShopType = shopTypeFilter === "all" || user.shopType === shopTypeFilter;
 
-    const matchesSearch =
+    // Filter by search term
+    const matchesSearch = searchTerm === "" ||
       user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.contact?.includes(searchTerm) ||
       user.shopName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesShopType =
-      shopTypeFilter === "all"
-        ? true
-        : user.shopType === shopTypeFilter;
-
-    return matchesStatus && matchesSearch && matchesShopType;
+    return matchesShopType && matchesSearch;
   });
 
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-
-  const currentUsers = filteredUsers.slice(
-    indexOfFirstUser,
-    indexOfLastUser
-  );
-
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, searchTerm, shopTypeFilter]);
 
+  // Refetch data when page or activeTab changes
+  useEffect(() => {
+    refetch();
+  }, [currentPage, activeTab, refetch]);
+
   useEffect(() => {
     setSelectedUserIds([]);
-  }, [activeTab, searchTerm, shopTypeFilter]);
-
-  const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
-  const [deleteStatus, { isLoading: isDeleting }] = useDeleteUserMutation();
+  }, [activeTab, searchTerm, shopTypeFilter, currentPage]);
 
   const handleStatusChange = async (id, newStatus) => {
     try {
       await updateStatus({ id, status: newStatus }).unwrap();
-      toast.success("status updated successfully");
+      toast.success("Status updated successfully");
+      refetch();
     } catch (error) {
       toast.error("Failed to Update", error);
     }
@@ -80,9 +84,9 @@ export default function UsersTable() {
     const confirmDelete = window.confirm("Are you sure you want to delete this user?");
     if (!confirmDelete) return;
     try {
-
       await deleteStatus(id).unwrap();
-      toast.success("user deleted successfully");
+      toast.success("User deleted successfully");
+      refetch();
     } catch (error) {
       toast.error("Failed to delete User", error);
     }
@@ -237,14 +241,26 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
+  // Calculate pagination display info using API meta data
+  const startIndex = paginationMeta.total > 0 ? (paginationMeta.page - 1) * paginationMeta.per_page + 1 : 0;
+  const endIndex = Math.min(
+    paginationMeta.page * paginationMeta.per_page,
+    paginationMeta.total
+  );
+
   if (isError) {
     return <p>No User Found</p>;
   }
 
+  // Debug: Log filtered users to check if kirana users exist
+  console.log("All users:", users);
+  console.log("Filtered users by shopType:", filteredUsers);
+  console.log("Selected shop type:", shopTypeFilter);
+
   return (
     <>
       {/* Tabs */}
-      <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl  md:w-fit w-full shadow-lg">
+      <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl md:w-fit w-full shadow-lg">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -275,6 +291,7 @@ export default function UsersTable() {
             <input
               className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
               onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchTerm}
               type="text"
               placeholder='Search By User Name and Phone no'
             />
@@ -283,10 +300,6 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-            <SlidersHorizontal size={20} />
-          </button> */}
-
           <div className="flex items-center gap-2 border border-brand-cyan px-3 py-3 rounded-2xl bg-white">
             <select
               value={shopTypeFilter}
@@ -297,6 +310,7 @@ export default function UsersTable() {
               <option value="medical">Medical</option>
               <option value="general">General</option>
               <option value="kirana">Kirana</option>
+              <option value="cosmetics">Cosmetics</option>
             </select>
           </div>
 
@@ -359,37 +373,30 @@ export default function UsersTable() {
 
           <tbody>
             {isLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
+              Array.from({ length: usersPerPage }).map((_, i) => (
                 <tr key={i} className="border-t">
                   <td className="p-3">
                     <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
                   </td>
-
                   <td className="p-3 space-y-1">
                     <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
                     <div className="h-3 w-32 bg-gray-100 rounded animate-pulse" />
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
                   </td>
-
                   <td className="p-3">
                     <div className="flex gap-3">
                       <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
@@ -401,11 +408,11 @@ export default function UsersTable() {
             ) : filteredUsers.length === 0 ? (
               <tr>
                 <td colSpan="8" className="text-center py-10 text-gray-500 font-medium">
-                  No users available in {activeTab} tab.
+                  No users available with selected filters.
                 </td>
               </tr>
             ) : (
-              currentUsers.map((u) => (
+              filteredUsers.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input
@@ -414,53 +421,39 @@ export default function UsersTable() {
                       onChange={() => toggleUserSelection(u._id)}
                     />
                   </td>
-
                   <td className="p-3">
                     <div className="flex items-center gap-3">
-                      {/* {u.shopPhoto ? (
-                        <img
-                          src={u.shopPhoto}
-                          alt={u.shopName}
-                          className="w-10 h-10 rounded-md object-cover border"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-md bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                          N/A
-                        </div>
-                      )} */}
-
                       <span className="font-medium">{u.shopName}</span>
                     </div>
                   </td>
-
                   <td className="p-3">{u.name || "-"}</td>
                   <td className="p-3">{u.shopAddress}</td>
-
                   <td className="p-3">
                     <div>{u.contact}</div>
                     <div className="text-xs text-gray-400">{u.email}</div>
                   </td>
-
                   <td className="p-3">
                     <div className="text-sm text-black">{u.shopType}</div>
                   </td>
-
                   <td className="p-3">
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
-
                   <td className="p-3">
                     {u.status === "pending" && (
                       <div className="flex gap-3 text-lg">
                         <SiTicktick
                           size={20}
                           className="text-green-600 cursor-pointer"
-                          onClick={() => handleStatusChange(u._id, "Approved")}
+                          onClick={() => handleStatusChange(u._id, "approved")}
                         />
                         <RxCrossCircled
                           size={20}
                           className="text-red-500 cursor-pointer"
                           onClick={() => handleStatusChange(u._id, "rejected")}
+                        />
+                        <FaEye
+                          className="text-blue-900 cursor-pointer"
+                          onClick={() => navigate(`/order/details/${u._id}`)}
                         />
                       </div>
                     )}
@@ -483,7 +476,10 @@ export default function UsersTable() {
                         <span className="text-red-700 text-xs bg-red-100 px-3 py-1 rounded-full">
                           Rejected
                         </span>
-                        <FaEye className="text-blue-900 cursor-pointer" />
+                        <FaEye
+                          className="text-blue-900 cursor-pointer"
+                          onClick={() => navigate(`/order/details/${u._id}`)}
+                        />
                         <FaTrash className="text-red-600 cursor-pointer" onClick={() => handleDelete(u._id)} />
                       </div>
                     )}
@@ -494,26 +490,22 @@ export default function UsersTable() {
           </tbody>
         </table>
 
-        {/* Pagination */}
-        {filteredUsers.length > usersPerPage && (
+        {/* Pagination using API meta data */}
+        {paginationMeta.total_pages > 1 && (
           <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white rounded-xl border">
-
             {/* Showing Info */}
             <p className="text-sm text-gray-600">
-              Showing {indexOfFirstUser + 1} to{" "}
-              {Math.min(indexOfLastUser, filteredUsers.length)} of{" "}
-              {filteredUsers.length} users
+              Showing {startIndex} to {endIndex} of {paginationMeta.total} users
             </p>
 
             {/* Pagination Buttons */}
             <div className="flex items-center gap-2">
-
               {/* Previous */}
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                disabled={!paginationMeta.has_prev_page}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-          ${currentPage === 1
+          ${!paginationMeta.has_prev_page
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-[#1E264F] text-white hover:bg-opacity-90"
                   }`}
@@ -522,42 +514,50 @@ export default function UsersTable() {
               </button>
 
               {/* Page Numbers */}
-              {[...Array(totalPages)].map((_, index) => {
+              {[...Array(paginationMeta.total_pages)].map((_, index) => {
                 const page = index + 1;
-                return (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
-              ${currentPage === page
-                        ? "bg-[#00E5B0] text-white shadow-md"
-                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-                      }`}
-                  >
-                    {page}
-                  </button>
-                );
+                if (
+                  page === 1 ||
+                  page === paginationMeta.total_pages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+                ${currentPage === page
+                          ? "bg-[#00E5B0] text-white shadow-md"
+                          : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return <span key={page} className="px-2">...</span>;
+                }
+                return null;
               })}
 
               {/* Next */}
               <button
                 onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  setCurrentPage((prev) => Math.min(prev + 1, paginationMeta.total_pages))
                 }
-                disabled={currentPage === totalPages}
+                disabled={!paginationMeta.has_next_page}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-          ${currentPage === totalPages
+          ${!paginationMeta.has_next_page
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-[#1E264F] text-white hover:bg-opacity-90"
                   }`}
               >
                 Next
               </button>
-
             </div>
           </div>
         )}
-      </div >
+      </div>
     </>
   );
 }

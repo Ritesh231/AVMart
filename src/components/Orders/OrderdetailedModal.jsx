@@ -72,7 +72,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
                     </p>
                   </div>
                 </div>
-                <p className="font-semibold">₹{item.itemTotal}</p>
+                <p className="font-semibold">₹{item.itemTotal.toFixed(2)}</p>
               </div>
             ))}
 
@@ -81,6 +81,14 @@ function OrderDetailsModal({ order, loading, onClose }) {
                 <span>Wallet Used</span>
                 <span>₹{order?.walletAmountUsed}</span>
               </div>
+              <div className="flex justify-between text-green-500">
+                <span>Discount</span>
+                <span>₹{order?.totalDiscount?.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Delivery Charges</span>
+                <span>₹{order?.deliveryCharge}</span>
+              </div>
               <div className="flex justify-between">
                 <span>Remaining</span>
                 <span>₹{order?.remainingAmount}</span>
@@ -88,6 +96,10 @@ function OrderDetailsModal({ order, loading, onClose }) {
               <div className="flex justify-between font-bold text-base pt-2">
                 <span>Total</span>
                 <span>{order?.priceFormatted}</span>
+              </div>
+              <div className="flex justify-between font-bold text-base pt-2 text-green-800">
+                <span>Paid Amount</span>
+                <span>{order?.paidAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>

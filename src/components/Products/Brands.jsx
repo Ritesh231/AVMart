@@ -50,11 +50,11 @@ export default function BrandsSection() {
     filteredBrands.length > 0 && selectedFilteredCount === filteredBrands.length;
   const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
 
-  useEffect(() => {
-    if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = isSomeSelected;
-    }
-  }, [isSomeSelected]);
+  // useEffect(() => {
+  //   if (selectAllRef.current) {
+  //     selectAllRef.current.indeterminate = isSomeSelected;
+  //   }
+  // }, [isSomeSelected]);
 
   const openEditModal = (brand) => {
     setSelectedBrand(brand);
