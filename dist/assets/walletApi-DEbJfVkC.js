@@ -1,1 +1,0 @@
-import{b as e}from"./index-C52keiLZ.js";const t=e.injectEndpoints({endpoints:a=>({getWallet:a.query({query:s=>({url:"/api/v1/admin/wallet-cashback/dashboard"}),providesTags:["Wallet"]})})}),{useGetWalletQuery:i}=t;export{i as u};

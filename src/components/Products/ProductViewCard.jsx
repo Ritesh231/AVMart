@@ -6,9 +6,11 @@ const ProductViewCard = ({ product }) => {
     return (
         <div className="relative bg-white border border-brand-teal/20 rounded-3xl p-4 flex flex-col items-start transition-shadow hover:shadow-md">
             {/* Discount Badge */}
-            <div className="absolute top-4 left-4 z-10 bg-[#EAB308] text-white text-[10px] font-bold h-10 w-10 flex items-center justify-center rounded-full shadow-lg border-2 border-white/20">
-                {product.discountBadge}
-            </div>
+            {product?.discountBadge && (
+                <div className="absolute top-4 left-4 z-10 bg-[#EAB308] text-white text-[10px] font-bold h-10 w-10 flex items-center justify-center rounded-full shadow-lg border-2 border-white/20">
+                    {product.discountBadge}
+                </div>
+            )}
 
             {/* Product Image Container */}
             <div className="w-full aspect-square flex items-center justify-center mb-4 bg-slate-50 rounded-2xl overflow-hidden">
@@ -25,12 +27,17 @@ const ProductViewCard = ({ product }) => {
             </h3>
 
             <div className="flex items-baseline gap-2 px-1">
-                <span className="text-brand-navy font-bold text-lg">
-                    ₹{product.price}
-                </span>
-                <span className="text-brand-gray line-through text-xs font-medium">
-                    ₹{product.mrp}
-                </span>
+                {product?.price && (
+                    <span className="text-brand-navy font-bold text-lg">
+                        ₹{product.price}
+                    </span>
+                )}
+
+                {product?.mrp && (
+                    <span className="text-brand-gray line-through text-xs font-medium">
+                        ₹{product.mrp}
+                    </span>
+                )}
             </div>
         </div>
     );

@@ -8,16 +8,47 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 }
+
 @layer components {
   h2 {
-    @apply text-2xl font-bold  text-gray-800;
+    @apply text-2xl font-bold text-gray-800;
   }
 }
+
 html {
   font-family: "Manrope", sans-serif;
+}
+
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+
+.print-header {
+  background-color: #1E264F !important;
+  color: white !important;
 }

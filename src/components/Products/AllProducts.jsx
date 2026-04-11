@@ -432,8 +432,9 @@ const ProductGrid = () => {
 
                 <p className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
                   Qty :
-                  <span className="ml-1 font-semibold">
+                  <span className="ml-1  font-semibold">
                     {firstVariant?.quantityValue}
+                    {firstVariant?.quantityUnit}
                   </span>
                 </p>
               </div>

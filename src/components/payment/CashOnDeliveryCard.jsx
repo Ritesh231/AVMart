@@ -15,7 +15,7 @@ const CashOnDeliveryCard = ({ transaction }) => {
 
   return (
     <div className="bg-white border-2 border-brand-soft rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow w-full max-w-md">
-      
+
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex gap-3">
@@ -46,7 +46,7 @@ const CashOnDeliveryCard = ({ transaction }) => {
           Order : {orderId} · COD ID : {CODId}
         </p>
       </div>
-      
+
       {/* Details */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-brand-blue p-2 rounded-lg">
@@ -60,7 +60,7 @@ const CashOnDeliveryCard = ({ transaction }) => {
           <p className="text-[10px] font-bold uppercase">
             Amount
           </p>
-          <p className="font-extrabold">₹{amount}</p>
+          <p className="font-extrabold">₹{amount.toFixed(2)}</p>
         </div>
       </div>
     </div>

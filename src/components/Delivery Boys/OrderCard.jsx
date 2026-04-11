@@ -6,7 +6,7 @@ export default function OrderStats({
   ongoing = 2,
   completed = 3,
   rejected = 1,
-  total = 6,
+  total = 0,
 }) {
   const stats = [
     {

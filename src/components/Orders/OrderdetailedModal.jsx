@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { useRef } from "react";
 
 function OrderDetailsModal({ order, loading, onClose }) {
   if (!order && !loading) return null;
@@ -9,21 +10,84 @@ function OrderDetailsModal({ order, loading, onClose }) {
     order?.rawStatus?.toLowerCase()
   );
 
+  const printRef = useRef();
+
+  const handlePrint = () => {
+    const printContents = printRef.current.innerHTML;
+
+    const printWindow = window.open("", "_blank", "width=800,height=600");
+
+    printWindow.document.write(`
+    <html>
+      <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+        body {
+  padding: 20px;
+
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+          .no-print {
+            display: none !important;
+          }
+              .print-header {
+    background-color: #1E264F !important;
+    color: white !important;
+  }
+
+     /* ✅ ADD THIS */
+      ::-webkit-scrollbar {
+        display: none;
+      }
+
+      * {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE */
+      }
+        </style>
+      </head>
+      <body>
+        ${printContents}
+      </body>
+    </html>
+  `);
+
+    printWindow.document.close();
+
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm no-scrollbar">
+      <div ref={printRef} className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-fadeIn ">
 
         {/* Header */}
-        <div className="bg-[#1E264F] text-white p-4 flex justify-between items-center">
+        <div
+          className="print-header flex justify-between items-center"
+          style={{ backgroundColor: "#1E264F", color: "white", padding: "16px" }}
+        >
           <div>
-            <h2 className="font-bold text-lg">{order?.orderId}</h2>
+            <h2 className="font-bold text-white text-lg">{order?.orderId}</h2>
             <p className="text-xs opacity-80">{order?.placedOn}</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 no-print">
             <span className="bg-yellow-400 text-black text-xs px-3 py-1 rounded-full font-semibold">
               {order?.deliveryStatus}
             </span>
+
+            <button
+              onClick={handlePrint}
+              className="bg-white text-black text-xs px-3 py-1 rounded-full font-semibold"
+            >
+              Print
+            </button>
 
             <button onClick={onClose}>
               <X size={20} />
@@ -32,7 +96,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
         </div>
 
         {/* Body */}
-        <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto no-scrollbar">
 
           {/* Shop Info */}
           <div className="border rounded-xl p-3 bg-gray-50">
@@ -102,6 +166,45 @@ function OrderDetailsModal({ order, loading, onClose }) {
                 <span>{order?.paidAmount.toFixed(2)}</span>
               </div>
             </div>
+
+
+
+            {order?.deliveryStatus === "Cancelled" && (
+              <div className="border-t pt-3">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-3">
+
+                  {/* Title */}
+                  <p className="text-sm font-bold text-red-600">
+                    ⚠ Order Cancelled
+                  </p>
+
+                  {/* Reason */}
+                  <div className="flex flex-col text-sm gap-1">
+                    <span className="font-medium text-gray-700">
+                      Reason
+                    </span>
+                    <span className="text-red-500 font-semibold break-words">
+                      {order?.cancellationReason || "N/A"}
+                    </span>
+                  </div>
+
+                  {/* Image */}
+                  {order?.cancellationImage && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-medium text-gray-700">
+                        Proof Image
+                      </span>
+
+                      <img
+                        src={order.cancellationImage}
+                        alt="Cancellation"
+                        className="w-full max-h-40 object-cover rounded-lg border"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Shipping Address */}
@@ -115,7 +218,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
           </div>
 
           {/* Timeline */}
-          <div className="border rounded-xl p-4 bg-gray-50">
+          <div className="border rounded-xl p-4 bg-gray-50 no-print">
             <p className="font-semibold text-sm mb-4">Order Timeline</p>
 
             {statusFlow.map((step, i) => {

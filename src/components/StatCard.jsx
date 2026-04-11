@@ -1,15 +1,21 @@
 import React from 'react';
 
-const StatCard = ({ title, number, statement, icon, variant = 'normal' }) => {
+const StatCard = ({ title, number, statement, icon, variant = 'normal', onClick, className }) => {
     // Styles for the "Special" Gradient Card
     const specialStyles = "bg-gradient-to-br from-[#1E294B] via-[#1E294B] to-[#49D1B1] text-white";
-     
+
     // Styles for the "Normal" Light Card
     const normalStyles = "bg-brand-soft text-brand-navy border border-transparent";
-    
-    return (
-        <div className={`relative flex flex-col justify-between p-5 rounded-2xl w-full min-h-[160px] shadow-sm transition-transform hover:scale-[1.02] ${variant === 'special' ? specialStyles : normalStyles}`}>
 
+    return (
+        <div
+            onClick={onClick}
+            className={`relative pointer-events-auto z-10 flex flex-col justify-between p-5 rounded-2xl w-full min-h-[160px] shadow-sm transition-transform hover:scale-[1.02] 
+  ${variant === 'special' ? specialStyles : normalStyles} 
+  ${className || ""} 
+  
+  ${onClick ? "cursor-pointer" : ""}`}
+        >
             {/* Header: Dot + Title + Icon */}
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">

@@ -50,7 +50,7 @@ const OnlinePaymentCard = ({
                 </div>
                 <div className="bg-brand-blue p-2 rounded-lg flex flex-col  justify-between items-start">
                     <p className="text-[10px] text-brand-navy font-bold uppercase">Amount</p>
-                    <p className="text-brand-navy font-extrabold text-base">₹{amount}</p>
+                    <p className="text-brand-navy font-extrabold text-base">₹{amount.toFixed(2)}</p>
                 </div>
             </div>
         </div>

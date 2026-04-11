@@ -8,45 +8,66 @@ import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import { useEffect, useRef, useState } from "react";
 
 export default function UsersTable() {
-  const { data, isLoading, isError } = useGetOrdersByStatusQuery("Delivered");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 20; // Match API limit
+
+  // ✅ Server-side pagination - send page and limit to API
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch
+  } = useGetOrdersByStatusQuery({
+    status: "Delivered",
+    page: currentPage,
+    limit: ordersPerPage
+  });
+
   const users = data?.orders || [];
+  const pagination = data?.pagination || {
+    total: 0,
+    page: 1,
+    limit: ordersPerPage,
+    pages: 1
+  };
+
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All");
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+
+  // ✅ Filter and search on current page data (API already paginated)
   const filteredUsers =
     paymentFilter === "All"
       ? users
       : users.filter(
         (order) => order.paymentMethod?.toLowerCase() === paymentFilter.toLowerCase()
       );
+
   const searchedUsers = filteredUsers.filter((order) =>
     JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 6;
+  // ❌ Remove frontend pagination - API already handles it
+  // const totalPages = Math.ceil(searchedUsers.length / ordersPerPage);
+  // const indexOfLastOrder = currentPage * ordersPerPage;
+  // const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  // const currentOrders = searchedUsers.slice(indexOfFirstOrder, indexOfLastOrder);
 
-  // Pagination Logic
-  const totalPages = Math.ceil(searchedUsers.length / ordersPerPage);
+  // ✅ Use searched users directly (already from current API page)
+  const currentOrders = searchedUsers;
 
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-
-  const currentOrders = searchedUsers.slice(
-    indexOfFirstOrder,
-    indexOfLastOrder
-  );
-
-  // Reset to page 1 when orders change
+  // Reset to page 1 when filters change and refetch
   useEffect(() => {
     setCurrentPage(1);
-  }, [users.length, paymentFilter, searchTerm]);
+    refetch();
+  }, [paymentFilter, searchTerm, refetch]);
 
+  // Reset selected orders when data changes
   useEffect(() => {
     setSelectedOrderIds([]);
-  }, [users.length, paymentFilter, searchTerm]);
+  }, [users.length]);
 
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [getOrderById, { data: orderData, isLoading: Loader }] =
@@ -215,6 +236,10 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
+  // ✅ Calculate display values from API pagination
+  const startIndex = (pagination.page - 1) * pagination.limit + 1;
+  const endIndex = Math.min(pagination.page * pagination.limit, pagination.total);
+
   return (
     <>
       {/* Search & Actions */}
@@ -235,10 +260,6 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-            <SlidersHorizontal size={20} />
-          </button> */}
-
           <div className="relative">
             <select
               value={paymentFilter}
@@ -250,7 +271,7 @@ export default function UsersTable() {
             >
               <option value="All">All Payments</option>
               <option value="Online">Online</option>
-              <option value="Cash">Cash On Delivery</option>
+              <option value="COD">Cash On Delivery</option>
               <option value="Partial">Partial</option>
             </select>
 
@@ -326,23 +347,18 @@ export default function UsersTable() {
                   <td className="p-3">
                     <div className="h-4 w-4 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-32 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-40 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-20 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-24 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="flex gap-2">
                       <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
@@ -350,15 +366,12 @@ export default function UsersTable() {
                       <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
                     </div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-6 w-28 bg-gray-200 rounded-xl"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-6 w-32 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
                   </td>
@@ -395,17 +408,16 @@ export default function UsersTable() {
                       onChange={() => toggleOrderSelection(u._id)}
                     />
                   </td>
-
-                  <td className="p-3 font-medium">{u._id}</td>
-
+                  <td className="p-3 font-medium">{u._id?.slice(-5)}</td>
                   <td className="p-3 font-medium">{u.shopInfo?.name}</td>
-
-                  <td className="p-3">{u.price}</td>
-
                   <td className="p-3">
-                    {u.placedOn || "-"}
+                    {u.price?.toString().includes(".")
+                      ? u.price.toString().split(".")[0] +
+                      "." +
+                      u.price.toString().split(".")[1].slice(0, 2)
+                      : u.price}
                   </td>
-
+                  <td className="p-3">{u.placedOn || "-"}</td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       {u.itemsPreview?.slice(0, 3).map((img, index) => (
@@ -418,22 +430,19 @@ export default function UsersTable() {
                       ))}
                     </div>
                   </td>
-
                   <td className="p-3">
                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
-            bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
+                      bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
                       <BsWallet2 className="text-[#03C616]" />
                       {u.paymentMethod}
                     </span>
                   </td>
-
                   <td className="p-3">
                     <div className="flex items-center gap-2 text-[#1A2550] text-sm">
                       <MdDeliveryDining className="text-xl" />
                       {u.deliveryBoy?.name || "Not Assigned"}
                     </div>
                   </td>
-
                   <td className="p-3">
                     <button
                       className="p-1 text-blue-900"
@@ -450,35 +459,31 @@ export default function UsersTable() {
               ))}
           </tbody>
         </table>
+
         {selectedOrderId && (
           <OrderDetailsModal
             order={orderData?.order}
-            loading={isLoading}
+            loading={Loader}
             onClose={() => setSelectedOrderId(null)}
           />
         )}
 
-
-        {/* Pagination */}
-        {searchedUsers.length > ordersPerPage && (
+        {/* ✅ Server-side Pagination */}
+        {pagination.total > ordersPerPage && (
           <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
-
             {/* Showing Info */}
             <p className="text-sm text-gray-600">
-              Showing {indexOfFirstOrder + 1} to{" "}
-              {Math.min(indexOfLastOrder, searchedUsers.length)} of{" "}
-              {searchedUsers.length} orders
+              Showing {startIndex} to {endIndex} of {pagination.total} orders
             </p>
 
             {/* Buttons */}
             <div className="flex items-center gap-2">
-
               {/* Prev */}
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-          ${currentPage === 1
+                  ${currentPage === 1
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-[#1E264F] text-white hover:bg-opacity-90"
                   }`}
@@ -486,39 +491,50 @@ export default function UsersTable() {
                 Prev
               </button>
 
-              {/* Page Numbers */}
-              {[...Array(totalPages)].map((_, index) => {
+              {/* Page Numbers with Ellipsis */}
+              {[...Array(pagination.pages)].map((_, index) => {
                 const page = index + 1;
-                return (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
-              ${currentPage === page
-                        ? "bg-[#00E5B0] text-white shadow-md"
-                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-                      }`}
-                  >
-                    {page}
-                  </button>
-                );
+                // Show limited page numbers for better UX
+                if (
+                  page === 1 ||
+                  page === pagination.pages ||
+                  (page >= currentPage - 2 && page <= currentPage + 2)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+                        ${currentPage === page
+                          ? "bg-[#00E5B0] text-white shadow-md"
+                          : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+                // Add ellipsis
+                if (page === currentPage - 3 || page === currentPage + 3) {
+                  return <span key={page} className="px-2">...</span>;
+                }
+                return null;
               })}
 
               {/* Next */}
               <button
                 onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  setCurrentPage((prev) => Math.min(prev + 1, pagination.pages))
                 }
-                disabled={currentPage === totalPages}
+                disabled={currentPage === pagination.pages}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-          ${currentPage === totalPages
+                  ${currentPage === pagination.pages
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-[#1E264F] text-white hover:bg-opacity-90"
                   }`}
               >
                 Next
               </button>
-
             </div>
           </div>
         )}

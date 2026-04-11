@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { FaCheckCircle } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
 import { FaCalendarAlt } from "react-icons/fa";
@@ -21,7 +21,7 @@ const steps = [
 const OrderDetails = () => {
 
   const { id } = useParams();
-  const [showTracking, setShowTracking] = React.useState(false);
+  const [openTrackingId, setOpenTrackingId] = useState(null);
   const [page, setPage] = React.useState(1);
   const perPage = 10;
 
@@ -154,21 +154,24 @@ const OrderDetails = () => {
           <h4 className="font-semibold">Order Tracking</h4>
 
           <button
-            onClick={() => setShowTracking(!showTracking)}
+            onClick={() =>
+              setOpenTrackingId((prev) => (prev === order._id ? null : order._id))
+            }
             className="text-sm text-blue-600 font-medium flex items-center gap-1"
           >
-            {showTracking ? "Hide" : "View"} Tracking
-            <span className={`transition-transform ${showTracking ? "rotate-180" : ""}`}>
+            {openTrackingId === order._id ? "Hide" : "View"} Tracking
+            <span className={`transition-transform ${openTrackingId === order._id ? "rotate-180" : ""}`}>
               ▼
             </span>
           </button>
+
         </div>
 
         <div className="relative">
 
 
           <div className="space-y-8">
-            {showTracking && (
+            {openTrackingId === order._id && (
               <div className="border border-emerald-200 rounded-xl p-5 mt-4">
 
                 <div className="relative">
@@ -311,11 +314,24 @@ const OrderDetails = () => {
 
           {/* LEFT SECTION */}
           <div className="space-y-2 flex-1 min-w-0">
-            <p className="text-sm text-gray-500">Shop Name</p>
-            <h2 className="text-lg font-semibold break-words">
-              {data?.data?.shop?.shopName}
-            </h2>
 
+            {/* ✅ IMAGE + NAME */}
+            <div className="flex items-center gap-4">
+              <img
+                src={data?.data?.shop?.image}
+                alt="shop"
+                className="w-16 h-16 rounded-full object-contain border"
+              />
+
+              <div>
+                <p className="text-sm text-gray-500">Shop Name</p>
+                <h2 className="text-lg font-semibold break-words">
+                  {data?.data?.shop?.shopName}
+                </h2>
+              </div>
+            </div>
+
+            {/* CONTACT */}
             <p className="text-sm text-gray-500 mt-2">Contact</p>
             <h2 className="text-base break-words">
               {data?.data?.shop?.contact}
@@ -373,6 +389,18 @@ const OrderDetails = () => {
                 <span className="text-sm text-gray-700">
                   {data?.data?.shop?.joined
                     ? new Date(data.data.shop.joined).toLocaleDateString()
+                    : "-"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <FaCalendarAlt className="text-xl text-[#1A2550] mt-1" />
+              <div>
+                <p className="text-xs text-gray-400">Shop Owner Date of Birth </p>
+                <span className="text-sm text-gray-700">
+                  {data?.data?.shop?.dateOfBirth
+                    ? new Date(data.data.shop.dateOfBirth).toLocaleDateString("en-GB")
                     : "-"}
                 </span>
               </div>

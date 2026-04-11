@@ -37,11 +37,14 @@ const Brands = lazy(() => import("../components/Products/Brands"));
 const AddProduct = lazy(() => import("../components/Products/AddProduct"));
 const AddCategory = lazy(() => import("../components/Products/AddCategory"));
 const AddSubcategory = lazy(() => import("../components/Products/AddSubcategory"));
-const AddBrand= lazy(() => import("../components/Products/AddBrand"));
+const AddBrand = lazy(() => import("../components/Products/AddBrand"));
 
 /* Delivery */
 const DeliveryRequests = lazy(() =>
   import("../components/Delivery Boys/NewRequest")
+);
+const DeliveryApproved = lazy(() =>
+  import("../components/Delivery Boys/DeliveryApproval")
 );
 
 const DeliveryBoyDetail = lazy(() =>
@@ -54,7 +57,7 @@ const PendingQueries = lazy(() => import("../components/Queries/PendingQueries")
 /*Offers*/
 const Offers = lazy(() => import("../pages/Offers"));
 const MainBanner = lazy(() => import("../components/Offers/MainBanner"));
-const AddBanner=lazy(()=>import("../components/Offers/AddBanner"));
+const AddBanner = lazy(() => import("../components/Offers/AddBanner"));
 
 /*Wallet*/
 const WalletTable = lazy(() => import("../components/Wallet/TotalBalanceTable"));
@@ -64,16 +67,16 @@ import ProtectedRoute from "../routes/ProtectRoute";
 
 const Loader = () => (
   <div className="flex items-center justify-center h-screen bg-white">
-    
+
     <div className="flex flex-col items-center gap-6">
-      
+
       {/* Logo */}
       <img
         src="/images/logo.svg"
         alt="Logo"
         className="w-48 h-48 animate-pulse"
       />
-      
+
       {/* Animated Spinner Ring */}
       <div className="relative">
         <div className="w-14 h-14 border-4 border-white/20 rounded-full"></div>
@@ -93,27 +96,27 @@ export default function AppRouter() {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-        <Route path="/" element={<Login/>} />
-         
-      <Route
-  element={
-    <ProtectedRoute>
-      <Layout />
-    </ProtectedRoute>
-  }
->
+        <Route path="/" element={<Login />} />
+
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/users" element={<Users />} />
           <Route path="/payments" element={<Payments />} />
           <Route path="/invoices" element={<Invoices />} />
-           
+
           {/*Queries*/}
-          <Route path="/queries" element={<Queries />}> 
-           <Route index element={<Navigate to="pending" replace />} />
-           <Route path="all" element={<PendingQueries/>} />
-           <Route path="pending" element={<PendingQueries/>}/>
-          <Route path="contacted" element={<PendingQueries/>}/>
-           
+          <Route path="/queries" element={<Queries />}>
+            <Route index element={<Navigate to="pending" replace />} />
+            <Route path="all" element={<PendingQueries />} />
+            <Route path="pending" element={<PendingQueries />} />
+            <Route path="contacted" element={<PendingQueries />} />
+
           </Route>
 
           {/* Orders */}
@@ -125,8 +128,8 @@ export default function AppRouter() {
             <Route path="delivered" element={<OrderDelivered />} />
             <Route path="rejected" element={<OrderRejected />} />
           </Route>
-          <Route path="/order/details/:id" element={<OrderDetails/>}/>
-          
+          <Route path="/order/details/:id" element={<OrderDetails />} />
+
           {/* Products */}
           <Route path="/products" element={<Products />}>
             <Route index element={<Navigate to="categories" replace />} />
@@ -135,33 +138,35 @@ export default function AppRouter() {
             <Route path="subcategories" element={<Subcategories />} />
             <Route path="brands" element={<Brands />} />
           </Route>
-           
-            <Route path="/AddProduct" element={<AddProduct/>}/>
-            <Route path="/AddCategory" element={<AddCategory/>}/>
-            <Route path="/AddSubcategory" element={<AddSubcategory/>}/>
-            <Route path="/AddBrand" element={<AddBrand/>}/>
-               
+
+          <Route path="/AddProduct" element={<AddProduct />} />
+          <Route path="/AddCategory" element={<AddCategory />} />
+          <Route path="/AddSubcategory" element={<AddSubcategory />} />
+          <Route path="/AddBrand" element={<AddBrand />} />
+
           {/* Delivery */}
           <Route path="/delivery" element={<Delivery />}>
             <Route index element={<Navigate to="requests" replace />} />
             <Route path="requests" element={<DeliveryRequests />} />
             <Route path="approved" element={<DeliveryRequests />} />
             <Route path="rejected" element={<DeliveryRequests />} />
+            <Route path="Paymentrequest" element={<DeliveryApproved />} />
+
           </Route>
-           
-            <Route path="/delivery/DeliveryBoyDetail/:id" element={<DeliveryBoyDetail/>}/>
-         
+
+          <Route path="/delivery/DeliveryBoyDetail/:id" element={<DeliveryBoyDetail />} />
+
           {/*Offer*/}
-           <Route path="/offers" element={<Offers/>}>
+          <Route path="/offers" element={<Offers />}>
             <Route index element={<Navigate to="mainbanner" replace />} />
-            <Route path="mainbanner" element={< MainBanner/>} />
-            <Route path="add-banner" element={<AddBanner/>}/>
+            <Route path="mainbanner" element={< MainBanner />} />
+            <Route path="add-banner" element={<AddBanner />} />
           </Route>
-          
+
           {/*Wallet*/}
-            <Route path="/wallet" element={<Wallet/>}>
+          <Route path="/wallet" element={<Wallet />}>
             <Route index element={<Navigate to="WalletTable" replace />} />
-            <Route path="WalletTable" element={<WalletTable/>} />
+            <Route path="WalletTable" element={<WalletTable />} />
           </Route>
 
         </Route>

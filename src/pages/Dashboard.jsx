@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { PackageCheck, Box, ShoppingCart, Users, CarFront, ChartColumnIncreasing, Filter, Plus, ChevronsRight } from "lucide-react"
 import StatCard from '../components/StatCard';
 import ProductViewCard from '../components/Products/ProductViewCard';
@@ -6,9 +6,29 @@ import TransactionItem from '../components/TransactionItem';
 import { useGetDashboardQuery } from "../Redux/apis/dashboardApi"
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { skipToken } from "@reduxjs/toolkit/query";
 
 const Dashboard = () => {
-    const { data: Product, isLoading, isError } = useGetDashboardQuery();
+
+    const [range, setRange] = useState("monthly");
+    const [customDates, setCustomDates] = useState({
+        start: "",
+        end: "",
+    });
+
+    const shouldSkip =
+        range === "custom" && (!customDates.start || !customDates.end);
+
+    const { data: Product, isLoading, isError } =
+        useGetDashboardQuery(
+            shouldSkip
+                ? skipToken
+                : {
+                    range,
+                    start: customDates.start,
+                    end: customDates.end,
+                }
+        );
     const product = Product?.data || [];
 
     const Skeleton = ({ className }) => (
@@ -21,14 +41,14 @@ const Dashboard = () => {
         {
             title: "Delivery Boys",
             number: product?.quickStats?.deliveryBoys || "0",
-            statement: "+ 12 % from last Month",
+            statement: `${product?.overview?.usersChange || "0%"} from last period`,
             icon: <Users size={24} />,
             special: true
         },
         {
             title: "Total Products",
             number: product?.quickStats?.totalProducts || "0",
-            statement: "+ 12 % from last Month",
+            statement: `${product?.overview?.usersChange || "0%"} from last period`,
             icon: <ShoppingCart size={24} />
         },
         {
@@ -48,7 +68,7 @@ const Dashboard = () => {
     const shortOverViewStats = [
         {
             title: "Total Users",
-            number: product?.overview?.totalUsers || [],
+            number: product?.overview?.totalUsers || 0,
             statement: `${product?.overview?.usersChange || "+0%"} from last Month`,
             icon: <Users size={24} />,
             special: true
@@ -58,6 +78,17 @@ const Dashboard = () => {
             number: product?.overview?.totalOrders,
             statement: `${product?.overview?.ordersChange || "+0%"} from last Month`,
             icon: <ShoppingCart size={24} />,
+
+        },
+        {
+            title: "Pending Orders",
+            number: product?.quickStats?.pendingOrders || 0,
+            statement: `${product?.overview?.usersChange || "+0%"} from last Month`,
+            icon: <ShoppingCart size={24} />,
+            className: "cursor-pointer",
+            onClick: () => {
+                navigate("/orders/pending");
+            }
         },
         {
             title: "Total Sales",
@@ -75,6 +106,31 @@ const Dashboard = () => {
             amount: item.amount,
             type: item.type === "credit" ? "credited" : "debited"
         })) || [];
+
+    {
+        range === "custom" && (
+            <div className="flex gap-3 mt-3">
+                <input
+                    type="date"
+                    value={customDates.start}
+                    onChange={(e) =>
+                        setCustomDates((prev) => ({ ...prev, start: e.target.value }))
+                    }
+                    className="border px-2 py-1 rounded"
+                />
+
+                <input
+                    type="date"
+                    value={customDates.end}
+                    onChange={(e) =>
+                        setCustomDates((prev) => ({ ...prev, end: e.target.value }))
+                    }
+                    className="border px-2 py-1 rounded"
+                />
+
+            </div>
+        )
+    }
 
     return (
         <div className="p-6 min-h-screen">
@@ -151,12 +207,71 @@ const Dashboard = () => {
                     <section className="bg-white border-2 border-[#62CDB969]/40 rounded-[2.5rem] p-6">
                         <div className='flex justify-between items-center mb-6 px-2'>
                             <h2 className="text-xl font-bold text-brand-navy">Short Overview</h2>
-                            <div className='bg-brand-blue rounded-lg py-2 px-4 flex gap-2 items-center text-brand-navy font-semibold text-sm'>
-                                <p>1 Last Month</p>
+                            <div className="flex flex-col gap-2">
+
+                                {/* Dropdown */}
+                                <div className='bg-brand-blue rounded-lg w-fit py-2 px-4 flex gap-2 items-center text-brand-navy font-semibold text-sm'>
+                                    <select
+                                        value={range}
+                                        onChange={(e) => setRange(e.target.value)}
+                                        className="bg-transparent outline-none cursor-pointer"
+                                    >
+                                        <option value="today">Today</option>
+                                        <option value="weekly">Last 7 Days</option>
+                                        <option value="monthly">This Month</option>
+                                        <option value="yearly">This Year</option>
+                                        <option value="all">All Time</option>
+                                        <option value="custom">Custom</option>
+
+                                    </select>
+                                </div>
+
+                                {/* ✅ SHOW ONLY WHEN CUSTOM */}
+                                {range === "custom" && (
+                                    <div className="flex gap-4 items-end">
+
+                                        {/* Start Date */}
+                                        <div className="flex flex-col">
+                                            <label className="text-xs font-medium text-gray-600 mb-1">
+                                                Start Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={customDates.start}
+                                                onChange={(e) =>
+                                                    setCustomDates((prev) => ({
+                                                        ...prev,
+                                                        start: e.target.value,
+                                                    }))
+                                                }
+                                                className="border px-2 py-1 rounded text-xs"
+                                            />
+                                        </div>
+
+                                        {/* End Date */}
+                                        <div className="flex flex-col">
+                                            <label className="text-xs font-medium text-gray-600 mb-1">
+                                                End Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={customDates.end}
+                                                onChange={(e) =>
+                                                    setCustomDates((prev) => ({
+                                                        ...prev,
+                                                        end: e.target.value,
+                                                    }))
+                                                }
+                                                className="border px-2 py-1 rounded text-xs"
+                                            />
+                                        </div>
+
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             {isLoading
                                 ? Array(3)
                                     .fill(0)
@@ -175,6 +290,8 @@ const Dashboard = () => {
                                         statement={stat.statement}
                                         icon={stat.icon}
                                         variant={stat.special ? "special" : "normal"}
+                                        onClick={stat.onClick}
+                                        className={stat.className}
                                     />
                                 ))}
                         </div>

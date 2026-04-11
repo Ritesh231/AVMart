@@ -19,9 +19,8 @@ import { FaShoppingCart } from "react-icons/fa";
 import AttendanceStats from "./AttendanceCard";
 import RevenueStats from "./RevenueCard";
 import OrderStats from "./OrderCard";
-import { useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery, useGetDeliveryBoyOrderDetailsQuery } from "../../Redux/apis/deliveryApi";
+import { useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery, useGetDeliveryBoyOrderDetailsQuery, useGetWithdrawalRequestsQuery, useVerifyWithdrawalMutation } from "../../Redux/apis/deliveryApi";
 import { useParams } from "react-router-dom";
-
 
 export default function DeliveryBoyDetails() {
   const [activeTab, setActiveTab] = useState("attendance");
@@ -32,6 +31,10 @@ export default function DeliveryBoyDetails() {
   const selectAllRef = useRef(null);
   const { id } = useParams();
   const { data, isLoading, isError } = useGetdeliveryProfileQuery(id);
+  const { data: withdrawalData, isLoading: withdrawalLoading } = useGetWithdrawalRequestsQuery();
+  const [verifyWithdrawal] = useVerifyWithdrawalMutation();
+
+  const withdrawals = withdrawalData?.data || [];
   const profile = data?.data || [];
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
@@ -339,6 +342,25 @@ export default function DeliveryBoyDetails() {
     setIsExportMenuOpen(false);
   };
 
+
+  const handleWithdrawalAction = async (id, status) => {
+    try {
+      await verifyWithdrawal({
+        requestId: id,
+        status,
+        paymentReference: "TXN123456789",
+        adminNote:
+          status === "approved"
+            ? "Approved by admin"
+            : "Rejected by admin",
+      }).unwrap();
+
+      toast.success(`Request ${status}`);
+    } catch (err) {
+      toast.error(err?.data?.error || "Action failed");
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
 
@@ -366,7 +388,7 @@ export default function DeliveryBoyDetails() {
                 {profile?._id}
               </span>
               <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
-                Active
+                {profile?.availabilityStatus}
               </span>
             </div>
 
@@ -385,7 +407,7 @@ export default function DeliveryBoyDetails() {
             {/* Stats */}
             <div className="flex flex-wrap gap-4 mt-3">
               <div className="bg-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
-                <Package size={16} /> 1247 Deliveries
+                <Package size={16} /> Total Deliveries : {profile?.totalDeliveries}
               </div>
               <div className="bg-gray-100 px-4 py-2 rounded-lg flex items-center gap-2 text-sm">
                 <Bike size={16} /> {profile?.vehicleNumber} {profile?.vehicleType}
@@ -435,6 +457,18 @@ export default function DeliveryBoyDetails() {
           <FaShoppingCart size={20} />
           Orders
         </button>
+
+        {/* <button
+          onClick={() => setActiveTab("paymentRequest")}
+          className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300
+      ${activeTab === "paymentRequest"
+              ? "bg-[#00E5B0] text-white"
+              : "bg-white text-[#1E264F] hover:bg-gray-100"
+            }`}
+        >
+          <FaShoppingCart size={20} />
+          Paymenrt Request
+        </button> */}
       </div>
 
       {/* Summary Cards */}
@@ -476,9 +510,9 @@ export default function DeliveryBoyDetails() {
                 />
                 Select All
               </label>
-              <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+              {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
-              </button>
+              </button> */}
               <div className="flex flex-wrap gap-3 items-center">
 
                 {/* Status Filter */}
@@ -681,9 +715,9 @@ export default function DeliveryBoyDetails() {
                 />
                 Select All
               </label>
-              <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
+              {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
                 <SlidersHorizontal size={20} />
-              </button>
+              </button> */}
               <div className="flex flex-wrap gap-3 items-center">
 
                 {/* Status Filter */}
@@ -1091,25 +1125,37 @@ export default function DeliveryBoyDetails() {
                           <div>
                             <h4 className="font-medium mb-2">Bill Summary</h4>
 
+                            {/* Subtotal */}
                             <div className="text-sm flex justify-between">
                               <span>Subtotal</span>
-                              <span>₹{orderData.billSummary?.subtotal}</span>
+                              <span>₹{Number(orderData.billSummary?.subtotal || 0).toFixed(2)}</span>
                             </div>
 
+                            {/* Delivery Charge */}
                             <div className="text-sm flex justify-between">
-                              <span>Delivery Charge</span>
-                              <span>₹{orderData.billSummary?.deliveryCharge}</span>
+                              <span>+ Delivery Charge</span>
+                              <span>₹{Number(orderData.billSummary?.deliveryCharge || 0).toFixed(2)}</span>
                             </div>
 
+                            {/* Discount */}
+                            <div className="text-sm flex justify-between text-green-600">
+                              <span>- Discount</span>
+                              <span>₹{Number(orderData.billSummary?.totalDiscount || 0).toFixed(2)}</span>
+                            </div>
+
+                            <hr className="my-2" />
+
+                            {/* Paid */}
                             <div className="text-sm flex justify-between text-green-600">
                               <span>Paid</span>
-                              <span>₹{orderData.billSummary?.totalPaid}</span>
+                              <span>₹{Number(orderData.billSummary?.totalPaid || 0).toFixed(2)}</span>
                             </div>
 
+                            {/* Remaining */}
                             <div className="text-sm flex justify-between text-red-600 font-medium">
-                              <span>Remaining to collect</span>
+                              <span>Remaining to Collect</span>
                               <span>
-                                ₹{orderData.billSummary?.remainingToCollect}
+                                ₹{Number(orderData.billSummary?.remainingToCollect || 0).toFixed(2)}
                               </span>
                             </div>
                           </div>
@@ -1123,6 +1169,120 @@ export default function DeliveryBoyDetails() {
           </div>
         </>
       )}
+
+      {activeTab === "paymentRequest" && (
+        <>
+          <div className="bg-white rounded-xl shadow-sm border overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="px-6 py-3 text-left">User</th>
+                  <th className="px-6 py-3 text-left">Amount</th>
+                  <th className="px-6 py-3 text-left">Description</th>
+                  <th className="px-6 py-3 text-left">Date</th>
+                  <th className="px-6 py-3 text-left">Status</th>
+                  <th className="px-6 py-3 text-center">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {withdrawalLoading ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-6">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : (
+                  withdrawals.map((item) => (
+                    <tr key={item._id} className="border-t hover:bg-gray-50">
+
+                      {/* User */}
+                      <td className="px-6 py-4">
+                        {item.deliveryBoyID ? (
+                          <div>
+                            <p className="font-medium">
+                              {item.deliveryBoyID.email}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {item.deliveryBoyID.contactNo}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">N/A</span>
+                        )}
+                      </td>
+
+                      {/* Amount */}
+                      <td className="px-6 py-4 text-green-600 font-semibold">
+                        ₹{item.amount}
+                      </td>
+
+                      {/* Description */}
+                      <td className="px-6 py-4 max-w-[250px] break-words">
+                        {item.description}
+                      </td>
+
+                      {/* Date */}
+                      <td className="px-6 py-4 text-gray-500">
+                        {new Date(item.createdAt).toLocaleDateString()}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-3 py-1 text-xs rounded-full font-semibold
+                      ${item.status === "approved"
+                              ? "bg-green-100 text-green-600"
+                              : item.status === "rejected"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-yellow-100 text-yellow-600"
+                            }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+
+                      {/* Action */}
+                      <td className="px-6 py-4 text-center">
+                        {item.status === "pending" ? (
+                          <div className="flex justify-center gap-2">
+
+
+                            <button
+                              onClick={() =>
+                                handleWithdrawalAction(item._id, "approved")
+                              }
+                              className="bg-green-500 hover:bg-green-600 text-white w-6 h-6 rounded-full"
+                            >
+                              ✔
+                            </button>
+
+
+                            <button
+                              onClick={() =>
+                                handleWithdrawalAction(item._id, "rejected")
+                              }
+                              className="bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full"
+                            >
+                              ✖
+                            </button>
+
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">
+                            No Action
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }

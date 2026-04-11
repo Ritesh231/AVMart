@@ -19,7 +19,7 @@ const TransactionItem = ({ data }) => {
                 </div>
 
                 <div>
-                    <h4 className="font-bold text-brand-navy text-lg leading-tight">{data.username}</h4>
+                    <h4 className="font-bold text-brand-navy text-md  leading-tight">{data.username}</h4>
                     <p className="text-xs text-brand-gray font-medium mt-1">{data.time}</p>
                 </div>
             </div>
@@ -28,6 +28,7 @@ const TransactionItem = ({ data }) => {
             <div className={`text-md font-bold whitespace-nowrap ${isCredited ? 'text-green-500' : 'text-red-500'}`}>
                 {isCredited ? '+' : '-'}₹{Number(data.amount).toFixed(2)}
             </div>
+
         </div>
     );
 };

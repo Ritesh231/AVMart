@@ -454,16 +454,16 @@ export default function AddProduct() {
               <div key={index} className="border p-4 rounded-lg bg-gray-50 space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <InputField
-                    label="Quantity Value"
+                    label="Product Size"
                     name="quantityValue"
-                    placeholder="Value should be Number"
+                    placeholder="e.g. 300"
                     value={variant.quantityValue}
                     onChange={(e) => handleVariantChange(index, e)}
                   />
 
                   <div>
                     <label className="text-xs font-medium text-gray-600">
-                      Quantity Unit
+                      Product Unit
                     </label>
                     <select name="quantityUnit"
                       value={variant.quantityUnit}
@@ -546,6 +546,7 @@ export default function AddProduct() {
                     label="Stock"
                     name="stock"
                     type="number"
+                    placeholder="Value should be a Number"
                     value={variant.stock}
                     onChange={(e) => handleVariantChange(index, e)}
                   />

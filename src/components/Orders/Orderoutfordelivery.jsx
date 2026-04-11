@@ -8,60 +8,70 @@ import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 
 export default function UsersTable() {
-  const { data, isLoading, isError } = useGetOrdersByStatusQuery("OutForDelivery");
-  const users = data?.orders || [];
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState('Online');
+  const [activeTab, setActiveTab] = useState('All');
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const ordersPerPage = 20;
 
-  const filteredUsers =
-    activeTab === "Online"
-      ? users.filter((order) => order.paymentMethod?.toLowerCase() === "online")
-      : activeTab === "Cash"
-        ? users.filter((order) => order.paymentMethod?.toLowerCase() === "cash")
-        : activeTab === "Partial"
-          ? users.filter((order) => order.paymentMethod?.toLowerCase() === "partial")
-          : users;
+  // Fetch orders with pagination params
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch
+  } = useGetOrdersByStatusQuery({
+    status: "OutForDelivery",
+    page: currentPage,
+    limit: ordersPerPage
+  });
 
-  const searchedUsers = filteredUsers.filter((order) =>
-    JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get pagination data from response
+  const orders = data?.orders || [];
+  const pagination = data?.pagination || {
+    total: 0,
+    page: 1,
+    limit: ordersPerPage,
+    pages: 1
+  };
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 6;
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [getOrderById, { data: orderData, isLoading: Loader }] = useGetOrdersByIdMutation();
 
-  // Pagination Logic
-  const totalPages = Math.ceil(searchedUsers.length / ordersPerPage);
+  // Filter by payment method (frontend filtering since we have all data for current page)
+  const filteredUsers = React.useMemo(() => {
+    if (activeTab === "All") {
+      return orders;
+    }
+    return orders.filter((order) =>
+      order.paymentMethod?.toLowerCase() === activeTab.toLowerCase()
+    );
+  }, [orders, activeTab]);
 
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  // Search filtering (frontend)
+  const searchedUsers = React.useMemo(() => {
+    if (!searchTerm) return filteredUsers;
+    return filteredUsers.filter((order) =>
+      JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [filteredUsers, searchTerm]);
 
-  const currentOrders = searchedUsers.slice(
-    indexOfFirstOrder,
-    indexOfLastOrder
-  );
-
-  // Reset to page 1 when orders change
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [users.length, activeTab, searchTerm]);
+    refetch();
+  }, [activeTab, refetch]);
+
+  // Refetch when page changes
+  useEffect(() => {
+    refetch();
+  }, [currentPage, refetch]);
 
   useEffect(() => {
     setSelectedOrderIds([]);
-  }, [users.length, activeTab, searchTerm]);
-
-
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [getOrderById, { data: orderData, isLoading: Loader }] =
-    useGetOrdersByIdMutation();
-
-  const tabs = [
-    { id: 'Online', label: 'Online Payments', },
-    { id: 'Cash', label: 'Cash On Delivery', },
-    { id: 'Partial', label: 'Partial Payments', }
-  ];
+  }, [orders.length, activeTab, searchTerm]);
 
   const selectedFilteredCount = searchedUsers.filter((order) =>
     selectedOrderIds.includes(order._id)
@@ -103,7 +113,7 @@ export default function UsersTable() {
     return sourceRows.map((order) => ({
       "Order ID": order._id || "-",
       "Shop Name": order.shopInfo?.name || "-",
-      Price: order.price ?? "-",
+      Price: order.price || "-",
       "Placed On": order.placedOn || "-",
       Items: order.itemsPreview?.length || order.itemsSummary?.length || 0,
       "Payment Method": order.paymentMethod || "-",
@@ -226,6 +236,10 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
+  // Calculate pagination display values
+  const startIndex = (pagination.page - 1) * pagination.limit + 1;
+  const endIndex = Math.min(pagination.page * pagination.limit, pagination.total);
+
   return (
     <>
       {/* Search & Actions */}
@@ -246,9 +260,6 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-                <SlidersHorizontal size={20} />
-              </button> */}
           <div className="relative">
             <select
               value={activeTab}
@@ -258,8 +269,9 @@ export default function UsersTable() {
               }}
               className="appearance-none border border-brand-cyan font-semibold text-brand-navy px-5 py-3 pr-10 rounded-2xl bg-white cursor-pointer focus:outline-none"
             >
+              <option value="All">All</option>
               <option value="Online">Online Payments</option>
-              <option value="Cash">Cash On Delivery</option>
+              <option value="COD">Cash On Delivery</option>
               <option value="Partial">Partial Payments</option>
             </select>
             {/* Dropdown Icon */}
@@ -334,23 +346,18 @@ export default function UsersTable() {
                   <td className="p-3">
                     <div className="h-4 w-4 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-28 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-40 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-20 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-4 w-24 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="flex gap-2">
                       <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
@@ -358,15 +365,12 @@ export default function UsersTable() {
                       <div className="h-8 w-8 bg-gray-200 rounded-md"></div>
                     </div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-6 w-28 bg-gray-200 rounded-xl"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-6 w-32 bg-gray-200 rounded"></div>
                   </td>
-
                   <td className="p-3">
                     <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
                   </td>
@@ -394,7 +398,7 @@ export default function UsersTable() {
             {/* ✅ Actual Data */}
             {!isLoading &&
               !isError &&
-              currentOrders.map((u) => (
+              searchedUsers.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input
@@ -403,17 +407,14 @@ export default function UsersTable() {
                       onChange={() => toggleOrderSelection(u._id)}
                     />
                   </td>
-
-                  <td className="p-3 font-medium">{u._id}</td>
-
+                  <td className="p-3 font-medium">{u.orderId || u._id}</td>
                   <td className="p-3 font-medium">{u.shopInfo?.name}</td>
-
-                  <td className="p-3">{u.price}</td>
-
+                  <td className="p-3">
+                    {u.price}
+                  </td>
                   <td className="p-3">
                     {u.placedOn}
                   </td>
-
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       {u.itemsPreview?.slice(0, 3).map((img, index) => (
@@ -426,7 +427,6 @@ export default function UsersTable() {
                       ))}
                     </div>
                   </td>
-
                   <td className="p-3">
                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
             bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">
@@ -434,14 +434,12 @@ export default function UsersTable() {
                       {u.paymentMethod}
                     </span>
                   </td>
-
                   <td className="p-3">
                     <div className="flex items-center gap-2 text-[#1A2550] text-sm">
                       <MdDeliveryDining className="text-xl" />
                       {u.deliveryBoy?.name || "Not Assigned"}
                     </div>
                   </td>
-
                   <td className="p-3">
                     <button
                       className="p-1 text-blue-900"
@@ -458,23 +456,23 @@ export default function UsersTable() {
               ))}
           </tbody>
         </table>
+
         {selectedOrderId && (
           <OrderDetailsModal
             order={orderData?.order}
-            loading={isLoading}
+            loading={Loader}
             onClose={() => setSelectedOrderId(null)}
           />
         )}
 
         {/* Pagination */}
-        {searchedUsers.length > ordersPerPage && (
+        {pagination.total > ordersPerPage && (
           <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
             {/* Showing Info */}
             <p className="text-sm text-gray-600">
-              Showing {indexOfFirstOrder + 1} to{" "}
-              {Math.min(indexOfLastOrder, searchedUsers.length)} of{" "}
-              {searchedUsers.length} orders
+              Showing {startIndex} to {endIndex} of{" "}
+              {pagination.total} orders
             </p>
 
             {/* Buttons */}
@@ -494,31 +492,43 @@ export default function UsersTable() {
               </button>
 
               {/* Page Numbers */}
-              {[...Array(totalPages)].map((_, index) => {
+              {[...Array(pagination.pages)].map((_, index) => {
                 const page = index + 1;
-                return (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+                // Show limited page numbers for better UX
+                if (
+                  page === 1 ||
+                  page === pagination.pages ||
+                  (page >= currentPage - 2 && page <= currentPage + 2)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                        ? "bg-[#00E5B0] text-white shadow-md"
-                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-                      }`}
-                  >
-                    {page}
-                  </button>
-                );
+                          ? "bg-[#00E5B0] text-white shadow-md"
+                          : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+                // Add ellipsis
+                if (page === currentPage - 3 || page === currentPage + 3) {
+                  return <span key={page} className="px-2">...</span>;
+                }
+                return null;
               })}
 
               {/* Next */}
               <button
                 onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  setCurrentPage((prev) => Math.min(prev + 1, pagination.pages))
                 }
-                disabled={currentPage === totalPages}
+                disabled={currentPage === pagination.pages}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-          ${currentPage === totalPages
+          ${currentPage === pagination.pages
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-[#1E264F] text-white hover:bg-opacity-90"
                   }`}

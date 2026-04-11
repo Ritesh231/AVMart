@@ -4,30 +4,52 @@ import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
 import { SiTicktick } from "react-icons/si";
 import { RxCrossCircled } from "react-icons/rx";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useGetOrdersByStatusQuery, useAssignOrderStatusMutation, } from "../../Redux/apis/ordersApi";
 import {
   useGetAllDeliveryBoysQuery,
   useGetAssignDeliveryBoysMutation
 } from "../../Redux/apis/deliveryApi";
-import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
-import OrderDetailsModal from "../Orders/OrderdetailedModal"
+
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 export default function UsersTable() {
-  const { data, isLoading, isError } = useGetOrdersByStatusQuery("Pending");
+  const navigate = useNavigate();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 20;
+
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch
+  } = useGetOrdersByStatusQuery({
+    status: "Pending",
+    page: currentPage,
+    limit: ordersPerPage
+  });
+
   const orders = data?.orders || [];
+  const pagination = data?.pagination || {
+    total: 0,
+    page: 1,
+    limit: ordersPerPage,
+    pages: 1
+  };
 
-  const users = orders.filter(
-    (order) =>
-      order.OrderStatus !== "confirmed" &&
-      order.OrderStatus !== "cancelled"
-  );
+  // ❌ REMOVE THIS - No need to filter out confirmed/cancelled from API response
+  // The API should only return Pending orders
+  // const users = orders.filter(
+  //   (order) =>
+  //     order.OrderStatus !== "confirmed" &&
+  //     order.OrderStatus !== "cancelled"
+  // );
 
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [getOrderById, { data: orderData, loading = { isLoading } }] =
-    useGetOrdersByIdMutation();
+  // ✅ Use orders directly from API
+  const users = orders;
+
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [selectedOrderForDelivery, setSelectedOrderForDelivery] = useState(null);
   const [selectedBoyId, setSelectedBoyId] = useState(null);
@@ -37,39 +59,38 @@ export default function UsersTable() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 6;
-
+  // Filter by payment method (frontend filtering on current page)
   const filteredOrders =
     activeStatus === "all"
       ? users
       : users.filter((order) =>
-        order.paymentMethod?.toLowerCase() === activeStatus
+        order.paymentMethod?.toLowerCase() === activeStatus.toLowerCase()
       );
 
+  // Search filtering (frontend on current page)
   const searchedOrders = filteredOrders.filter((order) =>
     JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Pagination Logic
-  const totalPages = Math.ceil(searchedOrders.length / ordersPerPage);
+  // ❌ REMOVE THESE - No more frontend pagination variables
+  // const totalPages = Math.ceil(searchedOrders.length / ordersPerPage);
+  // const indexOfLastOrder = currentPage * ordersPerPage;
+  // const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  // const currentOrders = searchedOrders.slice(indexOfFirstOrder, indexOfLastOrder);
 
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  // ✅ Use searchedOrders directly (API already paginated)
+  const currentOrders = searchedOrders;
 
-  const currentOrders = searchedOrders.slice(
-    indexOfFirstOrder,
-    indexOfLastOrder
-  );
-
-  // Reset to page 1 when orders change
+  // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [users.length, activeStatus, searchTerm]);
+    refetch(); // Refetch with new filters
+  }, [activeStatus, searchTerm, refetch]);
 
+  // Reset selected orders when data changes
   useEffect(() => {
     setSelectedOrderIds([]);
-  }, [users.length, activeStatus, searchTerm]);
+  }, [orders.length]);
 
   const [
     assignOrderStatus,
@@ -87,7 +108,7 @@ export default function UsersTable() {
 
   const handleApprove = async (id) => {
     try {
-      await assignOrderStatus({
+      const response = await assignOrderStatus({
         id,
         status: "confirmed",
       }).unwrap();
@@ -95,21 +116,23 @@ export default function UsersTable() {
       // Open Delivery Modal
       setSelectedOrderForDelivery(id);
       setIsDeliveryModalOpen(true);
-      toast.success(response?.message || "Success");
+      toast.success(response?.message || "Order approved successfully");
+      refetch();
     } catch (err) {
       console.error(err);
-      toast.error(err?.data?.error);
+      toast.error(err?.data?.error || "Failed to approve order");
     }
   };
 
   const handleReject = async (id) => {
     try {
-      await assignOrderStatus({
+      const response = await assignOrderStatus({
         id,
         status: "cancelled",
       }).unwrap();
 
-      toast.success(response?.message || "Success");
+      toast.success(response?.message || "Order rejected successfully");
+      refetch();
     } catch (err) {
       console.error(err);
       toast.error(err?.data?.message || "Failed to reject ❌");
@@ -119,7 +142,6 @@ export default function UsersTable() {
   const handleAssignDelivery = async (boyId) => {
     try {
       setSelectedBoyId(boyId);
-
       await assignDeliveryBoy({
         orderId: selectedOrderForDelivery,
         deliveryBoyId: boyId,
@@ -127,9 +149,12 @@ export default function UsersTable() {
       toast.success("Delivery boy assigned successfully");
       setIsDeliveryModalOpen(false);
       setSelectedOrderForDelivery(null);
+      refetch(); // Refresh the orders list
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to assign delivery boy ❌");
+      const message =
+        error?.data?.error || "Failed to assign delivery boy ❌";
+
+      toast.error(message);
     } finally {
       setSelectedBoyId(null);
     }
@@ -231,7 +256,7 @@ export default function UsersTable() {
         <body>
           <h2>Pending Orders Export</h2>
           <table border="1" cellspacing="0" cellpadding="6">
-            <thead><tr>${tableHead}</tr></thead>
+            <thead><tr>${tableHead}</table></thead>
             <tbody>${tableRows}</tbody>
           </table>
         </body>
@@ -285,6 +310,10 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
+  // Calculate pagination display values
+  const startIndex = (pagination.page - 1) * pagination.limit + 1;
+  const endIndex = Math.min(pagination.page * pagination.limit, pagination.total);
+
   return (
     <>
       {/* Search & Actions */}
@@ -305,9 +334,6 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-            <SlidersHorizontal size={20} />
-          </button> */}
           <div className="relative">
             <select
               value={activeStatus}
@@ -315,7 +341,7 @@ export default function UsersTable() {
               className="appearance-none border border-brand-cyan font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl bg-white"
             >
               <option value="all">All Payments</option>
-              <option value="all">All Payments</option>
+              <option value="online">Online Payments</option>
               <option value="cod">COD</option>
               <option value="partial">Partial</option>
             </select>
@@ -454,6 +480,7 @@ export default function UsersTable() {
                   </td>
                   <td className="p-3 font-medium">{u._id?.slice(-5)}</td>
                   <td className="p-3 font-medium">{u.shopInfo?.name}</td>
+
                   <td className="p-3">
                     {u.price?.toString().includes(".")
                       ? u.price.toString().split(".")[0] +
@@ -506,10 +533,7 @@ export default function UsersTable() {
                       {/* 👁 View */}
                       <button
                         className="p-1 text-blue-900"
-                        onClick={async () => {
-                          setSelectedOrderId(u._id);
-                          await getOrderById(u._id);
-                        }}
+                        onClick={() => navigate(`/order/details/${u._id}`)}
                       >
                         <FaEye size={18} />
                       </button>
@@ -520,13 +544,7 @@ export default function UsersTable() {
           </tbody>
         </table>
 
-        {selectedOrderId && (
-          <OrderDetailsModal
-            order={orderData?.order}
-            loading={isLoading}
-            onClose={() => setSelectedOrderId(null)}
-          />
-        )}
+
 
         {isDeliveryModalOpen && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -574,15 +592,15 @@ export default function UsersTable() {
             </div>
           </div>
         )}
+
         {/* Pagination */}
-        {searchedOrders.length > ordersPerPage && (
+        {pagination.total > ordersPerPage && (
           <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
             {/* Showing Info */}
             <p className="text-sm text-gray-600">
-              Showing {indexOfFirstOrder + 1} to{" "}
-              {Math.min(indexOfLastOrder, searchedOrders.length)} of{" "}
-              {searchedOrders.length} orders
+              Showing {startIndex} to {endIndex} of{" "}
+              {pagination.total} orders
             </p>
 
             {/* Buttons */}
@@ -602,38 +620,49 @@ export default function UsersTable() {
               </button>
 
               {/* Page Numbers */}
-              {[...Array(totalPages)].map((_, index) => {
+              {[...Array(pagination.pages)].map((_, index) => {
                 const page = index + 1;
-                return (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+                // Show limited page numbers for better UX
+                if (
+                  page === 1 ||
+                  page === pagination.pages ||
+                  (page >= currentPage - 2 && page <= currentPage + 2)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                        ? "bg-[#00E5B0] text-white shadow-md"
-                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-                      }`}
-                  >
-                    {page}
-                  </button>
-                );
+                          ? "bg-[#00E5B0] text-white shadow-md"
+                          : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+                // Add ellipsis
+                if (page === currentPage - 3 || page === currentPage + 3) {
+                  return <span key={page} className="px-2">...</span>;
+                }
+                return null;
               })}
 
               {/* Next */}
               <button
                 onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  setCurrentPage((prev) => Math.min(prev + 1, pagination.pages))
                 }
-                disabled={currentPage === totalPages}
+                disabled={currentPage === pagination.pages}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-          ${currentPage === totalPages
+          ${currentPage === pagination.pages
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-[#1E264F] text-white hover:bg-opacity-90"
                   }`}
               >
                 Next
               </button>
-
             </div>
           </div>
         )}
