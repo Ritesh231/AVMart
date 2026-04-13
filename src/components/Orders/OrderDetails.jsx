@@ -117,15 +117,21 @@ const OrderDetails = () => {
         </div>
 
         <div className="text-right">
-          <span className={`px-3 py-1 text-xs rounded-full ${order.status === "delivered"
-            ? "bg-green-100 text-green-600"
-            : "bg-yellow-100 text-yellow-600"
-            }`}>
+          <span
+            className={`px-3 py-1 text-xs rounded-full ${order.deliveryStatus === "delivered"
+              ? "bg-green-100 text-green-600"
+              : order.deliveryStatus === "Cancelled"
+                ? "bg-red-100 text-red-600"
+                : "bg-yellow-100 text-yellow-600"
+              }`}
+          >
             {order.deliveryStatus}
           </span>
+
           <p className="font-semibold text-emerald-600 mt-1">
-            ₹{order.total}
+            ₹{order.total.toFixed(2)}
           </p>
+
         </div>
       </div>
 
@@ -145,7 +151,7 @@ const OrderDetails = () => {
               </p>
             </div>
           </div>
-          <p className="font-semibold">₹{item.price}</p>
+          <p className="font-semibold">₹{item.price.toFixed(2)}</p>
         </div>
       ))}
 
@@ -168,7 +174,6 @@ const OrderDetails = () => {
         </div>
 
         <div className="relative">
-
 
           <div className="space-y-8">
             {openTrackingId === order._id && (
@@ -197,6 +202,7 @@ const OrderDetails = () => {
                             {step.done ? "Completed" : "Pending"}
                           </p>
                         </div>
+
                       </div>
                     ))}
                   </div>
@@ -483,7 +489,7 @@ const OrderDetails = () => {
         <button
           onClick={() => setPage((prev) => prev - 1)}
           disabled={!pagination?.has_prev_page}
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          className="px-4 py-2 bg-[#1A2550] text-white rounded disabled:opacity-50"
         >
           Previous
         </button>
@@ -497,7 +503,7 @@ const OrderDetails = () => {
         <button
           onClick={() => setPage((prev) => prev + 1)}
           disabled={!pagination?.has_next_page}
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          className="px-4 py-2 bg-[#1A2550] text-white rounded disabled:opacity-50"
         >
           Next
         </button>

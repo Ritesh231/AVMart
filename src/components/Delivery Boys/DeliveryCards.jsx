@@ -9,39 +9,49 @@ import StatCardSkeleton from "../statcardskeleton";
 
 export default function UserStats() {
 
-  const { data, isLoading, isError } = useGetAllDeliveryBoysQuery("pending");
+  const { data, isLoading, isError } = useGetAllDeliveryBoysQuery({
+    status: "pending"
+  });
+
   const counts = data?.cards || {};
 
   const stats = [
     {
       title: "New Requests",
       number: counts?.newRequests || 0,
-      // statement: "+12% from last Month",
       icon: <FaClock size={24} />,
       variant: "special",
     },
     {
       title: "Delivery Boys",
-      number: counts?.deliveryBoys,
-      // statement: "+12% from last week",
+      number: counts?.deliveryBoys || 0,
       icon: <IoMdPerson size={24} />,
       variant: "normal",
     },
     {
       title: "Total Deliveries",
-      number: counts?.totalDeliveries,
-      // statement: "+12% from last week",
+      number: counts?.totalDeliveries || 0,
       icon: <MdDeliveryDining size={24} />,
       variant: "normal",
     },
     {
       title: "Total Payout",
-      number: counts?.totalPayout,
-      // statement: "+12% from last week",
+      number: counts?.totalPayout || 0,
       icon: <FaSackDollar size={24} />,
       variant: "normal",
     },
   ];
+
+  // Handle error state
+  if (isError) {
+    return (
+      <section className="stat-card-sec mb-6 bg-white border-2 border-red-200 rounded-[2.5rem] p-6">
+        <div className="text-center text-red-500">
+          Failed to load delivery stats. Please try again.
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="stat-card-sec mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">

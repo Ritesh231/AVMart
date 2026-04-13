@@ -66,7 +66,8 @@ export default function UsersTable() {
     ).length;
     const isAllSelected =
         filteredUsers.length > 0 && selectedFilteredCount === filteredUsers.length;
-    const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+    const isSomeSelected =
+        selectedFilteredCount > 1 && selectedFilteredCount < filteredProducts.length;
 
     useEffect(() => {
         if (selectAllRef.current) {

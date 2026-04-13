@@ -10,6 +10,8 @@ import {
   useGetAllDeliveryBoysQuery,
   useGetAssignDeliveryBoysMutation
 } from "../../Redux/apis/deliveryApi";
+import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
+import OrderDetailsModal from "../Orders/OrderdetailedModal";
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
@@ -58,6 +60,10 @@ export default function UsersTable() {
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  const [getOrderById, { data: orderData, isLoading: Loader }] =
+    useGetOrdersByIdMutation();
 
   // Filter by payment method (frontend filtering on current page)
   const filteredOrders =
@@ -533,10 +539,14 @@ export default function UsersTable() {
                       {/* 👁 View */}
                       <button
                         className="p-1 text-blue-900"
-                        onClick={() => navigate(`/order/details/${u._id}`)}
+                        onClick={async () => {
+                          setSelectedOrderId(u._id);
+                          await getOrderById(u._id);
+                        }}
                       >
                         <FaEye size={18} />
                       </button>
+
                     </div>
                   </td>
                 </tr>
@@ -665,6 +675,14 @@ export default function UsersTable() {
               </button>
             </div>
           </div>
+        )}
+
+        {selectedOrderId && (
+          <OrderDetailsModal
+            order={orderData?.order}
+            loading={Loader}
+            onClose={() => setSelectedOrderId(null)}
+          />
         )}
       </div>
     </>

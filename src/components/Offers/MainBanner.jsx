@@ -6,10 +6,7 @@ import { useOutletContext } from "react-router-dom";
 
 export default function MainBanner() {
 
-  // ✅ Get activeTab from parent (Offers)
   const { activeTab } = useOutletContext();
-
-
 
   /******************** API *****************************/
   const { data, isLoading, isError, refetch } = useGetallbannersQuery();
@@ -17,12 +14,9 @@ export default function MainBanner() {
 
   const banners = data?.data || [];
 
-  // ✅ Filter based on activeTab from parent
   const filteredBanners = banners.filter(
     (banner) => banner.bannerType === activeTab
   );
-
-  console.log(banners);
 
   const handleDelete = async (id, type) => {
     if (!window.confirm("Delete this Banner?")) return;
@@ -38,6 +32,7 @@ export default function MainBanner() {
     } catch (err) {
       toast.error("Failed to delete banner");
     }
+
   };
 
   /******************** Loading UI *****************************/
@@ -71,6 +66,7 @@ export default function MainBanner() {
             key={banner._id}
             className="relative rounded-lg overflow-hidden group border bg-white"
           >
+
             <img
               src={banner.image}
               alt={banner.title}
@@ -86,6 +82,7 @@ export default function MainBanner() {
                 <FaTrash size={14} />
               </button>
             </div>
+
           </div>
         ))
       ) : (

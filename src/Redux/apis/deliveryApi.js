@@ -8,12 +8,15 @@ export const deliveryapi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
 
     getAllDeliveryBoys: builder.query({
-      query: ({ status, period }) => ({
+      query: ({ status, period, page, limit, search }) => ({
         url: "/api/v1/delivery/getalldeliveryboys",
         method: "GET",
         params: {
           status,
           period,
+          page,
+          limit,
+          search,
         },
       }),
       providesTags: ["DeliveryBoys"],
@@ -41,10 +44,15 @@ export const deliveryapi = baseApi.injectEndpoints({
         url: `/api/v1/adminauth/delivery-boy/${id}/profile`
       })
     }),
+
     getDeliveryBoyDetails: builder.query({
-      query: ({ id, tab }) => ({
+      query: ({ id, tab, page = 1, limit = 10 }) => ({
         url: `/api/v1/adminauth/delivery-boy/${id}/tab`,
-        params: { tab },
+        params: {
+          tab,
+          page,
+          limit
+        },
       }),
     }),
 
@@ -55,11 +63,11 @@ export const deliveryapi = baseApi.injectEndpoints({
     }),
 
     getWithdrawalRequests: builder.query({
-      query: () => ({
-        url: "/api/v1/adminauth/withdrawal-requests",
+      query: ({ page = 1, limit = 10 } = {}) => ({
+        url: `/api/v1/adminauth/withdrawal-requests?page=${page}&limit=${limit}`,
         method: "GET",
       }),
-      providesTags: ["DeliveryBoys"], // or create separate tag if needed
+      providesTags: ["DeliveryBoys"],
     }),
 
     verifyWithdrawal: builder.mutation({

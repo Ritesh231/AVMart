@@ -10,7 +10,7 @@ import {
   CheckCircle,
   ChevronDown,
   Truck,
-  Download, Search, SlidersHorizontal
+  Download, Search, SlidersHorizontal, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 import { FaUserCheck } from "react-icons/fa";
@@ -21,6 +21,7 @@ import RevenueStats from "./RevenueCard";
 import OrderStats from "./OrderCard";
 import { useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery, useGetDeliveryBoyOrderDetailsQuery, useGetWithdrawalRequestsQuery, useVerifyWithdrawalMutation } from "../../Redux/apis/deliveryApi";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function DeliveryBoyDetails() {
   const [activeTab, setActiveTab] = useState("attendance");
@@ -30,6 +31,11 @@ export default function DeliveryBoyDetails() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
   const { id } = useParams();
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const { data, isLoading, isError } = useGetdeliveryProfileQuery(id);
   const { data: withdrawalData, isLoading: withdrawalLoading } = useGetWithdrawalRequestsQuery();
   const [verifyWithdrawal] = useVerifyWithdrawalMutation();
@@ -75,8 +81,9 @@ export default function DeliveryBoyDetails() {
     data: tabData,
     isLoading: tabLoading,
     isError: tabError,
+    refetch: refetchTabData,
   } = useGetDeliveryBoyDetailsQuery(
-    { id, tab: activeTab },
+    { id, tab: activeTab, page: currentPage, limit: itemsPerPage },
     { skip: !id }
   );
 
@@ -94,89 +101,98 @@ export default function DeliveryBoyDetails() {
     setOpenOrderId(openOrderId === id ? null : id);
   };
 
+  // Get pagination meta from API response
+  const paginationMeta = tabData?.meta || {
+    page: currentPage,
+    per_page: itemsPerPage,
+    total: 0,
+    total_pages: 0,
+    has_next_page: false,
+    has_prev_page: false
+  };
+
   const attendanceData = tabData?.data || [];
   const attendanceCount = tabData?.stats || {
     present: 0,
     absent: 0,
     halfDay: 0,
   };
-  const orders =
-    tabData?.data?.filter((order) => {
-      const term = searchTerm.toLowerCase();
 
-      return (
-        order._id?.toLowerCase().includes(term) ||
-        order.deliveryStatus?.toLowerCase().includes(term) ||
-        order.paymentMethod?.toLowerCase().includes(term)
-      );
-    }) || [];
+  // Filter data based on search and status (client-side filtering on current page data)
+  const getFilteredData = () => {
+    let data = attendanceData;
 
-  const filteredAttendance = applyDateFilter(attendanceData)
-    .filter((item) => {
-      const term = searchTerm.toLowerCase();
+    // Apply search filter
+    if (activeTab === "attendance") {
+      data = data.filter((item) => {
+        const term = searchTerm.toLowerCase();
+        return (
+          item.date?.toLowerCase().includes(term) ||
+          item.status?.toLowerCase().includes(term) ||
+          item.workingHours?.toLowerCase().includes(term)
+        );
+      });
+    } else if (activeTab === "revenue") {
+      data = data.filter((txn) => {
+        const term = searchTerm.toLowerCase();
+        return (
+          txn.transactionId?.toLowerCase().includes(term) ||
+          txn.orderId?.toLowerCase().includes(term) ||
+          txn.type?.toLowerCase().includes(term) ||
+          txn.description?.toLowerCase().includes(term)
+        );
+      });
+    } else if (activeTab === "orders") {
+      data = data.filter((order) => {
+        const term = searchTerm.toLowerCase();
+        return (
+          order._id?.toLowerCase().includes(term) ||
+          order.deliveryStatus?.toLowerCase().includes(term) ||
+          order.paymentMethod?.toLowerCase().includes(term)
+        );
+      });
+    }
 
-      const matchesSearch =
-        item.date?.toLowerCase().includes(term) ||
-        item.status?.toLowerCase().includes(term) ||
-        item.workingHours?.toLowerCase().includes(term);
+    // Apply status filter
+    if (statusFilter !== "All") {
+      if (activeTab === "attendance") {
+        data = data.filter((item) => item.status === statusFilter);
+      } else if (activeTab === "revenue") {
+        data = data.filter((txn) => txn.type === statusFilter);
+      } else if (activeTab === "orders") {
+        data = data.filter((order) => order.deliveryStatus === statusFilter);
+      }
+    }
 
-      const matchesStatus =
-        statusFilter === "All" || item.status === statusFilter;
+    // Apply date filter
+    if (dateFilter !== "All") {
+      data = applyDateFilter(data);
+    }
 
-      return matchesSearch && matchesStatus;
-    });
+    return data;
+  };
 
-  const filteredRevenue = applyDateFilter(tabData?.data || [])
-    .filter((txn) => {
-      const term = searchTerm.toLowerCase();
+  const filteredData = getFilteredData();
 
-      const matchesSearch =
-        txn.transactionId?.toLowerCase().includes(term) ||
-        txn.orderId?.toLowerCase().includes(term) ||
-        txn.type?.toLowerCase().includes(term) ||
-        txn.description?.toLowerCase().includes(term);
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, statusFilter, dateFilter, fromDate, toDate, searchTerm]);
 
-      const matchesStatus =
-        statusFilter === "All" || txn.type === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-
-  const filteredOrders = applyDateFilter(tabData?.data || [])
-    .filter((order) => {
-      const term = searchTerm.toLowerCase();
-
-      const matchesSearch =
-        order._id?.toLowerCase().includes(term) ||
-        order.deliveryStatus?.toLowerCase().includes(term) ||
-        order.paymentMethod?.toLowerCase().includes(term);
-
-      const matchesStatus =
-        statusFilter === "All" || order.deliveryStatus === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-
-  const currentTabData =
-    activeTab === "attendance"
-      ? filteredAttendance
-      : activeTab === "revenue"
-        ? filteredRevenue
-        : filteredOrders;
+  // Reset selections when tab or filters change
+  useEffect(() => {
+    setSelectedIds([]);
+    setIsExportMenuOpen(false);
+  }, [activeTab, searchTerm, statusFilter, dateFilter, fromDate, toDate, currentPage]);
 
   const getItemId = (item) =>
     item?._id || item?.transactionId || item?.orderId || item?.date;
 
-  useEffect(() => {
-    setSelectedIds([]);
-    setIsExportMenuOpen(false);
-  }, [activeTab, searchTerm, statusFilter, dateFilter, fromDate, toDate, tabData]);
-
-  const selectedFilteredCount = currentTabData.filter((item) =>
+  const selectedFilteredCount = filteredData.filter((item) =>
     selectedIds.includes(getItemId(item))
   ).length;
   const isAllSelected =
-    currentTabData.length > 0 && selectedFilteredCount === currentTabData.length;
+    filteredData.length > 0 && selectedFilteredCount === filteredData.length;
   const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
 
   useEffect(() => {
@@ -193,17 +209,17 @@ export default function DeliveryBoyDetails() {
 
   const toggleSelectAll = (checked) => {
     if (checked) {
-      setSelectedIds(currentTabData.map((item) => getItemId(item)));
+      setSelectedIds(filteredData.map((item) => getItemId(item)));
       return;
     }
     setSelectedIds([]);
   };
 
   const getRowsForExport = () => {
-    const selectedRows = currentTabData.filter((item) =>
+    const selectedRows = filteredData.filter((item) =>
       selectedIds.includes(getItemId(item))
     );
-    const sourceRows = selectedRows.length ? selectedRows : currentTabData;
+    const sourceRows = selectedRows.length ? selectedRows : filteredData;
     if (!sourceRows.length) return [];
 
     if (activeTab === "attendance") {
@@ -342,7 +358,6 @@ export default function DeliveryBoyDetails() {
     setIsExportMenuOpen(false);
   };
 
-
   const handleWithdrawalAction = async (id, status) => {
     try {
       await verifyWithdrawal({
@@ -360,6 +375,53 @@ export default function DeliveryBoyDetails() {
       toast.error(err?.data?.error || "Action failed");
     }
   };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  // Calculate display range
+  const startItem = (paginationMeta.page - 1) * paginationMeta.per_page + 1;
+  const endItem = Math.min(paginationMeta.page * paginationMeta.per_page, paginationMeta.total);
+
+  // Render pagination buttons
+  const renderPaginationButtons = () => {
+    const totalPages = paginationMeta.total_pages;
+    const currentPageNum = paginationMeta.page;
+    const maxButtons = 5;
+    let startPage = Math.max(1, currentPageNum - Math.floor(maxButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages.map((page) => (
+      <button
+        key={page}
+        onClick={() => handlePageChange(page)}
+        className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+          ${currentPageNum === page
+            ? "bg-[#00E5B0] text-white shadow-md"
+            : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+          }`}
+      >
+        {page}
+      </button>
+    ));
+  };
+
+  if (isLoading) return <div className="p-6">Loading profile...</div>;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -387,7 +449,12 @@ export default function DeliveryBoyDetails() {
               <span className="text-xs bg-gray-200 px-2 py-1 rounded">
                 {profile?._id}
               </span>
-              <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
+              <span
+                className={`text-xs px-3 py-1 rounded-full ${profile?.availabilityStatus === "Notavailable"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-green-100 text-green-700"
+                  }`}
+              >
                 {profile?.availabilityStatus}
               </span>
             </div>
@@ -423,7 +490,10 @@ export default function DeliveryBoyDetails() {
       {/* Tabs */}
       <div className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2 md:w-fit w-full shadow-lg">
         <button
-          onClick={() => setActiveTab("attendance")}
+          onClick={() => {
+            setActiveTab("attendance");
+            setCurrentPage(1);
+          }}
           className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300
       ${activeTab === "attendance"
               ? "bg-[#00E5B0] text-white"
@@ -435,7 +505,10 @@ export default function DeliveryBoyDetails() {
         </button>
 
         <button
-          onClick={() => setActiveTab("revenue")}
+          onClick={() => {
+            setActiveTab("revenue");
+            setCurrentPage(1);
+          }}
           className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300
       ${activeTab === "revenue"
               ? "bg-[#00E5B0] text-white"
@@ -447,7 +520,10 @@ export default function DeliveryBoyDetails() {
         </button>
 
         <button
-          onClick={() => setActiveTab("orders")}
+          onClick={() => {
+            setActiveTab("orders");
+            setCurrentPage(1);
+          }}
           className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300
       ${activeTab === "orders"
               ? "bg-[#00E5B0] text-white"
@@ -457,177 +533,176 @@ export default function DeliveryBoyDetails() {
           <FaShoppingCart size={20} />
           Orders
         </button>
-
-        {/* <button
-          onClick={() => setActiveTab("paymentRequest")}
-          className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300
-      ${activeTab === "paymentRequest"
-              ? "bg-[#00E5B0] text-white"
-              : "bg-white text-[#1E264F] hover:bg-gray-100"
-            }`}
-        >
-          <FaShoppingCart size={20} />
-          Paymenrt Request
-        </button> */}
       </div>
 
       {/* Summary Cards */}
-
       {activeTab === "attendance" && (
-        <>
-          <AttendanceStats
-            present={attendanceCount?.present || 0}
-            absent={attendanceCount?.absent || 0}
-            halfDay={attendanceCount?.halfDay || 0}
-          />
+        <AttendanceStats
+          present={attendanceCount?.present || 0}
+          absent={attendanceCount?.absent || 0}
+          halfDay={attendanceCount?.halfDay || 0}
+        />
+      )}
 
+      {activeTab === "revenue" && (
+        <RevenueStats
+          totalEarned={tabData?.stats?.totalEarned || 0}
+          totalWithdrawn={tabData?.stats?.totalWithdrawn || 0}
+          balance={tabData?.stats?.balance || 0}
+        />
+      )}
 
+      {activeTab === "orders" && (
+        <OrderStats
+          total={tabData?.stats?.totalOrders}
+          ongoing={tabData?.stats?.ongoing || 0}
+          completed={tabData?.stats?.completed || 0}
+          rejected={tabData?.stats?.rejected || 0}
+        />
+      )}
 
-          {/* Filter */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-            {/* Search Bar */}
-            <div className="w-full lg:w-[40%] md:w-[50%]">
-              <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
-                <Search className="text-brand-gray" size={20} />
+      {/* Filter Section */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+        {/* Search Bar */}
+        <div className="w-full lg:w-[40%] md:w-[50%]">
+          <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
+            <Search className="text-brand-gray" size={20} />
+            <input
+              className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
+              type="text"
+              placeholder={activeTab === "attendance" ? "Search By Date, Working hours" : "Search By Order ID, Transaction ID"}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Filter Controls */}
+        <div className='flex justify-evenly gap-2 items-center flex-wrap'>
+          <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-3 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={(e) => toggleSelectAll(e.target.checked)}
+            />
+            Select All
+          </label>
+
+          <div className="flex flex-wrap gap-3 items-center">
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border px-4 py-3 rounded-xl bg-white"
+            >
+              <option value="All">All Status</option>
+
+              {activeTab === "attendance" && (
+                <>
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
+                  <option value="HalfDay">HalfDay</option>
+                </>
+              )}
+
+              {activeTab === "orders" && (
+                <>
+                  <option value="Ongoing">Ongoing</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="At Location">At Location</option>
+                </>
+              )}
+
+              {activeTab === "revenue" && (
+                <>
+                  <option value="Credit">Credit</option>
+                  <option value="Debit">Debit</option>
+                </>
+              )}
+
+            </select>
+
+            {/* Date Filter */}
+            <select
+              value={dateFilter}
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                setFromDate("");
+                setToDate("");
+              }}
+              className="border px-4 py-3 rounded-xl bg-white"
+            >
+              <option value="All">All Dates</option>
+              <option value="Today">Today</option>
+              <option value="Last7Days">Last 7 Days</option>
+              <option value="Custom">Custom Range</option>
+            </select>
+
+            {/* Custom Range */}
+            {dateFilter === "Custom" && (
+              <>
                 <input
-                  className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
-                  type="text"
-                  placeholder='Search By Name, Date, Working hours'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Export Button */}
-            <div className='flex justify-evenly gap-2 items-center'>
-              <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
-                <input
-                  ref={selectAllRef}
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={(e) => toggleSelectAll(e.target.checked)}
-                />
-                Select All
-              </label>
-              {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-                <SlidersHorizontal size={20} />
-              </button> */}
-              <div className="flex flex-wrap gap-3 items-center">
-
-                {/* Status Filter */}
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border px-4 py-2 rounded-xl bg-white"
-                >
-                  <option value="All">All Status</option>
-
-                  {activeTab === "attendance" && (
-                    <>
-                      <option value="Present">Present</option>
-                      <option value="Absent">Absent</option>
-                      <option value="HalfDay">HalfDay</option>
-                    </>
-                  )}
-
-                  {activeTab === "orders" && (
-                    <>
-                      <option value="Ongoing">Ongoing</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Rejected">Rejected</option>
-                    </>
-                  )}
-
-                  {activeTab === "revenue" && (
-                    <>
-                      <option value="Credit">Credit</option>
-                      <option value="Debit">Debit</option>
-                    </>
-                  )}
-                </select>
-
-                {/* Date Filter */}
-                <select
-                  value={dateFilter}
+                  type="date"
+                  value={fromDate}
+                  max={toDate || undefined}
                   onChange={(e) => {
-                    setDateFilter(e.target.value);
-                    setFromDate("");
-                    setToDate("");
+                    const selected = e.target.value;
+                    if (toDate && selected > toDate) setToDate("");
+                    setFromDate(selected);
                   }}
-                  className="border px-4 py-2 rounded-xl bg-white"
-                >
-                  <option value="All">All Dates</option>
-                  <option value="Today">Today</option>
-                  <option value="Last7Days">Last 7 Days</option>
-                  <option value="Custom">Custom Range</option>
-                </select>
+                  className="border px-3 py-2 rounded-xl"
+                />
 
-                {/* Custom Range */}
-                {dateFilter === "Custom" && (
-                  <>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      max={toDate || undefined}
-                      onChange={(e) => {
-                        const selected = e.target.value;
-                        if (toDate && selected > toDate) setToDate("");
-                        setFromDate(selected);
-                      }}
-                      className="border px-3 py-2 rounded-xl"
-                    />
+                <span>to</span>
 
-                    <span>to</span>
-
-                    <input
-                      type="date"
-                      value={toDate}
-                      min={fromDate || undefined}
-                      onChange={(e) => {
-                        const selected = e.target.value;
-                        if (fromDate && selected < fromDate) return;
-                        setToDate(selected);
-                      }}
-                      className="border px-3 py-2 rounded-xl"
-                    />
-                  </>
-                )}
-              </div>
-              <div className="relative">
-                <button
-                  className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
-                  onClick={() => setIsExportMenuOpen((prev) => !prev)}
-                >
-                  <Download size={20} /> Export
-                </button>
-                {isExportMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
-                    <button
-                      onClick={exportToPdf}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      PDF
-                    </button>
-                    <button
-                      onClick={exportToDoc}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      DOC
-                    </button>
-                    <button
-                      onClick={exportToExcel}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      Excel
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+                <input
+                  type="date"
+                  value={toDate}
+                  min={fromDate || undefined}
+                  onChange={(e) => {
+                    const selected = e.target.value;
+                    if (fromDate && selected < fromDate) return;
+                    setToDate(selected);
+                  }}
+                  className="border px-3 py-2 rounded-xl"
+                />
+              </>
+            )}
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border md:overflow-hidden overflow-x-auto ">
+          {/* Export Button */}
+          <div className="relative">
+            <button
+              className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+            >
+              <Download size={20} /> Export
+            </button>
+            {isExportMenuOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">PDF</button>
+                <button onClick={exportToDoc} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">DOC</button>
+                <button onClick={exportToExcel} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Excel</button>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {tabLoading && (
+        <div className="bg-white rounded-xl shadow-sm border p-8 text-center">
+          <p>Loading {activeTab} data...</p>
+        </div>
+      )}
+
+      {/* Attendance Tab */}
+      {activeTab === "attendance" && !tabLoading && (
+        <>
+          <div className="bg-white rounded-xl shadow-sm border md:overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
@@ -641,17 +716,8 @@ export default function DeliveryBoyDetails() {
               </thead>
 
               <tbody>
-                {filteredAttendance
-                  ?.filter((item) => {
-                    const term = searchTerm.toLowerCase();
-
-                    return (
-                      item.date?.toLowerCase().includes(term) ||
-                      item.status?.toLowerCase().includes(term) ||
-                      item.workingHours?.toLowerCase().includes(term)
-                    );
-                  })
-                  ?.map((item) => (
+                {filteredData.length > 0 ? (
+                  filteredData.map((item) => (
                     <tr key={item._id} className="border-t">
                       <td className="px-6 py-4">
                         <input
@@ -660,9 +726,7 @@ export default function DeliveryBoyDetails() {
                           onChange={() => toggleSelection(getItemId(item))}
                         />
                       </td>
-                      <td className="px-6 py-4">
-                        {item.date?.split("T")[0]}
-                      </td>
+                      <td className="px-6 py-4">{item.date?.split("T")[0]}</td>
                       <td className="px-6 py-4">{item.checkIn}</td>
                       <td className="px-6 py-4">{item.checkOut}</td>
                       <td className="px-6 py-4">{item.workingHours}</td>
@@ -672,152 +736,57 @@ export default function DeliveryBoyDetails() {
                         </span>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="text-center py-8 text-gray-500">
+                      No attendance records found
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {paginationMeta.total > 0 && (
+            <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white rounded-xl shadow-sm border">
+              <p className="text-sm text-gray-600">
+                Showing {startItem} to {endItem} of {paginationMeta.total} records
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={!paginationMeta.has_prev_page}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                    ${!paginationMeta.has_prev_page
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                    }`}
+                >
+                  <ChevronLeft size={16} /> Prev
+                </button>
+                {renderPaginationButtons()}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!paginationMeta.has_next_page}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                    ${!paginationMeta.has_next_page
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                    }`}
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
-      {activeTab === "revenue" && (
+      {/* Revenue Tab */}
+      {activeTab === "revenue" && !tabLoading && (
         <>
-          {/* Revenue Summary Cards */}
-          <RevenueStats
-            totalEarned={tabData?.stats?.totalEarned || 0}
-            totalWithdrawn={tabData?.stats?.totalWithdrawn || 0}
-            balance={tabData?.stats?.balance || 0}
-          />
-
-          {/* Filter */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-            {/* Search Bar */}
-            <div className="w-full lg:w-[40%] md:w-[50%]">
-              <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
-                <Search className="text-brand-gray" size={20} />
-                <input
-                  className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
-                  type="text"
-                  placeholder='Search By Name, Order ID, Transaction ID'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Export Button */}
-            <div className='flex justify-evenly gap-2 items-center'>
-              <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-3 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
-                <input
-                  ref={selectAllRef}
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={(e) => toggleSelectAll(e.target.checked)}
-                />
-                Select All
-              </label>
-              {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-                <SlidersHorizontal size={20} />
-              </button> */}
-              <div className="flex flex-wrap gap-3 items-center">
-
-                {/* Status Filter */}
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border px-4 py-2 rounded-xl bg-white"
-                >
-                  <option value="All">All Status</option>
-
-                  {activeTab === "attendance" && (
-                    <>
-                      <option value="Present">Present</option>
-                      <option value="Absent">Absent</option>
-                      <option value="HalfDay">HalfDay</option>
-                    </>
-                  )}
-
-                  {activeTab === "orders" && (
-                    <>
-                      <option value="Ongoing">Ongoing</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Rejected">Rejected</option>
-                    </>
-                  )}
-
-                  {activeTab === "revenue" && (
-                    <>
-                      <option value="Credit">Credit</option>
-                      <option value="Debit">Debit</option>
-                    </>
-                  )}
-                </select>
-
-                {/* Date Filter */}
-                <select
-                  value={dateFilter}
-                  onChange={(e) => {
-                    setDateFilter(e.target.value);
-                    setFromDate("");
-                    setToDate("");
-                  }}
-                  className="border px-4 py-2 rounded-xl bg-white"
-                >
-                  <option value="All">All Dates</option>
-                  <option value="Today">Today</option>
-                  <option value="Last7Days">Last 7 Days</option>
-                  <option value="Custom">Custom Range</option>
-                </select>
-
-                {/* Custom Range */}
-                {dateFilter === "Custom" && (
-                  <>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      max={toDate || undefined}
-                      onChange={(e) => {
-                        const selected = e.target.value;
-                        if (toDate && selected > toDate) setToDate("");
-                        setFromDate(selected);
-                      }}
-                      className="border px-3 py-2 rounded-xl"
-                    />
-
-                    <span>to</span>
-
-                    <input
-                      type="date"
-                      value={toDate}
-                      min={fromDate || undefined}
-                      onChange={(e) => {
-                        const selected = e.target.value;
-                        if (fromDate && selected < fromDate) return;
-                        setToDate(selected);
-                      }}
-                      className="border px-3 py-2 rounded-xl"
-                    />
-                  </>
-                )}
-              </div>
-              <div className="relative">
-                <button
-                  className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
-                  onClick={() => setIsExportMenuOpen((prev) => !prev)}
-                >
-                  <Download size={20} /> Export
-                </button>
-                {isExportMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
-                    <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">PDF</button>
-                    <button onClick={exportToDoc} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">DOC</button>
-                    <button onClick={exportToExcel} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Excel</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Transactions Table */}
           <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600">
@@ -833,18 +802,8 @@ export default function DeliveryBoyDetails() {
               </thead>
 
               <tbody>
-                {filteredRevenue
-                  .filter((txn) => {
-                    const term = searchTerm.toLowerCase();
-
-                    return (
-                      txn.transactionId?.toLowerCase().includes(term) ||
-                      txn.orderId?.toLowerCase().includes(term) ||
-                      txn.type?.toLowerCase().includes(term) ||
-                      txn.description?.toLowerCase().includes(term)
-                    );
-                  })
-                  ?.map((txn) => (
+                {filteredData.length > 0 ? (
+                  filteredData.map((txn) => (
                     <tr key={txn._id} className="border-t">
                       <td className="px-6 py-4">
                         <input
@@ -860,429 +819,306 @@ export default function DeliveryBoyDetails() {
                       <td className="px-6 py-4">₹{txn.amount}</td>
                       <td className="px-6 py-4">{txn.description}</td>
                     </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {activeTab === "orders" && (
-        <>
-          {/* Top Summary Cards */}
-          <OrderStats
-            total={tabData?.stats?.totalOrders}
-            ongoing={tabData?.stats?.ongoing || 0}
-            completed={tabData?.stats?.completed || 0}
-            rejected={tabData?.stats?.rejected || 0}
-          />
-
-          {/* Filter */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-            {/* Search Bar */}
-            <div className="w-full lg:w-[40%] md:w-[50%]">
-              <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
-                <Search className="text-brand-gray" size={20} />
-                <input
-                  className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
-                  type="text"
-                  placeholder='Search By Name, Order ID, Transaction ID'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Export Button */}
-            <div className='flex justify-evenly gap-2 items-center'>
-              <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
-                <input
-                  ref={selectAllRef}
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={(e) => toggleSelectAll(e.target.checked)}
-                />
-                Select All
-              </label>
-              {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-                <SlidersHorizontal size={20} />
-              </button> */}
-              <div className="flex flex-wrap gap-3 items-center">
-
-                {/* Status Filter */}
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border px-4 py-2 rounded-xl bg-white"
-                >
-                  <option value="All">All Status</option>
-
-                  {activeTab === "attendance" && (
-                    <>
-                      <option value="Present">Present</option>
-                      <option value="Absent">Absent</option>
-                      <option value="HalfDay">HalfDay</option>
-                    </>
-                  )}
-
-                  {activeTab === "orders" && (
-                    <>
-                      <option value="Ongoing">Ongoing</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Rejected">Rejected</option>
-                    </>
-                  )}
-
-                  {activeTab === "revenue" && (
-                    <>
-                      <option value="Credit">Credit</option>
-                      <option value="Debit">Debit</option>
-                    </>
-                  )}
-                </select>
-
-                {/* Date Filter */}
-                <select
-                  value={dateFilter}
-                  onChange={(e) => {
-                    setDateFilter(e.target.value);
-                    setFromDate("");
-                    setToDate("");
-                  }}
-                  className="border px-4 py-2 rounded-xl bg-white"
-                >
-                  <option value="All">All Dates</option>
-                  <option value="Today">Today</option>
-                  <option value="Last7Days">Last 7 Days</option>
-                  <option value="Custom">Custom Range</option>
-                </select>
-
-                {/* Custom Range */}
-                {dateFilter === "Custom" && (
-                  <>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      max={toDate || undefined}
-                      onChange={(e) => {
-                        const selected = e.target.value;
-                        if (toDate && selected > toDate) setToDate("");
-                        setFromDate(selected);
-                      }}
-                      className="border px-3 py-2 rounded-xl"
-                    />
-
-                    <span>to</span>
-
-                    <input
-                      type="date"
-                      value={toDate}
-                      min={fromDate || undefined}
-                      onChange={(e) => {
-                        const selected = e.target.value;
-                        if (fromDate && selected < fromDate) return;
-                        setToDate(selected);
-                      }}
-                      className="border px-3 py-2 rounded-xl"
-                    />
-                  </>
-                )}
-              </div>
-              <div className="relative">
-                <button
-                  className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
-                  onClick={() => setIsExportMenuOpen((prev) => !prev)}
-                >
-                  <Download size={20} /> Export
-                </button>
-                {isExportMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
-                    <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">PDF</button>
-                    <button onClick={exportToDoc} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">DOC</button>
-                    <button onClick={exportToExcel} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Excel</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Orders List */}
-          <div className="space-y-4">
-            {filteredOrders.map((order) => {
-
-              const isOngoing = order.deliveryStatus === "Ongoing";
-              const isDelivered = order.deliveryStatus === "Delivered";
-
-              return (
-                <div key={order._id} className="bg-white rounded-xl shadow-sm border overflow-hidden">
-
-                  {/* Header */}
-                  <div
-                    className="flex justify-between items-center p-5 cursor-pointer"
-                    onClick={() => toggleOrder(order._id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(getItemId(order))}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={() => toggleSelection(getItemId(order))}
-                      />
-
-                      {/* Dynamic Status Icon */}
-                      {isOngoing && (
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                          <Truck size={18} className="text-blue-600" />
-                        </div>
-                      )}
-
-                      {isDelivered && (
-                        <div className="bg-green-100 p-2 rounded-lg">
-                          <CheckCircle size={18} className="text-green-600" />
-                        </div>
-                      )}
-
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-semibold">
-                            {order._id.slice(-6).toUpperCase()}
-                          </h3>
-
-                          <span className="bg-gray-200 text-xs px-3 py-1 rounded-full">
-                            {order.deliveryStatus}
-                          </span>
-                        </div>
-
-                        <p className="text-sm text-gray-500 mt-1">
-                          {order.date}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          ₹{order.grandTotal}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {order.paymentMethod}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => toggleOrder(order._id)}
-                        className="p-2 rounded-md hover:bg-gray-100 transition"
-                      >
-                        <ChevronDown
-                          size={18}
-                          className={`transition-transform duration-300 ${openOrderId === order._id ? "rotate-180" : ""
-                            }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Collapsible Content */}
-                  {openOrderId === order._id && (
-                    <div className="border-t p-5 bg-gray-50 space-y-5">
-
-                      {orderLoading && <p>Loading order details...</p>}
-
-                      {!orderLoading && orderData && (
-                        <>
-                          {/* Customer Details */}
-                          <div>
-                            <h4 className="font-medium mb-2">Customer Details</h4>
-                            <p className="text-sm font-medium">
-                              {orderData.customer?.name}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {orderData.customer?.phone}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {orderData.customer?.address}
-                            </p>
-                          </div>
-
-                          {/* Order Items */}
-                          <div>
-                            <h4 className="font-medium mb-2">Order Items</h4>
-
-                            {orderData.items?.map((item, index) => (
-                              <div
-                                key={index}
-                                className="text-sm flex justify-between mb-1"
-                              >
-                                <span>
-                                  {item.name} x{item.quantity}
-                                </span>
-                                <span>₹{item.itemTotal}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Bill Summary */}
-                          <div>
-                            <h4 className="font-medium mb-2">Bill Summary</h4>
-
-                            {/* Subtotal */}
-                            <div className="text-sm flex justify-between">
-                              <span>Subtotal</span>
-                              <span>₹{Number(orderData.billSummary?.subtotal || 0).toFixed(2)}</span>
-                            </div>
-
-                            {/* Delivery Charge */}
-                            <div className="text-sm flex justify-between">
-                              <span>+ Delivery Charge</span>
-                              <span>₹{Number(orderData.billSummary?.deliveryCharge || 0).toFixed(2)}</span>
-                            </div>
-
-                            {/* Discount */}
-                            <div className="text-sm flex justify-between text-green-600">
-                              <span>- Discount</span>
-                              <span>₹{Number(orderData.billSummary?.totalDiscount || 0).toFixed(2)}</span>
-                            </div>
-
-                            <hr className="my-2" />
-
-                            {/* Paid */}
-                            <div className="text-sm flex justify-between text-green-600">
-                              <span>Paid</span>
-                              <span>₹{Number(orderData.billSummary?.totalPaid || 0).toFixed(2)}</span>
-                            </div>
-
-                            {/* Remaining */}
-                            <div className="text-sm flex justify-between text-red-600 font-medium">
-                              <span>Remaining to Collect</span>
-                              <span>
-                                ₹{Number(orderData.billSummary?.remainingToCollect || 0).toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {activeTab === "paymentRequest" && (
-        <>
-          <div className="bg-white rounded-xl shadow-sm border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-6 py-3 text-left">User</th>
-                  <th className="px-6 py-3 text-left">Amount</th>
-                  <th className="px-6 py-3 text-left">Description</th>
-                  <th className="px-6 py-3 text-left">Date</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                  <th className="px-6 py-3 text-center">Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {withdrawalLoading ? (
+                  ))
+                ) : (
                   <tr>
-                    <td colSpan="6" className="text-center py-6">
-                      Loading...
+                    <td colSpan="7" className="text-center py-8 text-gray-500">
+                      No revenue records found
                     </td>
                   </tr>
-                ) : (
-                  withdrawals.map((item) => (
-                    <tr key={item._id} className="border-t hover:bg-gray-50">
-
-                      {/* User */}
-                      <td className="px-6 py-4">
-                        {item.deliveryBoyID ? (
-                          <div>
-                            <p className="font-medium">
-                              {item.deliveryBoyID.email}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {item.deliveryBoyID.contactNo}
-                            </p>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">N/A</span>
-                        )}
-                      </td>
-
-                      {/* Amount */}
-                      <td className="px-6 py-4 text-green-600 font-semibold">
-                        ₹{item.amount}
-                      </td>
-
-                      {/* Description */}
-                      <td className="px-6 py-4 max-w-[250px] break-words">
-                        {item.description}
-                      </td>
-
-                      {/* Date */}
-                      <td className="px-6 py-4 text-gray-500">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-3 py-1 text-xs rounded-full font-semibold
-                      ${item.status === "approved"
-                              ? "bg-green-100 text-green-600"
-                              : item.status === "rejected"
-                                ? "bg-red-100 text-red-600"
-                                : "bg-yellow-100 text-yellow-600"
-                            }`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-
-                      {/* Action */}
-                      <td className="px-6 py-4 text-center">
-                        {item.status === "pending" ? (
-                          <div className="flex justify-center gap-2">
-
-
-                            <button
-                              onClick={() =>
-                                handleWithdrawalAction(item._id, "approved")
-                              }
-                              className="bg-green-500 hover:bg-green-600 text-white w-6 h-6 rounded-full"
-                            >
-                              ✔
-                            </button>
-
-
-                            <button
-                              onClick={() =>
-                                handleWithdrawalAction(item._id, "rejected")
-                              }
-                              className="bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full"
-                            >
-                              ✖
-                            </button>
-
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-xs">
-                            No Action
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {paginationMeta.total > 0 && (
+            <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white rounded-xl shadow-sm border">
+              <p className="text-sm text-gray-600">
+                Showing {startItem} to {endItem} of {paginationMeta.total} records
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={!paginationMeta.has_prev_page}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                    ${!paginationMeta.has_prev_page
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                    }`}
+                >
+                  <ChevronLeft size={16} /> Prev
+                </button>
+                {renderPaginationButtons()}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!paginationMeta.has_next_page}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                    ${!paginationMeta.has_next_page
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                    }`}
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
+      {/* Orders Tab */}
+      {activeTab === "orders" && !tabLoading && (
+        <>
+          <div className="space-y-4">
+            {filteredData.length > 0 ? (
+              filteredData.map((order) => {
+                const isOngoing = order.deliveryStatus === "Ongoing";
+                const isDelivered = order.deliveryStatus === "Delivered";
+
+                return (
+                  <div key={order._id} className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    {/* Header */}
+                    <div
+                      className="flex justify-between items-center p-5 cursor-pointer"
+                      onClick={() => toggleOrder(order._id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(getItemId(order))}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={() => toggleSelection(getItemId(order))}
+                        />
+
+                        {/* Dynamic Status Icon */}
+                        {isOngoing && (
+                          <div className="bg-blue-100 p-2 rounded-lg">
+                            <Truck size={18} className="text-blue-600" />
+                          </div>
+                        )}
+
+                        {isDelivered && (
+                          <div className="bg-green-100 p-2 rounded-lg">
+                            <CheckCircle size={18} className="text-green-600" />
+                          </div>
+                        )}
+
+                        <div>
+                          <div className="flex items-center gap-3">
+                            <h3 className="font-semibold">
+                              {order._id.slice(-6).toUpperCase()}
+                            </h3>
+                            <span className="bg-gray-200 text-xs px-3 py-1 rounded-full">
+                              {order.deliveryStatus}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {order.date}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-semibold">
+                            ₹{order.grandTotal}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {order.paymentMethod}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => toggleOrder(order._id)}
+                          className="p-2 rounded-md hover:bg-gray-100 transition"
+                        >
+                          <ChevronDown
+                            size={18}
+                            className={`transition-transform duration-300 ${openOrderId === order._id ? "rotate-180" : ""
+                              }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Content */}
+                    {openOrderId === order._id && (
+                      <div className="border-t p-5 bg-gray-50 space-y-5">
+                        {orderLoading && <p>Loading order details...</p>}
+                        {!orderLoading && orderData && (
+                          <>
+                            {/* Customer Details */}
+                            <div>
+                              <h4 className="font-medium mb-2">Customer Details</h4>
+                              <p className="text-sm font-medium">
+                                {orderData.customer?.name}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {orderData.customer?.phone}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {orderData.customer?.address}
+                              </p>
+                            </div>
+
+                            {/* Order Items */}
+                            <div>
+                              <h4 className="font-medium mb-2">Order Items</h4>
+                              {orderData.items?.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="text-sm flex justify-between mb-1"
+                                >
+                                  <span>
+                                    {item.name} x{item.quantity}
+                                  </span>
+                                  <span>₹{item.itemTotal}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Bill Summary */}
+                            <div>
+                              <h4 className="font-medium mb-2">Bill Summary</h4>
+                              <div className="text-sm flex justify-between">
+                                <span>Subtotal</span>
+                                <span>₹{Number(orderData.billSummary?.subtotal || 0).toFixed(2)}</span>
+                              </div>
+                              <div className="text-sm flex justify-between">
+                                <span>+ Delivery Charge</span>
+                                <span>₹{Number(orderData.billSummary?.deliveryCharge || 0).toFixed(2)}</span>
+                              </div>
+                              <div className="text-sm flex justify-between text-green-600">
+                                <span>- Discount</span>
+                                <span>₹{Number(orderData.billSummary?.totalDiscount || 0).toFixed(2)}</span>
+                              </div>
+                              <hr className="my-2" />
+                              <div className="text-sm flex justify-between text-green-600">
+                                <span>Paid</span>
+                                <span>₹{Number(orderData.billSummary?.totalPaid || 0).toFixed(2)}</span>
+                              </div>
+                              <div className="text-sm flex justify-between text-red-600 font-medium">
+                                <span>Remaining to Collect</span>
+                                <span>
+                                  ₹{Number(orderData.billSummary?.remainingToCollect || 0).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border p-8 text-center text-gray-500">
+                No orders found
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {paginationMeta.total > 0 && (
+            <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white rounded-xl shadow-sm border">
+              <p className="text-sm text-gray-600">
+                Showing {startItem} to {endItem} of {paginationMeta.total} orders
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={!paginationMeta.has_prev_page}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                    ${!paginationMeta.has_prev_page
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                    }`}
+                >
+                  <ChevronLeft size={16} /> Prev
+                </button>
+                {renderPaginationButtons()}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!paginationMeta.has_next_page}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                    ${!paginationMeta.has_next_page
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                    }`}
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Payment Request Tab (if needed) */}
+      {activeTab === "paymentRequest" && (
+        <div className="bg-white rounded-xl shadow-sm border overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-gray-600">
+              <tr>
+                <th className="px-6 py-3 text-left">User</th>
+                <th className="px-6 py-3 text-left">Amount</th>
+                <th className="px-6 py-3 text-left">Description</th>
+                <th className="px-6 py-3 text-left">Date</th>
+                <th className="px-6 py-3 text-left">Status</th>
+                <th className="px-6 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {withdrawalLoading ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-6">
+                    Loading...
+                  </td>
+                </tr>
+              ) : (
+                withdrawals.map((item) => (
+                  <tr key={item._id} className="border-t hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      {item.deliveryBoyID ? (
+                        <div>
+                          <p className="font-medium">{item.deliveryBoyID.email}</p>
+                          <p className="text-xs text-gray-500">{item.deliveryBoyID.contactNo}</p>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-green-600 font-semibold">₹{item.amount}</td>
+                    <td className="px-6 py-4 max-w-[250px] break-words">{item.description}</td>
+                    <td className="px-6 py-4 text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 text-xs rounded-full font-semibold
+                        ${item.status === "approved" ? "bg-green-100 text-green-600" :
+                          item.status === "rejected" ? "bg-red-100 text-red-600" :
+                            "bg-yellow-100 text-yellow-600"}`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {item.status === "pending" ? (
+                        <div className="flex justify-center gap-2">
+                          <button onClick={() => handleWithdrawalAction(item._id, "approved")}
+                            className="bg-green-500 hover:bg-green-600 text-white w-6 h-6 rounded-full">✔</button>
+                          <button onClick={() => handleWithdrawalAction(item._id, "rejected")}
+                            className="bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full">✖</button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">No Action</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

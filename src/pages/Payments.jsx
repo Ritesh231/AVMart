@@ -16,48 +16,7 @@ const Payments = () => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const selectAllRef = useRef(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 12;
-
-    const filterByDate = (txnDate) => {
-        if (!txnDate) return true;
-
-        const txn = new Date(txnDate);
-        const now = new Date();
-
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-
-        const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-        switch (dateFilter) {
-            case "Today":
-                return txn >= startOfToday && txn < startOfTomorrow;
-
-            case "Yesterday":
-                return txn >= startOfYesterday && txn < startOfToday;
-
-            case "This Month":
-                return txn >= startOfMonth;
-
-            case "Last Month":
-                return txn >= startOfLastMonth && txn <= endOfLastMonth;
-
-            case "Custom":
-                if (!fromDate || !toDate) return true;
-
-                const start = new Date(fromDate);
-                const end = new Date(toDate);
-                end.setHours(23, 59, 59, 999);
-
-                return txn >= start && txn <= end;
-            default:
-                return true;
-        }
-    };
+    const [itemsPerPage, setItemsPerPage] = useState(20);
 
     const tabMapping = {
         Online: "online",
@@ -65,55 +24,99 @@ const Payments = () => {
         Partial: "partial",
     };
 
+    // Pass pagination parameters to API
     const {
         data,
         isLoading,
         isFetching,
         isError,
-    } = useGetTransactionsOverviewQuery(tabMapping[activeTab]);
+    } = useGetTransactionsOverviewQuery({
+        tab: tabMapping[activeTab],  // This returns "online", "cod", or "partial" (string)
+        page: currentPage,
+        limit: itemsPerPage
+    });
 
     const transactions = data?.list?.transactions || [];
+    const pagination = data?.list?.pagination || {
+        page: currentPage,
+        per_page: itemsPerPage,
+        total: 0,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false
+    };
+
+    // Client-side filtering (search and date) on current page data
     const filteredTransactions = transactions.filter((txn) => {
         const search = searchTerm.toLowerCase();
 
         const matchesSearch =
             txn.customer?.toLowerCase().includes(search) ||
-            txn.orderId?.toLowerCase().includes(search) ||
             txn.shortOrderId?.toLowerCase().includes(search) ||
             txn.txnId?.toLowerCase().includes(search) ||
             txn.paymentDetails?.[0]?.id?.toLowerCase().includes(search);
 
-        const matchesDate = filterByDate(txn.dateTime);
+        const matchesDate = (() => {
+            if (!txn.dateTime) return true;
+            const txnDate = new Date(txn.dateTime);
+            const now = new Date();
+
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+            switch (dateFilter) {
+                case "Today":
+                    return txnDate >= startOfToday && txnDate < startOfTomorrow;
+                case "Yesterday":
+                    return txnDate >= startOfYesterday && txnDate < startOfToday;
+                case "This Month":
+                    return txnDate >= startOfMonth;
+                case "Last Month":
+                    return txnDate >= startOfLastMonth && txnDate <= endOfLastMonth;
+                case "Custom":
+                    if (!fromDate || !toDate) return true;
+                    const start = new Date(fromDate);
+                    const end = new Date(toDate);
+                    end.setHours(23, 59, 59, 999);
+                    return txnDate >= start && txnDate <= end;
+                default:
+                    return true;
+            }
+        })();
 
         return matchesSearch && matchesDate;
     });
 
-    const totalItems = filteredTransactions.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const totalItems = pagination.total;
+    const totalPages = pagination.total_pages;
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-
-    const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
-
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab, searchTerm, dateFilter, fromDate, toDate]);
 
     useEffect(() => {
         setSelectedTransactionIds([]);
-    }, [activeTab, searchTerm, dateFilter, fromDate, toDate, transactions.length]);
+    }, [activeTab, searchTerm, dateFilter, fromDate, toDate, currentPage]);
 
     const selectedFilteredCount = filteredTransactions.filter((txn) =>
-        selectedTransactionIds.includes(txn._id || txn.id)
+        selectedTransactionIds.includes(txn.id)
     ).length;
     const isAllSelected =
         filteredTransactions.length > 0 &&
         selectedFilteredCount === filteredTransactions.length;
+
     const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
 
-    useEffect(() => {
-        if (selectAllRef.current) {
-            selectAllRef.current.indeterminate = isSomeSelected;
-        }
-    }, [isSomeSelected]);
+    // useEffect(() => {
+    //     if (selectAllRef.current) {
+    //         selectAllRef.current.indeterminate = isSomeSelected;
+    //     }
+    // }, [isSomeSelected]);
 
     const toggleTransactionSelection = (id) => {
         setSelectedTransactionIds((prev) =>
@@ -123,15 +126,17 @@ const Payments = () => {
 
     const toggleSelectAll = (checked) => {
         if (checked) {
-            setSelectedTransactionIds(paginatedTransactions.map((txn) => txn._id || txn.id));
+            setSelectedTransactionIds(filteredTransactions.map((txn) => txn.id));
             return;
         }
         setSelectedTransactionIds([]);
     };
 
     const getRowsForExport = () => {
+        // For export, we need to fetch all data or use current filtered data
+        // This exports only current page data
         const selectedRows = filteredTransactions.filter((txn) =>
-            selectedTransactionIds.includes(txn._id || txn.id)
+            selectedTransactionIds.includes(txn.id)
         );
         const sourceRows = selectedRows.length > 0 ? selectedRows : filteredTransactions;
         if (!sourceRows.length) {
@@ -140,9 +145,9 @@ const Payments = () => {
         return sourceRows.map((txn) => ({
             Tab: activeTab,
             Customer: txn.customer || "-",
-            "Order ID": txn.orderId || txn.shortOrderId || "-",
+            "Order ID": txn.shortOrderId || "-",
             "Transaction ID": txn.txnId || txn.paymentDetails?.[0]?.id || "-",
-            "Payment Method": txn.paymentMethod || "-",
+            "Payment Method": txn.method || "-",
             Amount: txn.amount ?? "-",
             "Paid Online": txn.paidOnline ?? "-",
             "Paid Cash": txn.paidCash ?? "-",
@@ -265,6 +270,15 @@ const Payments = () => {
         setIsExportMenuOpen(false);
     };
 
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    const handleItemsPerPageChange = (e) => {
+        setItemsPerPage(Number(e.target.value));
+        setCurrentPage(1);
+    };
+
     const summary = data?.summary || {};
 
     const StatCardSkeleton = () => {
@@ -281,7 +295,6 @@ const Payments = () => {
         return (
             <div className="animate-pulse bg-gray-100 p-6 rounded-2xl">
                 <div className="h-5 bg-gray-300 rounded w-1/2 mb-4"></div>
-
                 <div className="space-y-3">
                     <div className="h-4 bg-gray-300 rounded w-full"></div>
                     <div className="h-4 bg-gray-300 rounded w-5/6"></div>
@@ -307,13 +320,6 @@ const Payments = () => {
             icon: <BadgeIndianRupee size={24} />,
             special: false
         },
-        // {
-        //     title: "Partial Payments",
-        //     number: summary?.partial || "0",
-        //     statement: "+ 12 % from last week",
-        //     icon: <BadgeIndianRupee size={24} />,
-        //     special: false
-        // },
         {
             title: "Total Revenue",
             number: summary?.totalRevenue || "0",
@@ -323,117 +329,60 @@ const Payments = () => {
         }
     ];
 
-    // const onlineTransaction = [
-    //     {
-    //         id: 1,
-    //         customerName: "John Doe",
-    //         date: "2026-02-05 10:30 AM",
-    //         orderId: "ORD - 1234",
-    //         transactionId: "TXN-123",
-    //         paymentMethod: "UPI",
-    //         amount: "1,250",
-    //         status: "Success"
-    //     },
-    // ];
-    // // Mock CashOnDelivery Transaction list
-    // const CODTransaction = [
-    //     {
-    //         id: 1,
-    //         customerName: "John Doe",
-    //         date: "2026-02-05 10:30 AM",
-    //         orderId: "ORD - 1234",
-    //         CODId: "COD-123",
-    //         deliveryBoy: "Rahul Sharma",
-    //         amount: "1,250",
-    //         status: "Completed"
-    //     },
-    // ];
-
-    // const partialPaymentTransactions = [
-    //     {
-    //         id: "PAR-9012",
-    //         customerName: "Anita Desai",
-    //         orderId: "ORD-1239",
-    //         deliveryBoy: "John Doe",
-    //         totalAmount: 3500,
-    //         currency: "₹",
-    //         status: "Fully Paid",
-    //         breakdown: {
-    //             advance: {
-    //                 label: "Advance Payment ( Partial )",
-    //                 amount: 3500,
-    //                 method: "UPI",
-    //                 date: "20/12/2025",
-    //                 time: "09:30 AM",
-    //                 statusText: "Paid At Order Placement"
-    //             },
-    //             remaining: {
-    //                 label: "Remaining Payment",
-    //                 amount: 3500,
-    //                 method: "Cash",
-    //                 date: "20/12/2025",
-    //                 time: "09:30 AM",
-    //                 statusText: "Paid At Delivery"
-    //             }
-    //         }
-    //     },
-
-    //     {
-    //         id: "PAR-9012",
-    //         customerName: "Anita Desai",
-    //         orderId: "ORD-1239",
-    //         deliveryBoy: "John Doe",
-    //         totalAmount: 3500,
-    //         currency: "₹",
-    //         status: "Fully Paid",
-    //         breakdown: {
-    //             advance: {
-    //                 label: "Advance Payment ( Partial )",
-    //                 amount: 3500,
-    //                 method: "UPI",
-    //                 date: "20/12/2025",
-    //                 time: "09:30 AM",
-    //                 statusText: "Paid At Order Placement"
-    //             },
-    //             remaining: {
-    //                 label: "Remaining Payment",
-    //                 amount: 3500, // Based on image total collection
-    //                 method: "Cash",
-    //                 date: "20/12/2025",
-    //                 time: "09:30 AM",
-    //                 statusText: "Paid At Delivery"
-    //             }
-    //         }
-    //     },
-    // ];
-
-    // NOTE: Code for pyment type toggle button
-
     const tabs = [
         { id: 'Online', label: 'Online Payments', icon: <CreditCard size={20} /> },
         { id: 'Cash', label: 'Cash On Delivery', icon: <Wallet size={20} /> },
         { id: 'Partial', label: 'Partial Payments', icon: <Blocks size={20} /> }
     ];
 
+    // Calculate display range
+    const startItem = (pagination.page - 1) * pagination.per_page + 1;
+    const endItem = Math.min(pagination.page * pagination.per_page, pagination.total);
+
+    // Render pagination buttons
+    const renderPaginationButtons = () => {
+        const maxButtons = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+        if (endPage - startPage + 1 < maxButtons) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        const pages = [];
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i);
+        }
+
+        return pages.map((page) => (
+            <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+                    ${currentPage === page
+                        ? "bg-[#00E5B0] text-white shadow-md"
+                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                    }`}
+            >
+                {page}
+            </button>
+        ));
+    };
+
     if (isLoading) {
         return (
             <div className="p-6">
-                {/* Skeleton Heading */}
                 <div className="animate-pulse mb-6">
                     <div className="h-6 bg-gray-300 rounded w-1/4 mb-2"></div>
                     <div className="h-4 bg-gray-300 rounded w-1/3"></div>
                 </div>
-
-                {/* Skeleton Stat Cards */}
                 <section className="mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {[...Array(4)].map((_, i) => (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {[...Array(3)].map((_, i) => (
                             <StatCardSkeleton key={i} />
                         ))}
                     </div>
                 </section>
-
-                {/* Skeleton Payment Cards */}
                 <section className="bg-white border-2 border-brand-soft rounded-[2.5rem] p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {[...Array(6)].map((_, i) => (
@@ -444,11 +393,16 @@ const Payments = () => {
             </div>
         );
     }
+
+    console.log("Active tab:", activeTab);
+    console.log("Mapped tab value:", tabMapping[activeTab]);
+    console.log("API params:", { tab: tabMapping[activeTab], page: currentPage, limit: itemsPerPage });
+
     if (isError) return <p>Error loading payments</p>;
 
     return (
         <div className='p-6'>
-            <section className="heading-and-btn-sec my-6 ">
+            <section className="heading-and-btn-sec my-2 ">
                 <h2>Payment</h2>
                 <p className='text-[#9F9F9F] text-[0.92rem]'>Manage Payments</p>
             </section>
@@ -469,19 +423,21 @@ const Payments = () => {
                 </div>
             </section>
 
-            {/* Payment filter button section*/}
-            <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2  md:w-fit w-full shadow-lg">
+            {/* Payment filter button section */}
+            <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2 md:w-fit w-full shadow-lg">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => {
+                            setActiveTab(tab.id);
+                            setCurrentPage(1);
+                        }}
                         className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300 first:ml-0 
                         ${activeTab === tab.id
                                 ? 'bg-[#00E5B0] text-white shadow-sm'
                                 : 'bg-white text-[#1E264F] hover:bg-opacity-90'
                             }`}
                     >
-                        {/* Icon inherits text color automatically */}
                         <span className={activeTab === tab.id ? 'text-white' : 'text-[#1E264F]'}>
                             {tab.icon}
                         </span>
@@ -489,6 +445,24 @@ const Payments = () => {
                     </button>
                 ))}
             </section>
+
+            {/* Items Per Page Selector */}
+            <div className="mb-4 flex justify-end">
+                <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Show:</label>
+                    <select
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
+                        className="border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                    <span className="text-sm text-gray-600">entries</span>
+                </div>
+            </div>
 
             <section className="bg-white border-2 border-brand-soft rounded-[2.5rem] p-6 shadow-sm overflow-hidden">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
@@ -517,9 +491,6 @@ const Payments = () => {
                             />
                             Select All
                         </label>
-                        {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-                            <SlidersHorizontal size={20} />
-                        </button> */}
                         <div className="flex items-center gap-3">
                             {/* Main Date Filter Dropdown */}
                             <div className="relative">
@@ -549,19 +520,15 @@ const Payments = () => {
                             {/* Custom Date Pickers */}
                             {dateFilter === "Custom" && (
                                 <>
-                                    {/* From Date */}
                                     <input
                                         type="date"
                                         value={fromDate}
-                                        max={toDate || undefined}   // cannot select after end date
+                                        max={toDate || undefined}
                                         onChange={(e) => {
                                             const selectedFrom = e.target.value;
-
-                                            // If from date is after current to date → reset toDate
                                             if (toDate && selectedFrom > toDate) {
                                                 setToDate("");
                                             }
-
                                             setFromDate(selectedFrom);
                                         }}
                                         className="border border-brand-soft px-3 py-2 rounded-xl"
@@ -569,19 +536,15 @@ const Payments = () => {
 
                                     <span className="text-gray-500">to</span>
 
-                                    {/* To Date */}
                                     <input
                                         type="date"
                                         value={toDate}
-                                        min={fromDate || undefined}  // cannot select before start date
+                                        min={fromDate || undefined}
                                         onChange={(e) => {
                                             const selectedTo = e.target.value;
-
-                                            // Extra safety check
                                             if (fromDate && selectedTo < fromDate) {
                                                 return;
                                             }
-
                                             setToDate(selectedTo);
                                         }}
                                         className="border border-brand-soft px-3 py-2 rounded-xl"
@@ -622,60 +585,57 @@ const Payments = () => {
                     </div>
                 </div>
 
-                {
-                    activeTab === "Online" && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 w-full whitespace-break-spaces">
-                            {isFetching
-                                ? [...Array(6)].map((_, i) => (
-                                    <PaymentCardSkeleton key={i} />
-                                ))
-                                : paginatedTransactions.map((txn) => (
-                                    <div key={txn._id || txn.id} className="relative">
-                                        <input
-                                            type="checkbox"
-                                            className="absolute top-3 left-3 z-10"
-                                            checked={selectedTransactionIds.includes(txn._id || txn.id)}
-                                            onChange={() => toggleTransactionSelection(txn._id || txn.id)}
-                                        />
-                                        <OnlinePaymentCard
-                                            customerName={txn.customer}
-                                            dateTime={txn.dateTime}
-                                            orderId={txn.orderId}
-                                            txnId={txn.txnId}
-                                            paymentMethod={txn.paymentMethod}
-                                            amount={txn.amount}
-                                            status={txn.status}
-                                        />
-                                    </div>
-                                ))
-                            }
-                        </div>
-                    )
-                }
+                {/* Online Payments */}
+                {activeTab === "Online" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 w-full whitespace-break-spaces">
+                        {isFetching
+                            ? [...Array(6)].map((_, i) => (
+                                <PaymentCardSkeleton key={i} />
+                            ))
+                            : filteredTransactions.map((txn) => (
+                                <div key={txn.id} className="relative">
+                                    <input
+                                        type="checkbox"
+                                        className="absolute top-3 left-3 z-10"
+                                        checked={selectedTransactionIds.includes(txn.id)}
+                                        onChange={() => toggleTransactionSelection(txn.id)}
+                                    />
+                                    <OnlinePaymentCard
+                                        customerName={txn.customer}
+                                        dateTime={txn.dateTime}
+                                        orderId={txn.shortOrderId}
+                                        txnId={txn.txnId}
+                                        paymentMethod={txn.method}
+                                        amount={txn.amount}
+                                        status={txn.status}
+                                    />
+                                </div>
+                            ))
+                        }
+                    </div>
+                )}
 
-                {/* --------------------------- */}
-
-                {/* CashOnDelivery Payment Cards */}
+                {/* Cash On Delivery Payments */}
                 {activeTab === "Cash" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 whitespace-break-spaces">
                         {isFetching
                             ? [...Array(6)].map((_, i) => (
                                 <PaymentCardSkeleton key={i} />
                             ))
-                            : paginatedTransactions.map((txn) => (
-                                <div key={txn._id || txn.id} className="relative">
+                            : filteredTransactions.map((txn) => (
+                                <div key={txn.id} className="relative">
                                     <input
                                         type="checkbox"
                                         className="absolute top-3 left-3 z-10"
-                                        checked={selectedTransactionIds.includes(txn._id || txn.id)}
-                                        onChange={() => toggleTransactionSelection(txn._id || txn.id)}
+                                        checked={selectedTransactionIds.includes(txn.id)}
+                                        onChange={() => toggleTransactionSelection(txn.id)}
                                     />
                                     <CashOnDeliveryCard
                                         transaction={{
                                             id: txn.id,
                                             customer: txn.customer,
                                             date: new Date(txn.dateTime).toLocaleString(),
-                                            status: txn.status.replaceAll("_", " "),
+                                            status: txn.status?.replaceAll("_", " "),
                                             orderId: txn.shortOrderId,
                                             CODId: txn.paymentDetails?.[0]?.id,
                                             deliveryBoy: txn.deliveryBoy?.name || "Not Assigned",
@@ -688,15 +648,14 @@ const Payments = () => {
                     </div>
                 )}
 
-                {/* --------------------------- */}
-
+                {/* Partial Payments */}
                 {activeTab === "Partial" && (
                     <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-1 gap-6">
                         {isFetching
                             ? [...Array(6)].map((_, i) => (
                                 <PaymentCardSkeleton key={i} />
                             ))
-                            : paginatedTransactions.map((txn) => {
+                            : filteredTransactions.map((txn) => {
                                 const formattedTransaction = {
                                     id: txn.id,
                                     customerName: txn.customer,
@@ -704,7 +663,7 @@ const Payments = () => {
                                     deliveryBoy: txn.deliveryBoy,
                                     totalAmount: txn.amount,
                                     currency: "₹",
-                                    status: txn.status.replaceAll("_", " "),
+                                    status: txn.status?.replaceAll("_", " "),
                                     breakdown: {
                                         advance: {
                                             label: "Advance Payment (Online)",
@@ -726,12 +685,12 @@ const Payments = () => {
                                 };
 
                                 return (
-                                    <div key={txn._id || txn.id} className="relative">
+                                    <div key={txn.id} className="relative">
                                         <input
                                             type="checkbox"
                                             className="absolute top-3 left-3 z-10"
-                                            checked={selectedTransactionIds.includes(txn._id || txn.id)}
-                                            onChange={() => toggleTransactionSelection(txn._id || txn.id)}
+                                            checked={selectedTransactionIds.includes(txn.id)}
+                                            onChange={() => toggleTransactionSelection(txn.id)}
                                         />
                                         <PartialPaymentCard
                                             transaction={formattedTransaction}
@@ -742,42 +701,44 @@ const Payments = () => {
                         }
                     </div>
                 )}
-            </section >
+            </section>
 
-            <div className="flex justify-between items-center mt-6">
-                <p className="text-sm text-gray-500">
-                    Showing {startIndex + 1} - {Math.min(endIndex, totalItems)} of {totalItems}
-                </p>
+            {/* Pagination Controls */}
+            {pagination.total > 0 && (
+                <div className="flex justify-between items-center mt-6">
+                    <p className="text-sm text-gray-600">
+                        Showing {startItem} to {endItem} of {pagination.total} transactions
+                    </p>
 
-                <div className="flex gap-2">
-                    <button
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage((prev) => prev - 1)}
-                        className="px-3 py-1 border rounded disabled:opacity-50"
-                    >
-                        Prev
-                    </button>
-
-                    {[...Array(totalPages)].map((_, i) => (
+                    <div className="flex gap-2 items-center">
                         <button
-                            key={i}
-                            onClick={() => setCurrentPage(i + 1)}
-                            className={`px-3 py-1 border rounded ${currentPage === i + 1 ? "bg-brand-cyan text-white" : ""
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={!pagination.has_prev_page}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                                ${!pagination.has_prev_page
+                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
                                 }`}
                         >
-                            {i + 1}
+                            Prev
                         </button>
-                    ))}
 
-                    <button
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage((prev) => prev + 1)}
-                        className="px-3 py-1 border rounded disabled:opacity-50"
-                    >
-                        Next
-                    </button>
+                        {renderPaginationButtons()}
+
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={!pagination.has_next_page}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                                ${!pagination.has_next_page
+                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                                }`}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 }

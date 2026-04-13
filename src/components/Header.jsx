@@ -24,20 +24,20 @@ const Header = () => {
 
     const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
-   const handleLogout = async () => {
-    try {
-        await logout().unwrap();
+    const handleLogout = async () => {
+        try {
+            await logout().unwrap();
 
-        // ✅ Remove correct token key
-        localStorage.removeItem("Admin_token");
-        localStorage.removeItem("admin");
+            // ✅ Remove correct token key
+            localStorage.removeItem("Admin_token");
+            localStorage.removeItem("admin");
 
-        navigate("/", { replace: true });
+            navigate("/", { replace: true });
 
-    } catch (error) {
-        console.error("Logout failed:", error);
-    }
-};
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    };
     const [showDropdown, setShowDropdown] = useState(false);
 
     const dropdownRef = useRef(null);
@@ -67,6 +67,13 @@ const Header = () => {
         { name: 'Offers', path: '/offers', icon: <Tag size={18} /> },
         { name: 'Wallet', path: '/wallet', icon: <Wallet size={18} /> },
     ];
+
+    const isActiveRoute = (path) => {
+        if (path === "/") {
+            return location.pathname === "/";
+        }
+        return location.pathname.startsWith(path);
+    };
 
     return (
         <header className="w-full bg-white shadow-sm">
@@ -100,13 +107,13 @@ const Header = () => {
                             </div>
                             <div className="hidden lg:flex items-center justify-between gap-3">
                                 <div>
-                                <h4 className="text-sm font-bold text-brand-navy leading-none">
-                                    Admin
-                                </h4>
+                                    <h4 className="text-sm font-bold text-brand-navy leading-none">
+                                        Admin
+                                    </h4>
 
-                                <p className="text-[11px] text-brand-gray mt-1 tracking-wider">
-                                    {admin?.email}
-                                </p>
+                                    <p className="text-[11px] text-brand-gray mt-1 tracking-wider">
+                                        {admin?.email}
+                                    </p>
                                 </div>
                                 <RiArrowDropDownLine className="text-2xl text-brand-navy" />
                             </div>
@@ -136,17 +143,18 @@ const Header = () => {
                             <li key={item.path}>
                                 <NavLink
                                     to={item.path}
-                                    className={({ isActive }) => `
-                    flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 text-xs
-                    ${isActive
-                                            ? 'bg-brand-navy text-white  '
-                                            : 'bg-white text-brand-navy hover:bg-slate-50 border border-transparent'}
-                  `}
+                                    className={`
+  flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 text-xs
+  ${isActiveRoute(item.path)
+                                            ? 'bg-brand-navy text-white'
+                                            : 'bg-white text-brand-navy hover:bg-slate-50 border border-transparent'
+                                        }
+`}
                                 >
                                     {({ isActive }) => (
                                         <>
                                             <span
-                                                className={`text-lg transition-colors ${isActive ? "text-[#00E9BE]" : "text-current"
+                                                className={`text-lg ${isActiveRoute(item.path) ? "text-[#00E9BE]" : "text-current"
                                                     }`}
                                             >
                                                 {item.icon}

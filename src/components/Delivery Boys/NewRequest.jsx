@@ -20,13 +20,22 @@ export default function UsersTable() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
 
+  // Pagination state for server-side pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   let status = "pending";
 
   if (location.pathname.includes("approved")) status = "approved";
   if (location.pathname.includes("rejected")) status = "rejected";
 
-  const { data, isLoading, isError } =
-    useGetAllDeliveryBoysQuery({ status });
+  // Pass pagination parameters to API
+  const { data, isLoading, isError, refetch } = useGetAllDeliveryBoysQuery({
+    status,
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchTerm || undefined
+  });
 
   const [updateDeliveryStatus, { isLoading: statusLoading }] =
     useUpdateDeliveryStatusMutation();
@@ -39,43 +48,42 @@ export default function UsersTable() {
       }).unwrap();
 
       console.log("Status updated successfully");
+      refetch(); // Refresh the current page data
     } catch (error) {
       console.error("Failed to update status", error);
     }
   };
 
   const users = data?.data || [];
+  const pagination = data?.pagination || {
+    current_page: currentPage,
+    per_page: itemsPerPage,
+    total_items: 0,
+    total_pages: 0,
+    has_next_page: false,
+    has_prev_page: false
+  };
+
+  // Get unique vehicle types from the current page data
   const uniqueVehicleTypes = [
     "All",
     ...new Set(users.map((u) => u.VehicleType).filter(Boolean)),
   ];
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 6;
+  // Client-side vehicle filtering (since vehicle filter might not be supported by backend)
+  const vehicleFilteredUsers = vehicleFilter === "All"
+    ? users
+    : users.filter((u) => u.VehicleType === vehicleFilter);
 
-  // Pagination Logic
-  const vehicleFilteredUsers =
-    vehicleFilter === "All"
-      ? users
-      : users.filter((u) => u.VehicleType === vehicleFilter);
-  const filteredUsers = vehicleFilteredUsers.filter((u) =>
-    JSON.stringify(u || {}).toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = vehicleFilteredUsers;
+  const totalPages = vehicleFilter === "All"
+    ? pagination.total_pages
+    : Math.ceil(filteredUsers.length / itemsPerPage);
 
-  const totalPages = Math.ceil(filteredUsers.length / ordersPerPage);
-
-  const indexOfLastOrder = currentPage * ordersPerPage;
-  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-
-  const currentOrders = filteredUsers.slice(
-    indexOfFirstOrder,
-    indexOfLastOrder
-  );
-
-  // Reset to page 1 when orders change
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [users.length, vehicleFilter, searchTerm]);
+  }, [status, vehicleFilter, searchTerm]);
 
   useEffect(() => {
     setSelectedUserIds([]);
@@ -236,6 +244,10 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
+  // Calculate display range for current page
+  const startItem = (pagination.current_page - 1) * pagination.per_page + 1;
+  const endItem = Math.min(pagination.current_page * pagination.per_page, pagination.total_items);
+
   return (
     <>
       {/* Search & Actions */}
@@ -262,9 +274,6 @@ export default function UsersTable() {
             />
             Select All
           </label>
-          {/* <button className="bg-brand-cyan px-3 py-3 rounded-xl">
-            <SlidersHorizontal size={20} />
-          </button> */}
 
           <select
             value={vehicleFilter}
@@ -312,6 +321,7 @@ export default function UsersTable() {
             )}
           </div>
         </div>
+
       </div>
 
       {/* Table */}
@@ -337,7 +347,7 @@ export default function UsersTable() {
           </thead>
 
           <tbody>
-            {/* ✅ Loading Skeleton */}
+            {/* Loading Skeleton */}
             {isLoading &&
               [...Array(5)].map((_, i) => (
                 <tr key={i} className="border-t animate-pulse">
@@ -351,18 +361,18 @@ export default function UsersTable() {
                 </tr>
               ))}
 
-            {/* ❌ Error */}
+            {/* Error */}
             {isError && (
               <tr>
                 <td colSpan="7" className="text-center p-6 text-red-500 font-semibold">
-                  Failed to load delivery boys.
+                  No data available.
                 </td>
               </tr>
             )}
 
-            {/* ✅ Data */}
+            {/* Data */}
             {!isLoading && !isError &&
-              currentOrders.map((u) => (
+              filteredUsers.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
                   <td className="p-3">
                     <input
@@ -405,8 +415,7 @@ export default function UsersTable() {
 
                   <td className="p-3 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-
-                      {/* ✅ Show Approve/Reject ONLY for pending */}
+                      {/* Show Approve/Reject ONLY for pending */}
                       {status === "pending" && (
                         <>
                           <button
@@ -435,30 +444,34 @@ export default function UsersTable() {
                   </td>
                 </tr>
               ))}
+
+            {/* No data message */}
+            {!isLoading && !isError && filteredUsers.length === 0 && (
+              <tr>
+                <td colSpan="7" className="text-center p-6 text-gray-500">
+                  No delivery boys found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
 
-
         {/* Pagination */}
-        {filteredUsers.length > ordersPerPage && (
+        {pagination.total_items > 0 && (
           <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
-
             {/* Showing Info */}
             <p className="text-sm text-gray-600">
-              Showing {indexOfFirstOrder + 1} to{" "}
-              {Math.min(indexOfLastOrder, filteredUsers.length)} of{" "}
-              {filteredUsers.length} orders
+              Showing {startItem} to {endItem} of {pagination.total_items} delivery boys
             </p>
 
             {/* Buttons */}
             <div className="flex items-center gap-2">
-
               {/* Prev */}
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-          ${currentPage === 1
+                  ${currentPage === 1
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-[#1E264F] text-white hover:bg-opacity-90"
                   }`}
@@ -466,32 +479,42 @@ export default function UsersTable() {
                 Prev
               </button>
 
-              {/* Page Numbers */}
-              {[...Array(totalPages)].map((_, index) => {
-                const page = index + 1;
-                return (
+              {/* Page Numbers - Show limited pages for better UX */}
+              {(() => {
+                const totalPagesToShow = Math.min(pagination.total_pages, 5);
+                let startPage = Math.max(1, currentPage - Math.floor(totalPagesToShow / 2));
+                let endPage = Math.min(pagination.total_pages, startPage + totalPagesToShow - 1);
+
+                if (endPage - startPage + 1 < totalPagesToShow) {
+                  startPage = Math.max(1, endPage - totalPagesToShow + 1);
+                }
+
+                const pages = [];
+                for (let i = startPage; i <= endPage; i++) {
+                  pages.push(i);
+                }
+
+                return pages.map((page) => (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
                     className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
-              ${currentPage === page
+                      ${currentPage === page
                         ? "bg-[#00E5B0] text-white shadow-md"
                         : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
                       }`}
                   >
                     {page}
                   </button>
-                );
-              })}
+                ));
+              })()}
 
               {/* Next */}
               <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.total_pages))}
+                disabled={currentPage === pagination.total_pages}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-          ${currentPage === totalPages
+                  ${currentPage === pagination.total_pages
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-[#1E264F] text-white hover:bg-opacity-90"
                   }`}

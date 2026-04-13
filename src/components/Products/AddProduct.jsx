@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 
+
 /* -------------------- Reusable Fields -------------------- */
 
 const InputField = ({ label, error, ...props }) => (
@@ -70,6 +71,93 @@ export default function AddProduct() {
   const brands = brandData?.data || [];
   const categories = categoryData?.data || [];
 
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+
+  const handleRemoveBg = async (type = "primary", index = null) => {
+    let file;
+
+    if (type === "primary") {
+      file = watch("primaryImages")?.[0];
+    } else if (type === "variant") {
+      file = variants[index]?.imageFiles?.[0];
+    }
+
+    if (!file) {
+      return toast.error("Please upload image first");
+    }
+
+    try {
+      setIsRemovingBg(true);
+
+      const formData = new FormData();
+      formData.append("image_file", file);
+
+      const res = await fetch(import.meta.env.VITE_REMOVE_BG_API, {
+        method: "POST",
+        headers: {
+          "X-Api-Key": import.meta.env.VITE_REMOVE_BG_API_KEY,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error(errText);
+        throw new Error("Remove.bg failed");
+      }
+
+      const blob = await res.blob();
+      const newFile = new File([blob], "no-bg.png", { type: "image/png" });
+
+      if (type === "primary") {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(newFile);
+        const newFileList = dataTransfer.files;
+
+        // Update the form value
+        setValue("primaryImages", newFileList, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+
+        // ✅ IMPORTANT: Sync the hidden file input with the new FileList
+        // This prevents react-hook-form from resetting the field to empty on re-render
+        const fileInput = document.getElementById("primaryImage");
+        if (fileInput) {
+          fileInput.files = newFileList;
+        }
+
+        // Update preview
+        setPreview(URL.createObjectURL(newFile));
+
+        // ✅ Manually trigger validation
+        await trigger("primaryImages");
+
+      } else {
+        const updated = [...variants];
+        updated[index].imageFiles = [newFile];
+        updated[index].previewImages = [URL.createObjectURL(newFile)];
+
+        // ✅ Sync variant DOM input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(newFile);
+        const fileInput = document.getElementById(`variantImages-${index}`);
+        if (fileInput) {
+          fileInput.files = dataTransfer.files;
+        }
+
+        setVariants(updated);
+      }
+
+      toast.success("Background Removed ✅");
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove background ❌");
+    } finally {
+      setIsRemovingBg(false);
+    }
+  };
   const [preview, setPreview] = useState(null);
   const navigate = useNavigate();
 
@@ -77,6 +165,7 @@ export default function AddProduct() {
   const {
     register,
     handleSubmit,
+    trigger,
     watch,
     setValue,
     formState: { errors },
@@ -187,8 +276,8 @@ export default function AddProduct() {
     // if (!formData.subcategory)
     //   return toast.error("Subcategory is required");
 
-    if (!formData.primaryImages || !formData.primaryImages[0])
-      return toast.error("Primary Image is required");
+    // if (!formData.primaryImages?.length)
+    //   return toast.error("Primary Image is required");
 
     if (!variants.length)
       return toast.error("At least one variant required");
@@ -212,6 +301,10 @@ export default function AddProduct() {
 
       if (!v.stock)
         return toast.error(`Variant ${i + 1}: Stock required`);
+
+      if (!v.imageFiles || v.imageFiles.length === 0) {
+        return toast.error(`Variant ${i + 1}: Image is required`);
+      }
 
       // if (!v.sku)
       //   return toast.error(`Variant ${i + 1}: SKU required`);
@@ -358,17 +451,21 @@ export default function AddProduct() {
             />
 
             {/* Main Image */}
+            {/* Main Image */}
             <div>
               <label className="text-xs font-medium text-gray-600">
-                Primary Image
+                Primary Image <span className="text-red-500">*</span>
               </label>
 
               {/* Upload Box */}
               <label
                 htmlFor="primaryImage"
-                className="mt-1 flex flex-col items-center justify-center 
-    border-2 border-dashed border-gray-300 rounded-lg 
-    h-28 cursor-pointer hover:border-[#00E5B0] transition"
+                className={`mt-1 flex flex-col items-center justify-center 
+      border-2 border-dashed rounded-lg h-28 cursor-pointer transition
+      ${errors.primaryImages
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-gray-300 hover:border-[#00E5B0]'
+                  }`}
               >
                 {preview ? (
                   <img
@@ -378,7 +475,6 @@ export default function AddProduct() {
                   />
                 ) : (
                   <>
-                    {/* Upload Icon */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-8 w-8 text-gray-400"
@@ -408,6 +504,12 @@ export default function AddProduct() {
                 className="hidden"
                 {...register("primaryImages", {
                   required: "Primary Image is required",
+                  validate: (files) => {
+                    if (!files || files.length === 0) {
+                      return "Primary Image is required";
+                    }
+                    return true;
+                  },
                   onChange: (e) => {
                     const file = e.target.files[0];
                     if (file) {
@@ -422,7 +524,20 @@ export default function AddProduct() {
                   {errors.primaryImages.message}
                 </p>
               )}
+
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => handleRemoveBg("primary")}
+                  disabled={isRemovingBg}
+                  className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {isRemovingBg ? "Processing..." : "Remove Background"}
+                </button>
+              </div>
             </div>
+
+
           </div>
 
           {/* Textareas */}
@@ -563,7 +678,7 @@ export default function AddProduct() {
                 {/* Variant Images */}
                 <div>
                   <label className="text-xs font-medium text-gray-600">
-                    Variant Images (Preview only - URLs needed for API)
+                    Variant Images
                   </label>
 
                   <div className="mt-2">
@@ -604,9 +719,18 @@ export default function AddProduct() {
                         </div>
                       )}
                     </label>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Note: Images are for preview only. API expects image URLs.
-                    </p>
+
+                  </div>
+
+                  <div className="flex gap-2 mt-2 w-96">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveBg("variant", index)}
+                      disabled={isRemovingBg}
+                      className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {isRemovingBg ? "Processing..." : "Remove Background"}
+                    </button>
                   </div>
                 </div>
 
@@ -645,3 +769,5 @@ export default function AddProduct() {
     </div>
   );
 }
+
+

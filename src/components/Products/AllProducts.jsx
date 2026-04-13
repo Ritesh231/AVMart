@@ -72,14 +72,14 @@ const ProductGrid = () => {
   const isAllSelected =
     filteredProducts.length > 0 &&
     selectedFilteredCount === filteredProducts.length;
-  const isSomeSelected = selectedFilteredCount > 0 && !isAllSelected;
+  const isSomeSelected =
+    selectedFilteredCount > 1 && selectedFilteredCount < filteredProducts.length;
 
   useEffect(() => {
     if (selectAllRef.current) {
       selectAllRef.current.indeterminate = isSomeSelected;
     }
   }, [isSomeSelected]);
-
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -93,8 +93,6 @@ const ProductGrid = () => {
       toast.error("Error to delete Product", err);
     }
   }
-
-
 
   const ProductShimmer = () => {
     return (
