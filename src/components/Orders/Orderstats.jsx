@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { IoCartOutline } from "react-icons/io5";
 import StatCard from "../StatCard";
 import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
@@ -5,7 +6,16 @@ import StatCardSkeleton from "../statcardskeleton";
 
 
 export default function UserStats() {
-  const { data, isLoading, isError } = useGetOrdersByStatusQuery("Pending");
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data, isLoading, isError, } = useGetOrdersByStatusQuery({
+    status: "Pending",
+    page: currentPage,
+    limit: 20,
+  },
+    {
+      refetchOnMountOrArgChange: false,
+    }
+  );
   const count = data?.topStats || {};
 
   const stats = [

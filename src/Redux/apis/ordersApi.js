@@ -30,14 +30,15 @@ export const Orderapi = baseApi.injectEndpoints({
     }),
 
     getOrderDetailsById: builder.mutation({
-      query: ({ id, page, per_page }) => ({
+      query: ({ id, page, per_page, filter }) => ({
         url: `/api/v1/profile/getUserDetail/${id}`,
+        method: "GET",
         params: {
           page,
           per_page,
+          filter,
         },
       }),
-      providesTags: ["Orders"],
     }),
 
     assignOrderStatus: builder.mutation({

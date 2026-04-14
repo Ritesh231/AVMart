@@ -66,6 +66,7 @@ const Header = () => {
         { name: 'Queries', path: '/queries', icon: <MessageSquare size={18} /> },
         { name: 'Offers', path: '/offers', icon: <Tag size={18} /> },
         { name: 'Wallet', path: '/wallet', icon: <Wallet size={18} /> },
+        { name: 'Suggestions', path: '/suggestions', icon: <MessageSquare size={18} /> },
     ];
 
     const isActiveRoute = (path) => {

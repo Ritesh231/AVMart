@@ -25,18 +25,24 @@ const OrderDetails = () => {
   const [page, setPage] = React.useState(1);
   const perPage = 10;
 
-  const [getOrderDetails, { data, isLoading }] =
-    useGetOrderDetailsByIdMutation();
+  const [activeTab, setActiveTab] = React.useState("ongoing");
 
   useEffect(() => {
     if (id) {
-      getOrderDetails({ id, page, per_page: perPage });
+      getOrderDetails({
+        id,
+        page,
+        per_page: perPage,
+        filter: activeTab,
+      });
     }
-  }, [id, page]);
+  }, [id, page, activeTab]);
+
+  const [getOrderDetails, { data, isLoading }] =
+    useGetOrderDetailsByIdMutation();
 
   const orders = data?.data?.recentOrders || [];
   const pagination = data?.data?.meta?.pagination;
-
   const statsData = data?.data?.stats || {};
 
   const stats = [
@@ -215,7 +221,6 @@ const OrderDetails = () => {
     </div>
   );
 
-  const [activeTab, setActiveTab] = React.useState("ongoing");
 
   const OrderDetailsSkeleton = () => (
     <div className="min-h-screen bg-gray-50 p-6 animate-pulse">
@@ -411,7 +416,6 @@ const OrderDetails = () => {
                 </span>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -443,8 +447,8 @@ const OrderDetails = () => {
 
           {/* Ongoing Orders */}
           {activeTab === "ongoing" && (
-            ongoingOrders.length > 0 ? (
-              ongoingOrders.map((order) => (
+            orders.length > 0 ? (
+              orders.map((order) => (
                 <OrderCard key={order._id} order={order} />
               ))
             ) : (
@@ -452,10 +456,9 @@ const OrderDetails = () => {
             )
           )}
 
-          {/* Completed Orders */}
           {activeTab === "completed" && (
-            completedOrders.length > 0 ? (
-              completedOrders.map((order) => (
+            orders.length > 0 ? (
+              orders.map((order) => (
                 <OrderCard key={order._id} order={order} />
               ))
             ) : (

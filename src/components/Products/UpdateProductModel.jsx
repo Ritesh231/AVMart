@@ -4,6 +4,7 @@ import {
   useUpdateProductMutation, useGetallSubcategoriesQuery, useGetallBrandsQuery,
   useGetallcategoriesQuery,
 } from "../../Redux/apis/productsApi";
+import { IoCloudUploadSharp } from "react-icons/io5";
 
 export default function EditProductModal({
   isOpen,
@@ -14,6 +15,7 @@ export default function EditProductModal({
   const { data: subcategoryData } = useGetallSubcategoriesQuery();
   const { data: brandData } = useGetallBrandsQuery();
   const { data: categoryData } = useGetallcategoriesQuery();
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
 
   const subcategories = subcategoryData?.data || [];
   const brands = brandData?.data || [];
@@ -42,6 +44,105 @@ export default function EditProductModal({
 
   const [previewImage, setPreviewImage] = useState(null);
 
+  const removeExistingImage = (variantIndex, imgIndex) => {
+    const updatedVariants = [...formData.variants];
+
+    updatedVariants[variantIndex].imageUrls =
+      updatedVariants[variantIndex].imageUrls.filter((_, i) => i !== imgIndex);
+
+    setFormData({ ...formData, variants: updatedVariants });
+  };
+
+  const removeNewImage = (variantIndex, imgIndex) => {
+    const updatedVariants = [...formData.variants];
+
+    updatedVariants[variantIndex].imageFiles =
+      updatedVariants[variantIndex].imageFiles.filter((_, i) => i !== imgIndex);
+
+    setFormData({ ...formData, variants: updatedVariants });
+  };
+
+  const handleRemoveBg = async (type = "primary", index = null) => {
+    let file;
+
+    if (type === "primary") {
+      if (formData.primaryImage) {
+        file = formData.primaryImage;
+      } else if (previewImage) {
+        const res = await fetch(previewImage);
+        const blob = await res.blob();
+        file = new File([blob], "primary.png", { type: blob.type });
+      }
+    }
+
+    // ✅ ADD THIS BLOCK FOR VARIANT
+    else if (type === "variant") {
+      const variant = formData.variants[index];
+
+      // ✅ New uploaded file
+      if (variant?.imageFiles?.length > 0) {
+        file = variant.imageFiles[0];
+      }
+
+      // ✅ Existing image URL → convert to file
+      else if (variant?.imageUrls?.length > 0) {
+        const res = await fetch(variant.imageUrls[0]);
+        const blob = await res.blob();
+        file = new File([blob], "variant.png", { type: blob.type });
+      }
+    }
+
+    if (!file) {
+      return toast.error("Upload image first");
+    }
+
+    try {
+      setIsRemovingBg(true);
+
+      const fd = new FormData();
+      fd.append("image_file", file);
+
+      const res = await fetch(import.meta.env.VITE_REMOVE_BG_API, {
+        method: "POST",
+        headers: {
+          "X-Api-Key": import.meta.env.VITE_REMOVE_BG_API_KEY,
+        },
+        body: fd,
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        console.error(err);
+        throw new Error("Remove BG failed");
+      }
+
+      const blob = await res.blob();
+      const newFile = new File([blob], "no-bg.png", {
+        type: "image/png",
+      });
+
+      // ✅ UPDATE VARIANT IMAGE PROPERLY
+      if (type === "variant") {
+        const updated = [...formData.variants];
+
+        updated[index].imageFiles = [newFile]; // replace with new bg removed file
+        updated[index].imageUrls = []; // optional: clear old URL
+
+        setFormData({
+          ...formData,
+          variants: updated,
+        });
+      }
+
+      toast.success("Background Removed ✅");
+    } catch (err) {
+      console.error(err);
+      toast.error("Remove BG Failed ❌");
+    } finally {
+      setIsRemovingBg(false);
+    }
+  };
+
   useEffect(() => {
     if (productData) {
       setFormData({
@@ -66,6 +167,8 @@ export default function EditProductModal({
           ...v,
           discountType: v.discountType || "percentage",
           discountValue: v.discountValue ?? 0,
+          imageUrls: v.images || [],
+          imageFiles: [],
           // gstRate: v.gstRate ?? 18,
         })),
       });
@@ -98,10 +201,13 @@ export default function EditProductModal({
   };
 
   // Variant image upload
-  const handleVariantImageChange = (index, file) => {
+  const handleVariantImageChange = (index, files) => {
     const updatedVariants = [...formData.variants];
-    updatedVariants[index].image = file;
-    updatedVariants[index].preview = URL.createObjectURL(file);
+
+    updatedVariants[index].imageFiles = [
+      ...(updatedVariants[index].imageFiles || []),
+      ...Array.from(files),
+    ];
 
     setFormData({ ...formData, variants: updatedVariants });
   };
@@ -123,52 +229,61 @@ export default function EditProductModal({
 
   const handleSubmit = async () => {
     try {
-      const data = new FormData();
-      // Basic Fields
-      data.append("productName", formData.productName);
-      data.append("subtext", formData.subtext);
-      data.append("description", formData.description);
-      data.append("keyFeatures", formData.keyFeatures); // send as string
-      data.append("wholesaleAdvantage", formData.wholesaleAdvantage);
-      data.append("brand", formData.brand);
-      data.append("category", formData.category);
-      data.append("subcategory", formData.subcategory);
-      data.append("status", formData.status);
-      data.append("slug", formData.slug);
+      const submitData = new FormData();
 
-      // Primary Image (plural name!)
+      // Basic fields
+      submitData.append("productName", formData.productName);
+      submitData.append("subtext", formData.subtext || "");
+      submitData.append("description", formData.description || "");
+      submitData.append("keyFeatures", formData.keyFeatures || "");
+      submitData.append("wholesaleAdvantage", formData.wholesaleAdvantage || "");
+      submitData.append("brand", formData.brand);
+      submitData.append("category", formData.category);
+      submitData.append("subcategory", formData.subcategory || "");
+      submitData.append("status", formData.status);
+      submitData.append("slug", formData.slug);
+
+      // Primary Image
       if (formData.primaryImage instanceof File) {
-        data.append("primaryImages", formData.primaryImage);
+        submitData.append("primaryImages", formData.primaryImage);
       }
 
-      // Variants
-      const cleanedVariants = formData.variants.map((v) => ({
+      // ✅ Format variants (KEEP EXISTING URLS)
+      const formattedVariants = formData.variants.map((v) => ({
+        _id: v._id,
         quantityValue: Number(v.quantityValue),
         quantityUnit: v.quantityUnit,
         originalPrice: Number(v.originalPrice),
-        discountType: v.discountType || "percent",
+        discountType: v.discountType || null,
         discountValue: Number(v.discountValue || 0),
-        // gstRate: Number(v.gstRate || 18),
         stock: Number(v.stock),
-        // sku: v.sku,
-        images: v.images || [],
+        images: v.imageUrls || [], // ✅ IMPORTANT
       }));
 
-      data.append("variants", JSON.stringify(cleanedVariants));
+      submitData.append("variants", JSON.stringify(formattedVariants));
+
+      // ✅ Upload new files separately
+      formData.variants.forEach((v, index) => {
+        if (v.imageFiles?.length > 0) {
+          v.imageFiles.forEach((file) => {
+            submitData.append(`variantImage_${index}`, file);
+          });
+        }
+      });
 
       await updateProduct({
         id: productData._id,
-        body: data,
+        body: submitData,
       }).unwrap();
 
-      toast.success("Product Updated Successfully");
+      toast.success("Product Updated Successfully ✅");
       onClose();
+
     } catch (err) {
-      toast.error(err.message || "Update Failed");
+      console.error(err);
+      toast.error(err?.data?.message || "Update Failed ❌");
     }
   };
-
-
 
   if (!isOpen) return null;
 
@@ -280,6 +395,17 @@ export default function EditProductModal({
               className="absolute inset-0 opacity-0 cursor-pointer"
             />
           </div>
+
+          <div className="flex gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => handleRemoveBg("primary")}
+              disabled={isRemovingBg}
+              className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-50"
+            >
+              {isRemovingBg ? "Processing..." : "Remove Background"}
+            </button>
+          </div>
         </div>
 
         {/* Variants Section */}
@@ -349,6 +475,7 @@ export default function EditProductModal({
                         }`} // Add padding-right for % sign
                     />
 
+
                     {/* % sign inside input */}
                     {variant.discountType === "percentage" && (
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
@@ -368,6 +495,80 @@ export default function EditProductModal({
                     <option value="percentage">Percentage</option>
                     <option value="flat">Flat</option>
                   </select>
+                </div>
+
+
+
+
+                <div className="mt-3">
+                  <label className="text-sm font-medium">Variant Images</label>
+
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {/* Existing Images */}
+                    {variant.imageUrls?.map((img, i) => (
+                      <div key={i} className="relative">
+                        <img
+                          src={img}
+                          alt="variant"
+                          className="w-16 h-16 object-cover rounded border"
+                        />
+
+                        {/* ❌ Remove Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(index, i)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* New Uploaded Images */}
+                    {variant.imageFiles?.map((file, i) => (
+                      <div key={i} className="relative">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt="preview"
+                          className="w-16 h-16 object-cover rounded border"
+                        />
+
+                        {/* ❌ Remove Button */}
+                        <button
+                          type="button"
+                          onClick={() => removeNewImage(index, i)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Upload Button UI */}
+                  <label className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded cursor-pointer text-sm">
+                    <IoCloudUploadSharp size={24} />
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) =>
+                        handleVariantImageChange(index, e.target.files)
+                      }
+                    />
+                  </label>
+
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveBg("variant", index)}
+                      disabled={isRemovingBg}
+                      className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-50"
+                    >
+                      {isRemovingBg ? "Processing..." : "Remove Background"}
+                    </button>
+                  </div>
+
                 </div>
 
                 {/* Stock */}

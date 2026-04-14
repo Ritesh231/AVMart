@@ -684,6 +684,7 @@ export default function UsersTable() {
             onClose={() => setSelectedOrderId(null)}
           />
         )}
+
       </div>
     </>
   );

@@ -264,56 +264,27 @@ export default function AddProduct() {
     const formData = data;
 
     /* ---------------- REQUIRED FIELD VALIDATION ---------------- */
-    if (!formData.productName?.trim())
-      return toast.error("Product Name is required");
-
-    if (!formData.brand)
-      return toast.error("Brand is required");
-
-    if (!formData.category)
-      return toast.error("Category is required");
-
-    // if (!formData.subcategory)
-    //   return toast.error("Subcategory is required");
-
-    // if (!formData.primaryImages?.length)
-    //   return toast.error("Primary Image is required");
-
-    if (!variants.length)
-      return toast.error("At least one variant required");
+    if (!formData.productName?.trim()) return toast.error("Product Name is required");
+    if (!formData.brand) return toast.error("Brand is required");
+    if (!formData.category) return toast.error("Category is required");
+    if (!variants.length) return toast.error("At least one variant required");
 
     // Validate variants
     for (let i = 0; i < variants.length; i++) {
       const v = variants[i];
+      if (!v.quantityValue || !v.quantityUnit) return toast.error(`Variant ${i + 1}: Quantity required`);
+      if (!v.originalPrice) return toast.error(`Variant ${i + 1}: Original Price required`);
 
-      if (!v.quantityValue || !v.quantityUnit)
-        return toast.error(`Variant ${i + 1}: Quantity required`);
-
-      if (!v.originalPrice)
-        return toast.error(`Variant ${i + 1}: Original Price required`);
-
-      const originalPrice = Number(v.originalPrice);
-      const discountValue = Number(v.discountValue || 0);
-
-      if (discountValue > originalPrice) {
-        return toast.error(`Variant ${i + 1}: Discount cannot exceed original price`);
-      }
-
-      if (!v.stock)
-        return toast.error(`Variant ${i + 1}: Stock required`);
-
-      if (!v.imageFiles || v.imageFiles.length === 0) {
+      // Check if both file uploads and existing URLs are missing
+      if ((!v.imageFiles || v.imageFiles.length === 0) && (!v.imageUrls || v.imageUrls.length === 0)) {
         return toast.error(`Variant ${i + 1}: Image is required`);
       }
-
-      // if (!v.sku)
-      //   return toast.error(`Variant ${i + 1}: SKU required`);
     }
 
     try {
       const submitData = new FormData();
 
-      // Append all fields
+      // 1. Append basic product fields
       submitData.append("productName", formData.productName.trim());
       submitData.append("subtext", formData.subtext?.trim() || "");
       submitData.append("description", formData.description?.trim() || "");
@@ -321,88 +292,50 @@ export default function AddProduct() {
       submitData.append("wholesaleAdvantage", formData.wholesaleAdvantage?.trim() || "");
       submitData.append("brand", formData.brand);
       submitData.append("category", formData.category);
-      submitData.append("subcategory", formData.subcategory);
+      submitData.append("subcategory", formData.subcategory || "");
       submitData.append("status", formData.status);
 
-      // Primary image
-      submitData.append("primaryImages", formData.primaryImages[0]);
+      // 2. Clear out primary images (Frontend files)
+      if (formData.primaryImages && formData.primaryImages[0]) {
+        submitData.append("primaryImages", formData.primaryImages[0]);
+      }
 
-      // Format variants - Use imageUrls if available, otherwise empty array
+      // 3. Format variants JSON (keeping existing URLs)
       const formattedVariants = variants.map((v) => ({
+        _id: v._id, // Preserve ID for updates
         quantityValue: Number(v.quantityValue),
         quantityUnit: v.quantityUnit,
         originalPrice: Number(v.originalPrice),
         discountType: v.discountType || null,
         discountValue: Number(v.discountValue || 0),
-        // gstRate: Number(v.gstRate || 0),
         stock: Number(v.stock),
-        // sku: v.sku,
-        // IMPORTANT: Send empty array for now since we don't have URLs
-        // The API expects URLs, not files
-        images: [] // Send empty array to avoid errors
+        images: v.imageUrls || [] // Send back existing URLs for the backend to keep
       }));
 
       submitData.append("variants", JSON.stringify(formattedVariants));
 
-      // DO NOT append variant image files here - the API expects URLs in the images array
-      // If you need to upload images, you need to do it separately and get URLs first
-
-      // Log the FormData contents (for debugging)
-      console.log("FormData entries:");
-      for (let pair of submitData.entries()) {
-        if (pair[0] === 'variants') {
-          console.log(pair[0], JSON.parse(pair[1]));
-        } else if (pair[0].includes('image')) {
-          console.log(pair[0], 'File:', pair[1].name, 'Size:', pair[1].size);
-        } else {
-          console.log(pair[0], pair[1]);
+      // 4. THE FIX: Append new variant image files uniquely by their index
+      variants.forEach((v, index) => {
+        if (v.imageFiles && v.imageFiles.length > 0) {
+          v.imageFiles.forEach((file) => {
+            // This matches the new backend logic: variantImage_0, variantImage_1, etc.
+            submitData.append(`variantImage_${index}`, file);
+          });
         }
-      }
+      });
 
-      // Make the API call
+      // 5. API Call (Replace 'id' with your actual product ID variable if Updating)
       const response = await addProduct(submitData).unwrap();
-
       toast.success("Product Added Successfully ✅");
-      console.log("Response:", response);
-
       navigate("/products/all");
 
-      // Reset form
-      setVariants([{
-        quantityValue: "",
-        quantityUnit: "",
-        originalPrice: "",
-        discountType: "percent",
-        discountValue: "",
-        // gstRate: "",
-        stock: "",
-        // sku: "",
-        imageFiles: [],
-        imageUrls: [],
-        previewImages: [],
-      }]);
-      setPreview(null);
-
     } catch (error) {
-      console.error("Full error:", error);
-
-      // Handle different error types
-      let errorMessage = "Failed to Add Product ❌";
-
-      if (error.data) {
-        if (typeof error.data === 'string' && error.data.includes('<!DOCTYPE')) {
-          errorMessage = "Server error (500). Please check your data format.";
-          console.error("Server returned HTML error page");
-        } else {
-          errorMessage = error.data.message || errorMessage;
-        }
-      } else if (error.error) {
-        errorMessage = error.error;
-      }
-
-      toast.error(errorMessage);
+      console.error("Submission Error:", error);
+      toast.error(error.data?.message || "Failed to process product ❌");
     }
   };
+
+
 
   /* -------------------- UI -------------------- */
   return (

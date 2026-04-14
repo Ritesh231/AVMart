@@ -62,6 +62,9 @@ const AddBanner = lazy(() => import("../components/Offers/AddBanner"));
 /*Wallet*/
 const WalletTable = lazy(() => import("../components/Wallet/TotalBalanceTable"));
 
+/*Suggestions*/
+const Suggestion = lazy(() => import("../components/Suggestions/Suggestion"));
+
 /*Protected Route*/
 import ProtectedRoute from "../routes/ProtectRoute";
 
@@ -167,6 +170,12 @@ export default function AppRouter() {
           <Route path="/wallet" element={<Wallet />}>
             <Route index element={<Navigate to="WalletTable" replace />} />
             <Route path="WalletTable" element={<WalletTable />} />
+          </Route>
+
+          {/*Suggestions*/}
+          <Route path="/suggestions" element={<Suggestion />}>
+            <Route index element={<Navigate to="Suggestion" replace />} />
+            <Route path="Suggestion" element={<Suggestion />} />
           </Route>
 
         </Route>

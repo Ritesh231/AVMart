@@ -140,34 +140,72 @@ function OrderDetailsModal({ order, loading, onClose }) {
               </div>
             ))}
 
-            <div className="border-t pt-2 text-sm space-y-1">
-              <div className="flex justify-between">
-                <span>Wallet Used</span>
-                <span>₹{order?.walletAmountUsed}</span>
-              </div>
-              <div className="flex justify-between text-green-500">
-                <span>Discount</span>
-                <span>₹{order?.totalDiscount?.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Delivery Charges</span>
-                <span>₹{order?.deliveryCharge}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Remaining</span>
-                <span>₹{order?.remainingAmount}</span>
-              </div>
+            <div className="border-t pt-2 text-sm space-y-2">
+
+              {/* ✅ Wallet (only if > 0) */}
+              {order?.walletAmountUsed > 0 && (
+                <div className="flex justify-between">
+                  <span>Wallet Used</span>
+                  <span>₹{order.walletAmountUsed.toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* ✅ Discount Breakdown (only if exists) */}
+              {order?.discounts?.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-gray-500">
+                    Discount Breakdown
+                  </p>
+
+                  {order.discounts.map((disc, index) => (
+                    disc?.discountAmount > 0 && (
+                      <div
+                        key={index}
+                        className="flex justify-between text-green-600 text-sm"
+                      >
+                        <span>
+                          {disc.name} ({disc.value}%)
+                        </span>
+                        <span>- ₹{disc.discountAmount.toFixed(2)}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              )}
+
+              {order?.totalDiscount > 0 && (
+                <div className="flex justify-between text-green-700 font-semibold border-t pt-1">
+                  <span>Total Discount</span>
+                  <span>- ₹{order.totalDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {order?.deliveryCharge > 0 && (
+                <div className="flex justify-between">
+                  <span>Delivery Charges</span>
+                  <span>₹{order.deliveryCharge.toFixed(2)}</span>
+                </div>
+              )}
+
+              {order?.remainingAmount > 0 && (
+                <div className="flex justify-between">
+                  <span>Remaining</span>
+                  <span>₹{order.remainingAmount.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between font-bold text-base pt-2">
                 <span>Total</span>
                 <span>{order?.priceFormatted}</span>
               </div>
-              <div className="flex justify-between font-bold text-base pt-2 text-green-800">
-                <span>Paid Amount</span>
-                <span>{order?.paidAmount.toFixed(2)}</span>
-              </div>
+
+              {order?.paidAmount > 0 && (
+                <div className="flex justify-between font-bold text-base pt-2 text-green-800">
+                  <span>Paid Amount</span>
+                  <span>₹{order.paidAmount.toFixed(2)}</span>
+                </div>
+              )}
             </div>
-
-
 
             {order?.deliveryStatus === "Cancelled" && (
               <div className="border-t pt-3">
