@@ -430,7 +430,6 @@ export default function UsersTable() {
               ))
             )}
           </tbody>
-
         </table>
 
         <EditSubcategoryModal
@@ -438,7 +437,6 @@ export default function UsersTable() {
           onClose={() => setIsModalOpen(false)}
           subcategoryData={selectedSubcategory}
         />
-
 
         {/* Pagination */}
         {filteredSubcategories.length > ordersPerPage && (
@@ -499,11 +497,9 @@ export default function UsersTable() {
               >
                 Next
               </button>
-
             </div>
           </div>
         )}
-
       </div>
     </>
   );

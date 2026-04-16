@@ -6,11 +6,20 @@ import { FaSackDollar } from "react-icons/fa6";
 import StatCard from "../StatCard";
 import { useGetAllDeliveryBoysQuery } from "../../Redux/apis/deliveryApi";
 import StatCardSkeleton from "../statcardskeleton";
+import { useState } from "react";
 
 export default function UserStats() {
 
-  const { data, isLoading, isError } = useGetAllDeliveryBoysQuery({
-    status: "pending"
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  let status = "pending";
+
+  const { data, isLoading, isError, refetch } = useGetAllDeliveryBoysQuery({
+    status,
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchTerm || undefined
   });
 
   const counts = data?.cards || {};
@@ -42,7 +51,6 @@ export default function UserStats() {
     },
   ];
 
-  // Handle error state
   if (isError) {
     return (
       <section className="stat-card-sec mb-6 bg-white border-2 border-red-200 rounded-[2.5rem] p-6">
@@ -72,4 +80,5 @@ export default function UserStats() {
       </div>
     </section>
   );
+
 }

@@ -3,6 +3,40 @@ import { useGetWithdrawalRequestsQuery, useVerifyWithdrawalMutation } from "../.
 import { Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 
+const SkeletonRow = () => {
+    return (
+        <tr className="border-t animate-pulse">
+            <td className="p-3">
+                <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-24"></div>
+            </td>
+
+            <td className="p-3">
+                <div className="h-4 bg-gray-200 rounded w-16"></div>
+            </td>
+
+            <td className="p-3">
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+            </td>
+
+            <td className="p-3">
+                <div className="h-4 bg-gray-200 rounded w-24"></div>
+            </td>
+
+            <td className="p-3">
+                <div className="h-5 bg-gray-200 rounded-full w-20"></div>
+            </td>
+
+            <td className="p-3 text-center">
+                <div className="flex justify-center gap-2">
+                    <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+                    <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+                </div>
+            </td>
+        </tr>
+    );
+};
+
 function WithdrawalTable() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -53,7 +87,31 @@ function WithdrawalTable() {
         setCurrentPage(1); // Reset to first page when changing items per page
     };
 
-    if (isLoading) return <p className="p-4">Loading...</p>;
+    if (isLoading) {
+        return (
+            <div className="p-4">
+                <div className="bg-white rounded-xl shadow overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                <th className="p-3 text-left">User</th>
+                                <th className="p-3 text-left">Amount</th>
+                                <th className="p-3 text-left">Description</th>
+                                <th className="p-3 text-left">Date</th>
+                                <th className="p-3 text-left">Status</th>
+                                <th className="p-3 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {[...Array(6)].map((_, i) => (
+                                <SkeletonRow key={i} />
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    }
 
     // Calculate display range for the current page
     const startItem = (pagination.page - 1) * pagination.per_page + 1;

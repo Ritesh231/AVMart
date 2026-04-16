@@ -2,7 +2,7 @@ import React from 'react'
 import { useGetDashboardQuery } from '../../Redux/apis/dashboardApi';
 
 const ProductViewCard = ({ product }) => {
-
+    const { data, isLoading, isError, refetch } = useGetDashboardQuery();
     return (
         <div className="relative bg-white border border-brand-teal/20 rounded-3xl p-4 flex flex-col items-start transition-shadow hover:shadow-md">
             {/* Discount Badge */}

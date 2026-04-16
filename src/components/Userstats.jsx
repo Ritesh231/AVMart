@@ -2,9 +2,21 @@ import { FaUsers, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import StatCard from "../components/StatCard";
 import { useGetallusersQuery } from "../Redux/apis/userApi";
 import StatCardSkeleton from "./statcardskeleton";
+import { useState } from "react";
 
 export default function UserStats() {
-  const { data, isLoading, isError } = useGetallusersQuery();
+
+  const [activeTab, setActiveTab] = useState('pending');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(10);
+
+  const queryParams = {
+    page: currentPage,
+    limit: usersPerPage,
+    status: activeTab,
+  };
+
+  const { data, isLoading, isError, refetch } = useGetallusersQuery(queryParams);
   const users = data?.stats || [];
 
   const stats = [
