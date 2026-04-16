@@ -43,15 +43,28 @@ const OnlinePaymentCard = ({
             </div>
 
             {/* Details Grid */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-brand-blue p-2 rounded-lg flex flex-col  justify-between items-start">
-                    <p className="text-[10px] text-brand-navy font-bold uppercase w-36 whitespace-nowrap">Payment Method</p>
-                    <p className="text-brand-navy font-extrabold text-base">Online</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+
+                {/* Payment Method */}
+                <div className="bg-brand-blue p-2 sm:p-3 rounded-lg flex flex-col justify-between items-start w-full">
+                    <p className="text-[10px] text-brand-navy font-bold uppercase w-full break-words whitespace-normal">
+                        Payment Method
+                    </p>
+                    <p className="text-brand-navy font-extrabold text-sm sm:text-base break-words">
+                        Online
+                    </p>
                 </div>
-                <div className="bg-brand-blue p-2 rounded-lg flex flex-col  justify-between items-start">
-                    <p className="text-[10px] text-brand-navy font-bold uppercase">Amount</p>
-                    <p className="text-brand-navy font-extrabold text-base">₹{amount.toFixed(2)}</p>
+
+                {/* Amount */}
+                <div className="bg-brand-blue p-2 sm:p-3 rounded-lg flex flex-col justify-between items-start w-full">
+                    <p className="text-[10px] text-brand-navy font-bold uppercase">
+                        Amount
+                    </p>
+                    <p className="text-brand-navy font-extrabold text-sm sm:text-base">
+                        ₹{amount.toFixed(2)}
+                    </p>
                 </div>
+
             </div>
         </div>
     )

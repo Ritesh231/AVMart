@@ -446,43 +446,30 @@ const Payments = () => {
                 ))}
             </section>
 
-            {/* Items Per Page Selector */}
-            <div className="mb-4 flex justify-end">
-                <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600">Show:</label>
-                    <select
-                        value={itemsPerPage}
-                        onChange={handleItemsPerPageChange}
-                        className="border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                    </select>
-                    <span className="text-sm text-gray-600">entries</span>
-                </div>
-            </div>
-
             <section className="bg-white border-2 border-brand-soft rounded-[2.5rem] p-6 shadow-sm overflow-hidden">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-                    {/* Search Bar */}
-                    <div className="w-full lg:w-[40%] md:w-[50%]">
-                        <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+
+                    {/* 🔍 Search Bar */}
+                    <div className="w-full lg:w-[40%]">
+                        <div className="flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all">
                             <Search className="text-brand-gray" size={20} />
                             <input
-                                className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
+                                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray"
                                 type="text"
-                                placeholder='Search By Name, Order ID, Transaction ID'
+                                placeholder="Search By Name, Order ID, Transaction ID"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
                     </div>
 
-                    {/* Export Button */}
-                    <div className='flex justify-evenly gap-2 items-center'>
-                        <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+                    {/* 🔧 Right Controls */}
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full lg:w-auto">
+
+                        {/* ✅ Select All */}
+                        <label className="flex items-center justify-center sm:justify-start gap-2 
+    border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold 
+    text-brand-navy bg-white w-full sm:w-auto">
                             <input
                                 ref={selectAllRef}
                                 type="checkbox"
@@ -491,9 +478,12 @@ const Payments = () => {
                             />
                             Select All
                         </label>
-                        <div className="flex items-center gap-3">
-                            {/* Main Date Filter Dropdown */}
-                            <div className="relative">
+
+                        {/* 📅 Date Filter + Inputs */}
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+
+                            {/* Dropdown */}
+                            <div className="relative w-full sm:w-auto">
                                 <select
                                     value={dateFilter}
                                     onChange={(e) => {
@@ -501,7 +491,8 @@ const Payments = () => {
                                         setFromDate("");
                                         setToDate("");
                                     }}
-                                    className="appearance-none border-brand-cyan border-[1px] font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl focus:outline-none bg-white cursor-pointer"
+                                    className="w-full appearance-none border border-brand-cyan font-semibold 
+          text-brand-navy px-4 py-3 pr-12 rounded-2xl focus:outline-none bg-white cursor-pointer"
                                 >
                                     <option value="All">All</option>
                                     <option value="Today">Today</option>
@@ -513,28 +504,26 @@ const Payments = () => {
 
                                 <ChevronDown
                                     size={18}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
                                 />
                             </div>
 
-                            {/* Custom Date Pickers */}
+                            {/* Custom Date Inputs */}
                             {dateFilter === "Custom" && (
-                                <>
+                                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                                     <input
                                         type="date"
                                         value={fromDate}
                                         max={toDate || undefined}
                                         onChange={(e) => {
                                             const selectedFrom = e.target.value;
-                                            if (toDate && selectedFrom > toDate) {
-                                                setToDate("");
-                                            }
+                                            if (toDate && selectedFrom > toDate) setToDate("");
                                             setFromDate(selectedFrom);
                                         }}
-                                        className="border border-brand-soft px-3 py-2 rounded-xl"
+                                        className="w-full border border-brand-soft px-3 py-2 rounded-xl"
                                     />
 
-                                    <span className="text-gray-500">to</span>
+                                    <span className="hidden sm:flex items-center text-gray-500">to</span>
 
                                     <input
                                         type="date"
@@ -542,25 +531,29 @@ const Payments = () => {
                                         min={fromDate || undefined}
                                         onChange={(e) => {
                                             const selectedTo = e.target.value;
-                                            if (fromDate && selectedTo < fromDate) {
-                                                return;
-                                            }
+                                            if (fromDate && selectedTo < fromDate) return;
                                             setToDate(selectedTo);
                                         }}
-                                        className="border border-brand-soft px-3 py-2 rounded-xl"
+                                        className="w-full border border-brand-soft px-3 py-2 rounded-xl"
                                     />
-                                </>
+                                </div>
                             )}
                         </div>
-                        <div className="relative">
+
+                        {/* 📤 Export Button */}
+                        <div className="relative w-full sm:w-auto">
                             <button
-                                className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+                                className="w-full sm:w-auto bg-brand-navy px-4 py-3 rounded-2xl 
+        flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all"
                                 onClick={() => setIsExportMenuOpen((prev) => !prev)}
                             >
-                                <Download size={20} /> Export
+                                <Download size={20} />
+                                Export
                             </button>
+
                             {isExportMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                                <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 
+        w-full sm:w-40 bg-white rounded-xl shadow-lg border z-20">
                                     <button
                                         onClick={exportToPdf}
                                         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
@@ -582,6 +575,7 @@ const Payments = () => {
                                 </div>
                             )}
                         </div>
+
                     </div>
                 </div>
 
@@ -706,7 +700,7 @@ const Payments = () => {
             {/* Pagination Controls */}
             {pagination.total > 0 && (
                 <div className="flex justify-between items-center mt-6">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-center items-center text-gray-600 hidden md:block">
                         Showing {startItem} to {endItem} of {pagination.total} transactions
                     </p>
 

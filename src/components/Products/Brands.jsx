@@ -241,20 +241,27 @@ export default function BrandsSection() {
     <div className="p-6 bg-[#F8FAFC] rounded-xl border border-teal-200">
 
       {/* Search + Export */}
-      <div className="flex items-center justify-between mb-6 gap-3">
-        <div className="relative w-full max-w-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+
+        {/* Search */}
+        <div className="relative w-full sm:max-w-sm">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           <input
             type="text"
             placeholder="Search By Brand Name"
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-teal-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-teal-200 text-sm 
+      focus:outline-none focus:ring-2 focus:ring-teal-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <label className="inline-flex items-center gap-2 border border-teal-200 rounded-lg px-3 py-2 text-sm font-medium bg-white text-[#1A2550] whitespace-nowrap">
+        {/* Right Controls */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+
+          <label className="flex items-center justify-center sm:justify-start gap-2 
+    border border-teal-200 rounded-lg px-3 py-2 text-sm font-medium 
+    bg-white text-[#1A2550] w-full sm:w-auto">
             <input
               ref={selectAllRef}
               type="checkbox"
@@ -263,43 +270,38 @@ export default function BrandsSection() {
             />
             Select All
           </label>
-          <div className="relative">
+
+          <div className="relative w-full sm:w-auto">
             <button
-              className="flex items-center gap-2 bg-[#1A2550] text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 
+        bg-[#1A2550] text-white px-4 py-2 rounded-lg text-sm font-medium"
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
             >
               <FiDownload size={14} />
               Export
             </button>
+
             {isExportMenuOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
-                <button
-                  onClick={exportToPdf}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                >
+              <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-40 
+        bg-white rounded-xl shadow-lg border z-20">
+                <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                   PDF
                 </button>
-                <button
-                  onClick={exportToDoc}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                >
+                <button onClick={exportToDoc} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                   DOC
                 </button>
-                <button
-                  onClick={exportToExcel}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                >
+                <button onClick={exportToExcel} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                   Excel
                 </button>
               </div>
             )}
           </div>
-        </div>
 
+        </div>
       </div>
 
       {/* Brand Cards */}
-      <div className="grid md:grid-cols-6 grid-cols-2 gap-5">
+      <div className="grid md:grid-cols-6 grid-cols-2 gap-10">
 
         {isLoading
           ? Array(12)

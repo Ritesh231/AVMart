@@ -455,76 +455,75 @@ export default function UsersTable() {
             )}
           </tbody>
         </table>
-
-        {/* Pagination */}
-        {pagination.total_items > 0 && (
-          <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
-            {/* Showing Info */}
-            <p className="text-sm text-gray-600">
-              Showing {startItem} to {endItem} of {pagination.total_items} delivery boys
-            </p>
-
-            {/* Buttons */}
-            <div className="flex items-center gap-2">
-              {/* Prev */}
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-                  ${currentPage === 1
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
-                  }`}
-              >
-                Prev
-              </button>
-
-              {/* Page Numbers - Show limited pages for better UX */}
-              {(() => {
-                const totalPagesToShow = Math.min(pagination.total_pages, 5);
-                let startPage = Math.max(1, currentPage - Math.floor(totalPagesToShow / 2));
-                let endPage = Math.min(pagination.total_pages, startPage + totalPagesToShow - 1);
-
-                if (endPage - startPage + 1 < totalPagesToShow) {
-                  startPage = Math.max(1, endPage - totalPagesToShow + 1);
-                }
-
-                const pages = [];
-                for (let i = startPage; i <= endPage; i++) {
-                  pages.push(i);
-                }
-
-                return pages.map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
-                      ${currentPage === page
-                        ? "bg-[#00E5B0] text-white shadow-md"
-                        : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
-                      }`}
-                  >
-                    {page}
-                  </button>
-                ));
-              })()}
-
-              {/* Next */}
-              <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.total_pages))}
-                disabled={currentPage === pagination.total_pages}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
-                  ${currentPage === pagination.total_pages
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
-                  }`}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+      {/* Pagination */}
+      {pagination.total_items > 0 && (
+        <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
+          {/* Showing Info */}
+          <p className="text-sm text-gray-600 hidden md:block">
+            Showing {startItem} to {endItem} of {pagination.total_items} delivery boys
+          </p>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Prev */}
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+                  ${currentPage === 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                }`}
+            >
+              Prev
+            </button>
+
+            {/* Page Numbers - Show limited pages for better UX */}
+            {(() => {
+              const totalPagesToShow = Math.min(pagination.total_pages, 5);
+              let startPage = Math.max(1, currentPage - Math.floor(totalPagesToShow / 2));
+              let endPage = Math.min(pagination.total_pages, startPage + totalPagesToShow - 1);
+
+              if (endPage - startPage + 1 < totalPagesToShow) {
+                startPage = Math.max(1, endPage - totalPagesToShow + 1);
+              }
+
+              const pages = [];
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(i);
+              }
+
+              return pages.map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+                      ${currentPage === page
+                      ? "bg-[#00E5B0] text-white shadow-md"
+                      : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                    }`}
+                >
+                  {page}
+                </button>
+              ));
+            })()}
+
+            {/* Next */}
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.total_pages))}
+              disabled={currentPage === pagination.total_pages}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+                  ${currentPage === pagination.total_pages
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                }`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

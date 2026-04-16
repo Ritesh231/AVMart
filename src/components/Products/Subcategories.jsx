@@ -445,7 +445,7 @@ export default function UsersTable() {
           <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
             {/* Showing Info */}
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 hidden md:block">
               Showing {indexOfFirstOrder + 1} to{" "}
               {Math.min(indexOfLastOrder, filteredSubcategories.length)} of{" "}
               {filteredSubcategories.length} orders

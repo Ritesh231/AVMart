@@ -288,21 +288,22 @@ export default function EditProductModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overflow-y-auto">
-      <div className="bg-white rounded-xl w-[800px] p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
 
-        <h2 className="text-lg font-bold mb-4">Edit Product</h2>
+      <div className="bg-white rounded-xl w-full max-w-3xl p-4 sm:p-6 shadow-xl max-h-[95vh] overflow-y-auto">
+
+        <h2 className="text-base sm:text-lg font-bold mb-4">Edit Product</h2>
 
         {/* Basic Fields */}
-        <div className="grid grid-cols-2 gap-3">
-          <input name="productName" value={formData.productName} onChange={handleChange} placeholder="Product Name" className="border p-2 rounded-lg" />
-          <input name="slug" value={formData.slug} onChange={handleChange} placeholder="Slug" className="border p-2 rounded-lg" />
-          {/* Brand */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input name="productName" value={formData.productName} onChange={handleChange} placeholder="Product Name" className="border p-2 rounded-lg text-sm" />
+          <input name="slug" value={formData.slug} onChange={handleChange} placeholder="Slug" className="border p-2 rounded-lg text-sm" />
+
           <select
             name="brand"
             value={formData.brand}
             onChange={handleChange}
-            className="border p-2 rounded-lg"
+            className="border p-2 rounded-lg text-sm"
           >
             <option value="">Select Brand</option>
             {brands.map((b) => (
@@ -312,7 +313,6 @@ export default function EditProductModal({
             ))}
           </select>
 
-          {/* Category */}
           <select
             name="category"
             value={formData.category}
@@ -320,10 +320,10 @@ export default function EditProductModal({
               setFormData({
                 ...formData,
                 category: e.target.value,
-                subcategory: "" // reset subcategory when category changes
+                subcategory: ""
               });
             }}
-            className="border p-2 rounded-lg"
+            className="border p-2 rounded-lg text-sm"
           >
             <option value="">Select Category</option>
             {categories.map((c) => (
@@ -333,12 +333,11 @@ export default function EditProductModal({
             ))}
           </select>
 
-          {/* Subcategory */}
           <select
             name="subcategory"
             value={formData.subcategory}
             onChange={handleChange}
-            className="border p-2 rounded-lg"
+            className="border p-2 rounded-lg text-sm"
           >
             <option value="">Select Subcategory</option>
             {filteredSubcategories.map((s) => (
@@ -347,45 +346,27 @@ export default function EditProductModal({
               </option>
             ))}
           </select>
-          <input name="status" value={formData.status} onChange={handleChange} placeholder="Status" className="border p-2 rounded-lg" />
+
+          <input name="status" value={formData.status} onChange={handleChange} placeholder="Status" className="border p-2 rounded-lg text-sm" />
         </div>
 
-        <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded-lg mt-3" />
-        {/* <div className="grid grid-cols-3 gap-3 mt-3">
-          <input
-            name="origin"
-            value={formData.origin}
-            onChange={handleChange}
-            placeholder="Origin"
-            className="border p-2 rounded"
-          />
-
-          <input
-            name="shelfLife"
-            value={formData.shelfLife}
-            onChange={handleChange}
-            placeholder="Shelf Life"
-            className="border p-2 rounded"
-          />
-
-          <input
-            name="storage"
-            value={formData.storage}
-            onChange={handleChange}
-            placeholder="Storage Info"
-            className="border p-2 rounded"
-          />
-        </div> */}
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          placeholder="Description"
+          className="w-full border p-2 rounded-lg mt-3 text-sm"
+        />
 
         {/* Main Image Upload */}
         <div className="mt-4">
-          <label className="font-medium">Main Product Image</label>
+          <label className="font-medium text-sm">Main Product Image</label>
 
-          <div className="border-dashed border-2 rounded-lg p-4 text-center mt-2 relative">
+          <div className="border-dashed border-2 rounded-lg p-3 sm:p-4 text-center mt-2 relative">
             {previewImage ? (
-              <img src={previewImage} alt="Preview" className="h-32 mx-auto object-contain" />
+              <img src={previewImage} alt="Preview" className="h-24 sm:h-32 mx-auto object-contain" />
             ) : (
-              <p>Click to upload image</p>
+              <p className="text-sm">Click to upload image</p>
             )}
 
             <input
@@ -396,12 +377,12 @@ export default function EditProductModal({
             />
           </div>
 
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-2">
             <button
               type="button"
               onClick={() => handleRemoveBg("primary")}
               disabled={isRemovingBg}
-              className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-50"
+              className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white w-full sm:w-auto"
             >
               {isRemovingBg ? "Processing..." : "Remove Background"}
             </button>
@@ -410,12 +391,12 @@ export default function EditProductModal({
 
         {/* Variants Section */}
         <div className="mt-6">
-          <h3 className="font-semibold mb-3">Variants</h3>
+          <h3 className="font-semibold mb-3 text-sm sm:text-base">Variants</h3>
 
           {formData.variants.map((variant, index) => (
-            <div key={index} className="border p-4 rounded-lg mb-4">
-              <div className="grid grid-cols-2 gap-3">
-                {/* Quantity Value */}
+            <div key={index} className="border p-3 sm:p-4 rounded-lg mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
                 <input
                   type="number"
                   value={variant.quantityValue || ""}
@@ -423,16 +404,15 @@ export default function EditProductModal({
                     handleVariantChange(index, "quantityValue", e.target.value)
                   }
                   placeholder="Quantity"
-                  className="border p-2 rounded"
+                  className="border p-2 rounded text-sm"
                 />
 
-                {/* Quantity Unit Dropdown */}
                 <select
                   value={variant.quantityUnit || ""}
                   onChange={(e) =>
                     handleVariantChange(index, "quantityUnit", e.target.value)
                   }
-                  className="border p-2 rounded"
+                  className="border p-2 rounded text-sm"
                 >
                   <option value="">Select Unit</option>
                   {QUANTITY_UNITS.map((unit) => (
@@ -442,7 +422,6 @@ export default function EditProductModal({
                   ))}
                 </select>
 
-                {/* Original Price */}
                 <input
                   type="number"
                   value={variant.originalPrice || ""}
@@ -450,70 +429,53 @@ export default function EditProductModal({
                     handleVariantChange(index, "originalPrice", e.target.value)
                   }
                   placeholder="Original Price"
-                  className="border p-2 rounded"
+                  className="border p-2 rounded text-sm"
                 />
 
-                {/* Discount Value */}
-                <div className="flex items-center gap-2">
-                  {/* Discount Value Input */}
+                {/* Discount */}
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative w-full">
                     <input
                       type="number"
                       value={variant.discountValue || ""}
                       onChange={(e) => {
                         let value = Number(e.target.value);
-
-                        // Limit to 100 if percentage
                         if (variant.discountType === "percentage" && value > 100) {
                           value = 100;
                         }
-
                         handleVariantChange(index, "discountValue", value);
                       }}
                       placeholder="Discount"
-                      className={`border p-2 rounded w-full ${variant.discountType === "percentage" ? "pr-8" : ""
-                        }`} // Add padding-right for % sign
+                      className={`border p-2 rounded w-full text-sm ${variant.discountType === "percentage" ? "pr-8" : ""}`}
                     />
 
-
-                    {/* % sign inside input */}
                     {variant.discountType === "percentage" && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
                         %
                       </span>
                     )}
                   </div>
 
-                  {/* Discount Type Dropdown */}
                   <select
                     value={variant.discountType || "percentage"}
                     onChange={(e) =>
                       handleVariantChange(index, "discountType", e.target.value)
                     }
-                    className="border p-2 rounded"
+                    className="border p-2 rounded text-sm w-full sm:w-auto"
                   >
                     <option value="percentage">Percentage</option>
                     <option value="flat">Flat</option>
                   </select>
                 </div>
 
-
-
-
+                {/* Images */}
                 <div className="mt-3">
                   <label className="text-sm font-medium">Variant Images</label>
 
                   <div className="flex gap-2 mt-2 flex-wrap">
-                    {/* Existing Images */}
                     {variant.imageUrls?.map((img, i) => (
                       <div key={i} className="relative">
-                        <img
-                          src={img}
-                          alt="variant"
-                          className="w-16 h-16 object-cover rounded border"
-                        />
-
-                        {/* ❌ Remove Button */}
+                        <img src={img} alt="variant" className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded border" />
                         <button
                           type="button"
                           onClick={() => removeExistingImage(index, i)}
@@ -524,16 +486,9 @@ export default function EditProductModal({
                       </div>
                     ))}
 
-                    {/* New Uploaded Images */}
                     {variant.imageFiles?.map((file, i) => (
                       <div key={i} className="relative">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt="preview"
-                          className="w-16 h-16 object-cover rounded border"
-                        />
-
-                        {/* ❌ Remove Button */}
+                        <img src={URL.createObjectURL(file)} alt="preview" className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded border" />
                         <button
                           type="button"
                           onClick={() => removeNewImage(index, i)}
@@ -545,9 +500,8 @@ export default function EditProductModal({
                     ))}
                   </div>
 
-                  {/* Upload Button UI */}
-                  <label className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded cursor-pointer text-sm">
-                    <IoCloudUploadSharp size={24} />
+                  <label className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-gray-100 rounded cursor-pointer text-sm w-full sm:w-auto justify-center">
+                    <IoCloudUploadSharp size={20} />
                     <input
                       type="file"
                       multiple
@@ -558,20 +512,18 @@ export default function EditProductModal({
                     />
                   </label>
 
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <button
                       type="button"
                       onClick={() => handleRemoveBg("variant", index)}
                       disabled={isRemovingBg}
-                      className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-50"
+                      className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white w-full sm:w-auto"
                     >
                       {isRemovingBg ? "Processing..." : "Remove Background"}
                     </button>
                   </div>
-
                 </div>
 
-                {/* Stock */}
                 <input
                   type="number"
                   value={variant.stock || ""}
@@ -579,61 +531,30 @@ export default function EditProductModal({
                     handleVariantChange(index, "stock", e.target.value)
                   }
                   placeholder="Stock"
-                  className="border p-2 rounded"
+                  className="border rounded text-sm px-2 py-1.5 sm:py-2 h-9 sm:h-10"
                 />
-
-                {/* SKU */}
-                {/* <input
-                  value={variant.sku || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "sku", e.target.value)
-                  }
-                  placeholder="SKU"
-                  className="border p-2 rounded"
-                /> */}
-
-                {/* GST Rate Dropdown */}
-                {/* <select
-                  value={variant.gstRate ?? ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "gstRate", Number(e.target.value))
-                  }
-                  className="border p-2 rounded"
-                >
-                 
-                  <option value="" disabled>
-                    Select GST Rate
-                  </option>
-
-                  {GST_RATES.map((rate) => (
-                    <option key={rate} value={rate}>
-                      {rate}%
-                    </option>
-                  ))}
-                </select> */}
               </div>
             </div>
           ))}
 
-
           <button
             onClick={addVariant}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg"
+            className="px-4 py-2 bg-green-500 text-white rounded-lg w-full sm:w-auto"
           >
             + Add Variant
           </button>
         </div>
 
         {/* Buttons */}
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+          <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg w-full sm:w-auto">
             Cancel
           </button>
 
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg w-full sm:w-auto"
           >
             {isLoading ? "Updating..." : "Update"}
           </button>

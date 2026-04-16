@@ -562,24 +562,31 @@ export default function DeliveryBoyDetails() {
       )}
 
       {/* Filter Section */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-        {/* Search Bar */}
-        <div className="w-full lg:w-[40%] md:w-[50%]">
-          <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
-            <Search className="text-brand-gray" size={20} />
+      <div className="flex flex-col gap-4 mb-6">
+
+        {/* 🔍 Search Bar */}
+        <div className="w-full">
+          <div className="flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl px-3 py-2 focus-within:border-brand-teal transition-all">
+            <Search className="text-brand-gray" size={18} />
             <input
-              className='w-full bg-transparent border-none focus:ring-0 focus:outline-none text-brand-navy placeholder:text-brand-gray'
+              className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-sm text-brand-navy placeholder:text-brand-gray"
               type="text"
-              placeholder={activeTab === "attendance" ? "Search By Date, Working hours" : "Search By Order ID, Transaction ID"}
+              placeholder={
+                activeTab === "attendance"
+                  ? "Search by date / hours"
+                  : "Search by Order ID / Txn ID"
+              }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Filter Controls */}
-        <div className='flex justify-evenly gap-2 items-center flex-wrap'>
-          <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-3 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+        {/* ⚙️ Controls */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full">
+
+          {/* Select All */}
+          <label className="flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold text-brand-navy bg-white w-fit">
             <input
               ref={selectAllRef}
               type="checkbox"
@@ -589,12 +596,14 @@ export default function DeliveryBoyDetails() {
             Select All
           </label>
 
-          <div className="flex flex-wrap gap-3 items-center">
+          {/* Filters Row */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+
             {/* Status Filter */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border px-4 py-3 rounded-xl bg-white"
+              className="border px-3 py-2 rounded-xl bg-white w-full sm:w-auto text-sm"
             >
               <option value="All">All Status</option>
 
@@ -621,7 +630,6 @@ export default function DeliveryBoyDetails() {
                   <option value="Debit">Debit</option>
                 </>
               )}
-
             </select>
 
             {/* Date Filter */}
@@ -632,56 +640,55 @@ export default function DeliveryBoyDetails() {
                 setFromDate("");
                 setToDate("");
               }}
-              className="border px-4 py-3 rounded-xl bg-white"
+              className="border px-3 py-2 rounded-xl bg-white w-full sm:w-auto text-sm"
             >
               <option value="All">All Dates</option>
               <option value="Today">Today</option>
               <option value="Last7Days">Last 7 Days</option>
               <option value="Custom">Custom Range</option>
             </select>
-
-            {/* Custom Range */}
-            {dateFilter === "Custom" && (
-              <>
-                <input
-                  type="date"
-                  value={fromDate}
-                  max={toDate || undefined}
-                  onChange={(e) => {
-                    const selected = e.target.value;
-                    if (toDate && selected > toDate) setToDate("");
-                    setFromDate(selected);
-                  }}
-                  className="border px-3 py-2 rounded-xl"
-                />
-
-                <span>to</span>
-
-                <input
-                  type="date"
-                  value={toDate}
-                  min={fromDate || undefined}
-                  onChange={(e) => {
-                    const selected = e.target.value;
-                    if (fromDate && selected < fromDate) return;
-                    setToDate(selected);
-                  }}
-                  className="border px-3 py-2 rounded-xl"
-                />
-              </>
-            )}
           </div>
 
-          {/* Export Button */}
-          <div className="relative">
+          {/* 📅 Custom Date Range */}
+          {dateFilter === "Custom" && (
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
+              <input
+                type="date"
+                value={fromDate}
+                max={toDate || undefined}
+                onChange={(e) => {
+                  const selected = e.target.value;
+                  if (toDate && selected > toDate) setToDate("");
+                  setFromDate(selected);
+                }}
+                className="border px-3 py-2 rounded-xl w-full text-sm"
+              />
+
+              <input
+                type="date"
+                value={toDate}
+                min={fromDate || undefined}
+                onChange={(e) => {
+                  const selected = e.target.value;
+                  if (fromDate && selected < fromDate) return;
+                  setToDate(selected);
+                }}
+                className="border px-3 py-2 rounded-xl w-full text-sm"
+              />
+            </div>
+          )}
+
+          {/* 📥 Export Button */}
+          <div className="relative w-full sm:w-auto">
             <button
-              className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+              className="w-full sm:w-auto bg-brand-navy px-4 py-2 rounded-xl flex justify-center gap-2 items-center text-white text-sm font-semibold hover:bg-opacity-90 transition-all"
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
             >
-              <Download size={20} /> Export
+              <Download size={16} /> Export
             </button>
+
             {isExportMenuOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+              <div className="absolute right-0 mt-2 w-full sm:w-40 bg-white rounded-xl shadow-lg border z-20">
                 <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">PDF</button>
                 <button onClick={exportToDoc} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">DOC</button>
                 <button onClick={exportToExcel} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Excel</button>
@@ -751,7 +758,7 @@ export default function DeliveryBoyDetails() {
           {/* Pagination */}
           {paginationMeta.total > 0 && (
             <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white rounded-xl shadow-sm border">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 hidden md:block">
                 Showing {startItem} to {endItem} of {paginationMeta.total} records
               </p>
               <div className="flex items-center gap-2">

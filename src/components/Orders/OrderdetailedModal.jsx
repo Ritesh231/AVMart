@@ -226,7 +226,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
                       {order?.cancellationReason || "N/A"}
                     </span>
                   </div>
-                  
+
                   {/* Image */}
                   {order?.cancellationImage && (
                     <div className="flex flex-col gap-2">

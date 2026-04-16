@@ -72,7 +72,7 @@ export default function ProductCategories() {
         <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t rounded-xl">
 
           {/* Showing Info */}
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 hidden md:block">
             Showing {startIndex + 1} to{" "}
             {Math.min(endIndex, categories.length)} of{" "}
             {categories.length} categories

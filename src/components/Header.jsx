@@ -8,6 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useLogoutMutation } from "../Redux/apis/authApi";
 import { RiArrowDropDownLine } from "react-icons/ri";
+import { IoArrowBackCircleOutline } from "react-icons/io5";
 
 const Header = () => {
     const location = useLocation();
@@ -139,34 +140,56 @@ const Header = () => {
             {/* Navigation Bar */}
             <nav className="bg-brand-soft border-t border-brand-teal/10">
                 <div className="overflow-x-auto no-scrollbar scroll-smooth">
-                    <ul className="flex justify-center items-center gap-2 px-6 py-3 min-w-max">
+
+                    <ul className="flex items-center gap-2 px-3 sm:px-6 py-3 min-w-max">
+
+                        {/* 🔙 Back Button (Mobile Only) */}
+                        <li className="md:hidden">
+                            <button
+                                onClick={() => {
+                                    if (window.history.length > 1) {
+                                        navigate(-1);
+                                    } else {
+                                        navigate("/dashboard");
+                                    }
+                                }}
+                                className="flex items-center justify-center h-9 w-9 text-2xl rounded-xl bg-white text-brand-navy shadow-sm border border-gray-100 hover:bg-brand-navy hover:text-white transition-all duration-200 active:scale-95"
+                            >
+                                <IoArrowBackCircleOutline />
+                            </button>
+                        </li>
+
+                        {/* Nav Items */}
                         {navItems.map((item) => (
                             <li key={item.path}>
                                 <NavLink
                                     to={item.path}
                                     className={`
-  flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 text-xs
-  ${isActiveRoute(item.path)
+              flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 text-xs whitespace-nowrap
+              ${isActiveRoute(item.path)
                                             ? 'bg-brand-navy text-white'
                                             : 'bg-white text-brand-navy hover:bg-slate-50 border border-transparent'
                                         }
-`}
+            `}
                                 >
-                                    {({ isActive }) => (
-                                        <>
-                                            <span
-                                                className={`text-lg ${isActiveRoute(item.path) ? "text-[#00E9BE]" : "text-current"
-                                                    }`}
-                                            >
-                                                {item.icon}
-                                            </span>
-                                            <span>{item.name}</span>
-                                        </>
-                                    )}
+                                    <>
+                                        <span
+                                            className={`text-lg ${isActiveRoute(item.path)
+                                                ? "text-[#00E9BE]"
+                                                : "text-current"
+                                                }`}
+                                        >
+                                            {item.icon}
+                                        </span>
+                                        <span className="hidden sm:inline">
+                                            {item.name}
+                                        </span>
+                                    </>
                                 </NavLink>
                             </li>
                         ))}
                     </ul>
+
                 </div>
             </nav>
         </header>

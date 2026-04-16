@@ -281,10 +281,10 @@ const ProductGrid = () => {
     <div className="p-6 bg-white rounded-xl border border-emerald-200">
 
       {/* Search */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-6">
 
         {/* Search Bar */}
-        <div className="w-full lg:w-[40%] md:w-[50%]">
+        <div className="w-full lg:w-[40%]">
           <div className='flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all'>
             <Search className="text-brand-gray" size={20} />
             <input
@@ -298,7 +298,7 @@ const ProductGrid = () => {
         </div>
 
         {/* Export Button */}
-        <div className='flex justify-evenly gap-2 items-center'>
+        <div className='flex flex-col sm:flex-row gap-2 w-full lg:w-auto'>
           <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-3 text-sm font-semibold text-brand-navy bg-white">
             <input
               ref={selectAllRef}
@@ -318,7 +318,8 @@ const ProductGrid = () => {
                 setSelectedCategory(e.target.value);
                 setCurrentPage(1);
               }}
-              className="appearance-none border-brand-cyan border-[1px] font-semibold text-brand-navy px-4 py-3 pr-10 rounded-2xl focus:outline-none bg-white cursor-pointer"
+              className="w-full appearance-none border border-brand-cyan font-semibold text-brand-navy 
+  px-4 py-3 pr-12 rounded-2xl focus:outline-none bg-white cursor-pointer"
             >
               {uniqueCategories.map((cat, index) => (
                 <option key={index} value={cat}>
@@ -329,7 +330,7 @@ const ProductGrid = () => {
 
             <ChevronDown
               size={18}
-              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
+              className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
             />
           </div>
           <div className="relative">
@@ -366,7 +367,7 @@ const ProductGrid = () => {
       </div>
 
       {/* 🔹 Products Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
 
         {currentOrders.map((product) => {
           const firstVariant = product.variants?.[0];
@@ -474,7 +475,7 @@ const ProductGrid = () => {
         <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t">
 
           {/* Showing Info */}
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 hidden md-block">
             Showing {indexOfFirstOrder + 1} to{" "}
             {Math.min(indexOfLastOrder, filteredProducts.length)} of{" "}
             {filteredProducts.length} orders
