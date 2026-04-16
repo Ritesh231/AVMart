@@ -24,12 +24,10 @@ export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
 
-  // Only send page and status to API (not shopType and search since they're handled client-side)
   const queryParams = {
     page: currentPage,
     limit: usersPerPage,
     status: activeTab,
-    // Remove shopType and search from API params if backend doesn't support them
   };
 
   const { data, isLoading, isError, refetch } = useGetallusersQuery(queryParams);
