@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { ChevronDown, Download, Search, SlidersHorizontal } from 'lucide-react'
 import { FaSearch, FaEdit, FaTrash } from "react-icons/fa";
 import ProductCategoryCards from "../Products/ProductCategorytabs"
-import { useGetallproductsQuery, useDeleteProductMutation } from "../../Redux/apis/productsApi"
+import { useGetallproductsQuery, useDeleteProductMutation, useUpdateStatusMutation } from "../../Redux/apis/productsApi"
 import EditProductModal from "../../components/Products/UpdateProductModel";
 import { useState } from "react";
 import { Plus } from "lucide-react";
@@ -13,6 +13,7 @@ const products = Array.from({ length: 20 });
 const ProductGrid = () => {
   const { data, isLoading, isError } = useGetallproductsQuery();
   const products = data?.data || [];
+  const [updateStatus] = useUpdateStatusMutation();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState("")
@@ -94,6 +95,23 @@ const ProductGrid = () => {
     }
   }
 
+  const handleToggleStatus = async (product) => {
+    try {
+      const newStatus =
+        product.status === "active" ? "inactive" : "active";
+      await updateStatus({
+        body: {
+          productId: product._id,
+          status: newStatus,
+        },
+      }).unwrap();
+      toast.success(`Product ${newStatus === "active" ? "active" : "inactive"} ✅`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update status ❌");
+    }
+  };
+
   const ProductShimmer = () => {
     return (
       <div className="border border-gray-200 rounded-xl p-3 bg-white animate-pulse">
@@ -141,6 +159,7 @@ const ProductGrid = () => {
     const selectedRows = filteredProducts.filter((item) =>
       selectedProductIds.includes(item._id)
     );
+
     const sourceRows = selectedRows.length > 0 ? selectedRows : filteredProducts;
 
     if (!sourceRows.length) {
@@ -436,6 +455,27 @@ const ProductGrid = () => {
                     {firstVariant?.quantityUnit}
                   </span>
                 </p>
+
+              </div>
+
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs font-medium">
+                  {product.status ? "active" : "inactive"}
+                </span>
+
+                <button
+                  onClick={() => handleToggleStatus(product)}
+                  className={`w-10 h-5 flex items-center rounded-full p-1 transition-all duration-300 ${product.status === "active" ? "bg-green-500" : "bg-gray-300"
+                    }`}
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all duration-300 ${product.status === "active"
+                      ? "translate-x-5"
+                      : "translate-x-0"
+                      }`}
+                  />
+                </button>
+
               </div>
 
               {/* Buttons */}

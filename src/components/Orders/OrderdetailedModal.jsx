@@ -154,11 +154,11 @@ function OrderDetailsModal({ order, loading, onClose }) {
               {/* ✅ Discount Breakdown (only if exists) */}
               {order?.discounts?.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-gray-500">
+                  {/* <p className="text-xs font-semibold text-gray-500">
                     Discount Breakdown
-                  </p>
+                  </p> */}
 
-                  {order.discounts.map((disc, index) => (
+                  {/* {order.discounts.map((disc, index) => (
                     disc?.discountAmount > 0 && (
                       <div
                         key={index}
@@ -170,7 +170,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
                         <span>- ₹{disc.discountAmount.toFixed(2)}</span>
                       </div>
                     )
-                  ))}
+                  ))} */}
                 </div>
               )}
 

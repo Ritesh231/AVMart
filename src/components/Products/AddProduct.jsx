@@ -11,7 +11,6 @@ import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 
-
 /* -------------------- Reusable Fields -------------------- */
 
 const InputField = ({ label, error, ...props }) => (
@@ -202,8 +201,10 @@ export default function AddProduct() {
       originalPrice: "",
       discountType: "",
       discountValue: "",
-      // gstRate: "",
+      gstRate: "",
       stock: "",
+      marginPercentage: "",
+      InRate: "",
       // sku: "",
       imageFiles: [], // For storing file objects
       imageUrls: [], // For storing URLs (if you have them)
@@ -214,7 +215,15 @@ export default function AddProduct() {
   /* -------------------- Variant Logic -------------------- */
   const handleVariantChange = (index, e) => {
     const updated = [...variants];
-    updated[index][e.target.name] = e.target.value;
+    let { name, value } = e.target;
+
+    // ✅ Restrict marginPercentage
+    if (name === "marginPercentage") {
+      if (value > 100) value = 100;
+      if (value < 0) value = 0;
+    }
+
+    updated[index][name] = value;
     setVariants(updated);
   };
 
@@ -245,7 +254,9 @@ export default function AddProduct() {
         originalPrice: "",
         discountType: "percent",
         discountValue: "",
-        // gstRate: "",
+        gstRate: "",
+        marginPercentage: "",
+        InRate: "",
         stock: "",
         // sku: "",
         imageFiles: [],
@@ -258,6 +269,8 @@ export default function AddProduct() {
   const removeVariant = (index) => {
     setVariants(variants.filter((_, i) => i !== index));
   };
+
+
 
   /* -------------------- Submit -------------------- */
   const onSubmit = async (data) => {
@@ -306,9 +319,12 @@ export default function AddProduct() {
         quantityValue: Number(v.quantityValue),
         quantityUnit: v.quantityUnit,
         originalPrice: Number(v.originalPrice),
+        gstRate: v.gstRate,
         discountType: v.discountType || null,
         discountValue: Number(v.discountValue || 0),
         stock: Number(v.stock),
+        marginPercentage: Number(v.marginPercentage || 0),
+        InRate: Number(v.InRate || 0),
         images: v.imageUrls || [] // Send back existing URLs for the backend to keep
       }));
 
@@ -383,7 +399,6 @@ export default function AddProduct() {
               {...register("subcategory",)}
             />
 
-            {/* Main Image */}
             {/* Main Image */}
             <div>
               <label className="text-xs font-medium text-gray-600">
@@ -570,7 +585,7 @@ export default function AddProduct() {
                       }
                     }}
                   />
-                  {/* <div>
+                  <div>
                     <label className="text-xs font-medium text-gray-600">
                       GST Rate
                     </label>
@@ -588,7 +603,7 @@ export default function AddProduct() {
                       <option value="18">18%</option>
                       <option value="28">28%</option>
                     </select>
-                  </div> */}
+                  </div>
 
                   <InputField
                     label="Stock"
@@ -596,6 +611,31 @@ export default function AddProduct() {
                     type="number"
                     placeholder="Value should be a Number"
                     value={variant.stock}
+                    onChange={(e) => handleVariantChange(index, e)}
+                  />
+
+                  <InputField
+                    label="Margin %"
+                    name="marginPercentage"
+                    type="number"
+                    placeholder="Enter margin %"
+                    value={variant.marginPercentage}
+                    onChange={(e) => handleVariantChange(index, e)}
+                    min={0}
+                    max={100}
+                    onInput={(e) => {
+                      if (e.target.value > 100) {
+                        e.target.value = 100;
+                      }
+                    }}
+                  />
+
+                  <InputField
+                    label="In Rate"
+                    name="InRate"
+                    type="number"
+                    placeholder="Enter In Rate"
+                    value={variant.InRate}
                     onChange={(e) => handleVariantChange(index, e)}
                   />
 

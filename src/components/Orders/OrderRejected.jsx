@@ -1,23 +1,22 @@
 import { FaEye } from "react-icons/fa";
 import { ChevronDown, Download, Search, SlidersHorizontal } from "lucide-react";
 import { BsWallet2 } from "react-icons/bs";
-import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
+import { useGetOrdersByStatusQuery, useAssignOrderStatusMutation } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import { useEffect, useRef, useState } from "react";
 
 export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 20; // Match API limit
+  const ordersPerPage = 20;
 
-  // ✅ Server-side pagination - send page and limit to API
   const {
     data,
     isLoading,
     isError,
     refetch
   } = useGetOrdersByStatusQuery({
-    status: "Rejected",
+    status: "shop_closed",
     page: currentPage,
     limit: ordersPerPage
   });
@@ -29,6 +28,8 @@ export default function UsersTable() {
     limit: ordersPerPage,
     pages: 1
   };
+
+  const [assignOrderStatus] = useAssignOrderStatusMutation();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All");
@@ -234,9 +235,16 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
-  // ✅ Calculate display values from API pagination
   const startIndex = (pagination.page - 1) * pagination.limit + 1;
   const endIndex = Math.min(pagination.page * pagination.limit, pagination.total);
+
+  const handleReassign = async (id) => {
+    try {
+      await assignOrderStatus({ id, status: "confirmed" });
+    } catch (error) {
+      console.error("Error reassigning order:", error);
+    }
+  };
 
   return (
     <>
@@ -431,7 +439,8 @@ export default function UsersTable() {
                       {u.paymentMethod}
                     </span>
                   </td>
-                  <td className="p-3">
+
+                  <td className="p-3 flex gap-5">
                     <button
                       className="p-1 text-blue-900"
                       title="View"
@@ -442,7 +451,15 @@ export default function UsersTable() {
                     >
                       <FaEye size={18} />
                     </button>
+                    <button
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+                        bg-[#1E264F] text-white hover:bg-opacity-90"
+                      onClick={() => handleReassign(u._id)}
+                    >
+                      Reassign
+                    </button>
                   </td>
+
                 </tr>
               ))}
           </tbody>

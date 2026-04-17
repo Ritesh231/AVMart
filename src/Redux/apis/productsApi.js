@@ -156,6 +156,15 @@ export const Productsapi = baseApi.injectEndpoints({
       invalidatesTags: ["Brands"],
     }),
 
+    updateStatus: builder.mutation({
+      query: ({ body }) => ({
+        url: `/api/v1/admin/products/product-status`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Products"],
+    }),
+
   }),
 });
 
@@ -163,4 +172,4 @@ export const { useGetallproductsQuery, useGetallcategoriesQuery,
   useGetallSubcategoriesQuery, useGetallBrandsQuery, useAddProductMutation,
   useAddCategoryMutation, useAddSubcategoryMutation, useAddBrandMutation, useEditCategoryMutation,
   useDeleteCategoryMutation, useEditSubcategoryMutation, useDeleteSubcategoryMutation,
-  useUpdateProductMutation, useDeleteProductMutation, useUpdateBrandMutation, useDeleteBrandMutation } = Productsapi;
+  useUpdateProductMutation, useDeleteProductMutation, useUpdateBrandMutation, useDeleteBrandMutation, useUpdateStatusMutation } = Productsapi;

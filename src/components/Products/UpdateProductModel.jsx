@@ -169,7 +169,9 @@ export default function EditProductModal({
           discountValue: v.discountValue ?? 0,
           imageUrls: v.images || [],
           imageFiles: [],
-          // gstRate: v.gstRate ?? 18,
+          gstRate: v.gstRate ?? 18,
+          marginPercentage: v.marginPercentage ?? 0,
+          InRate: v.InRate ?? 0,
         })),
       });
 
@@ -178,7 +180,7 @@ export default function EditProductModal({
   }, [productData]);
 
   const QUANTITY_UNITS = ["ml", "l", "g", "kg", "piece", "dozen", "pack", "box", ""];
-  // const GST_RATES = [0, 3, 5, 12, 18, 28];
+  const GST_RATES = [0, 3, 5, 12, 18, 28];
 
   // Handle normal input
   const handleChange = (e) => {
@@ -257,7 +259,10 @@ export default function EditProductModal({
         discountType: v.discountType || null,
         discountValue: Number(v.discountValue || 0),
         stock: Number(v.stock),
-        images: v.imageUrls || [], // ✅ IMPORTANT
+        images: v.imageUrls || [],
+        gstRate: Number(v.gstRate || 0),
+        marginPercentage: Number(v.marginPercentage || 0),
+        InRate: Number(v.InRate || 0),
       }));
 
       submitData.append("variants", JSON.stringify(formattedVariants));
@@ -467,6 +472,47 @@ export default function EditProductModal({
                     <option value="flat">Flat</option>
                   </select>
                 </div>
+
+                {/* GST */}
+                <select
+                  value={variant.gstRate || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "gstRate", e.target.value)
+                  }
+                  className="border p-2 rounded text-sm"
+                >
+                  <option value="">GST</option>
+                  {GST_RATES.map((g) => (
+                    <option key={g} value={g}>
+                      {g}%
+                    </option>
+                  ))}
+                </select>
+
+                {/* Margin % */}
+                <input
+                  type="number"
+                  value={variant.marginPercentage || ""}
+                  onChange={(e) => {
+                    let value = Number(e.target.value);
+                    if (value > 100) value = 100;
+                    if (value < 0) value = 0;
+                    handleVariantChange(index, "marginPercentage", value);
+                  }}
+                  placeholder="Margin %"
+                  className="border p-2 rounded text-sm"
+                />
+
+                {/* InRate */}
+                <input
+                  type="number"
+                  value={variant.InRate || ""}
+                  onChange={(e) =>
+                    handleVariantChange(index, "InRate", e.target.value)
+                  }
+                  placeholder="In Rate"
+                  className="border rounded text-sm px-2 py-1.5 sm:py-2 h-9 sm:h-10"
+                />
 
                 {/* Images */}
                 <div className="mt-3">
