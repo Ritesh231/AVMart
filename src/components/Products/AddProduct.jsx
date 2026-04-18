@@ -6,6 +6,7 @@ import {
   useGetallSubcategoriesQuery,
   useGetallBrandsQuery,
   useGetallcategoriesQuery,
+  useSearchPartyQuery,
 } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
@@ -60,17 +61,26 @@ const SelectField = ({ label, options, error, ...props }) => (
 /* -------------------- Main Component -------------------- */
 
 export default function AddProduct() {
+  const [partySearch, setPartySearch] = useState("");
+  const [selectedParty, setSelectedParty] = useState(null);
   const [addProduct, { isLoading }] = useAddProductMutation();
 
   const { data: subcategoryData } = useGetallSubcategoriesQuery();
   const { data: brandData } = useGetallBrandsQuery();
   const { data: categoryData } = useGetallcategoriesQuery();
+  const { data: partyData } = useSearchPartyQuery(partySearch, {
+    skip: !partySearch,
+  });
+
+  const partyList = partyData?.data || [];
+  const [isNewParty, setIsNewParty] = useState(false);
 
   const subcategories = subcategoryData?.data || [];
   const brands = brandData?.data || [];
   const categories = categoryData?.data || [];
 
   const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const handleRemoveBg = async (type = "primary", index = null) => {
     let file;
@@ -270,8 +280,6 @@ export default function AddProduct() {
     setVariants(variants.filter((_, i) => i !== index));
   };
 
-
-
   /* -------------------- Submit -------------------- */
   const onSubmit = async (data) => {
     const formData = data;
@@ -282,13 +290,16 @@ export default function AddProduct() {
     if (!formData.category) return toast.error("Category is required");
     if (!variants.length) return toast.error("At least one variant required");
 
+    if (!isNewParty && !selectedParty) {
+      return toast.error("Please select a Party");
+    }
+
     // Validate variants
     for (let i = 0; i < variants.length; i++) {
       const v = variants[i];
       if (!v.quantityValue || !v.quantityUnit) return toast.error(`Variant ${i + 1}: Quantity required`);
       if (!v.originalPrice) return toast.error(`Variant ${i + 1}: Original Price required`);
 
-      // Check if both file uploads and existing URLs are missing
       if ((!v.imageFiles || v.imageFiles.length === 0) && (!v.imageUrls || v.imageUrls.length === 0)) {
         return toast.error(`Variant ${i + 1}: Image is required`);
       }
@@ -308,6 +319,37 @@ export default function AddProduct() {
       submitData.append("subcategory", formData.subcategory || "");
       submitData.append("status", formData.status);
 
+      // ✅ FIXED: Handle Party data properly
+      if (!isNewParty && selectedParty) {
+        // For existing party - send just the ID
+        submitData.append("Party", selectedParty._id);
+      } else if (isNewParty && data.newParty) {
+
+        submitData.append("Party[PartName]", data.newParty?.name || "");
+        submitData.append("Party[contactPerson]", data.newParty?.contactPerson || "");
+        submitData.append("Party[phone]", data.newParty?.phone || "");
+        submitData.append("Party[GSTin]", data.newParty?.GSTin || "");
+        submitData.append("Party[PAN]", data.newParty?.PAN || "");
+        submitData.append("Party[BillingAddress]", data.newParty?.address || "");
+        submitData.append("Party[statePinCode]", data.newParty?.statePinCode || "");
+        submitData.append("Party[placeOfSupply]", data.newParty?.placeOfSupply || "");
+
+        // Option 2: Send as JSON string but backend needs to parse it
+        // If backend expects a JSON string, uncomment below:
+        /*
+        submitData.append("Party", JSON.stringify({
+          PartName: data.newParty?.name || "",
+          contactPerson: data.newParty?.contactPerson || "",
+          phone: data.newParty?.phone || "",
+          GSTin: data.newParty?.GSTin || "",
+          PAN: data.newParty?.PAN || "",
+          BillingAddress: data.newParty?.address || "",
+          statePinCode: data.newParty?.statePinCode || "",
+          placeOfSupply: data.newParty?.placeOfSupply || "",
+        }));
+        */
+      }
+
       // 2. Clear out primary images (Frontend files)
       if (formData.primaryImages && formData.primaryImages[0]) {
         submitData.append("primaryImages", formData.primaryImages[0]);
@@ -315,7 +357,7 @@ export default function AddProduct() {
 
       // 3. Format variants JSON (keeping existing URLs)
       const formattedVariants = variants.map((v) => ({
-        _id: v._id, // Preserve ID for updates
+        _id: v._id,
         quantityValue: Number(v.quantityValue),
         quantityUnit: v.quantityUnit,
         originalPrice: Number(v.originalPrice),
@@ -325,22 +367,21 @@ export default function AddProduct() {
         stock: Number(v.stock),
         marginPercentage: Number(v.marginPercentage || 0),
         InRate: Number(v.InRate || 0),
-        images: v.imageUrls || [] // Send back existing URLs for the backend to keep
+        images: v.imageUrls || []
       }));
 
       submitData.append("variants", JSON.stringify(formattedVariants));
 
-      // 4. THE FIX: Append new variant image files uniquely by their index
+      // 4. Append new variant image files
       variants.forEach((v, index) => {
         if (v.imageFiles && v.imageFiles.length > 0) {
           v.imageFiles.forEach((file) => {
-            // This matches the new backend logic: variantImage_0, variantImage_1, etc.
             submitData.append(`variantImage_${index}`, file);
           });
         }
       });
 
-      // 5. API Call (Replace 'id' with your actual product ID variable if Updating)
+      // 5. API Call
       const response = await addProduct(submitData).unwrap();
       toast.success("Product Added Successfully ✅");
       navigate("/products/all");
@@ -350,8 +391,6 @@ export default function AddProduct() {
       toast.error(error.data?.message || "Failed to process product ❌");
     }
   };
-
-
 
   /* -------------------- UI -------------------- */
   return (
@@ -364,149 +403,227 @@ export default function AddProduct() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-6">
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <InputField
-              label="Product Name"
-              error={errors.productName?.message}
-              {...register("productName", { required: "Product Name is required" })}
-            />
 
-            <InputField
-              label="Subtext"
-              error={errors.subtext?.message}
-              {...register("subtext")}
-            />
+          {/* -------------------- Party Section -------------------- */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setIsNewParty(false)}
+              className={`px-3 py-1 text-xs rounded ${!isNewParty ? "bg-[#1E264F] text-white" : "bg-gray-200"}`}
+            >
+              Select Existing
+            </button>
 
-            <SelectField
-              label="Brand"
-              options={brands}
-              error={errors.brand?.message}
-              {...register("brand", { required: "Brand is required" })}
-            />
-
-            <SelectField
-              label="Category"
-              options={categories}
-              error={errors.category?.message}
-              {...register("category", { required: "Category is required" })}
-            />
-
-            <SelectField
-              label="Subcategory"
-              options={filteredSubcategories}
-              error={errors.subcategory?.message}
-              {...register("subcategory",)}
-            />
-
-            {/* Main Image */}
-            <div>
-              <label className="text-xs font-medium text-gray-600">
-                Primary Image <span className="text-red-500">*</span>
-              </label>
-
-              {/* Upload Box */}
-              <label
-                htmlFor="primaryImage"
-                className={`mt-1 flex flex-col items-center justify-center 
-      border-2 border-dashed rounded-lg h-28 cursor-pointer transition
-      ${errors.primaryImages
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-300 hover:border-[#00E5B0]'
-                  }`}
-              >
-                {preview ? (
-                  <img
-                    src={preview}
-                    alt="preview"
-                    className="h-20 object-contain"
-                  />
-                ) : (
-                  <>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12v-8m0 0L9 7m3-3l3 3"
-                      />
-                    </svg>
-                    <span className="text-xs text-gray-400 mt-1">
-                      Click to Upload
-                    </span>
-                  </>
-                )}
-              </label>
-
-              {/* Hidden Input */}
-              <input
-                id="primaryImage"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                {...register("primaryImages", {
-                  required: "Primary Image is required",
-                  validate: (files) => {
-                    if (!files || files.length === 0) {
-                      return "Primary Image is required";
-                    }
-                    return true;
-                  },
-                  onChange: (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setPreview(URL.createObjectURL(file));
-                    }
-                  },
-                })}
-              />
-
-              {errors.primaryImages && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.primaryImages.message}
-                </p>
-              )}
-
-              <div className="flex gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => handleRemoveBg("primary")}
-                  disabled={isRemovingBg}
-                  className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-gray-800 disabled:opacity-50"
-                >
-                  {isRemovingBg ? "Processing..." : "Remove Background"}
-                </button>
-              </div>
-            </div>
-
-
+            <button
+              type="button"
+              onClick={() => setIsNewParty(true)}
+              className={`px-3 py-1 text-xs rounded ${isNewParty ? "bg-[#1E264F] text-white" : "bg-gray-200"}`}
+            >
+              Add New Party
+            </button>
           </div>
 
-          {/* Textareas */}
-          <div className="space-y-4">
-            <TextareaField
-              label="Description"
-              error={errors.description?.message}
-              {...register("description")}
-            />
+          {!isNewParty && (
+            <>
+              <input
+                type="text"
+                placeholder="Search Party"
+                value={partySearch}
+                onChange={(e) => {
+                  setPartySearch(e.target.value);
+                  setShowDropdown(true);
+                }}
+                className="w-full px-3 py-2 border rounded-lg text-sm"
+              />
 
-            <TextareaField
-              label="Key Features (Comma separated)"
-              error={errors.keyFeatures?.message}
-              {...register("keyFeatures")}
-            />
+              {showDropdown && partyList.length > 0 && (
+                <div className="border rounded-lg max-h-40 overflow-y-auto bg-white shadow">
+                  {partyList.map((party) => (
+                    <div
+                      key={party._id}
+                      onClick={() => {
+                        setSelectedParty(party);
+                        setPartySearch(party.PartName);
+                        setShowDropdown(false);
+                      }}
+                      className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                    >
+                      {party.PartName} ({party.phone})
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selectedParty && (
+                <div className="mt-2 p-2 bg-green-50 border border-green-300 rounded text-sm">
+                  ✅ Selected: {selectedParty.PartName}
+                </div>
+              )}
+            </>
+          )}
 
-            <TextareaField
-              label="Wholesale Advantage"
-              error={errors.wholesaleAdvantage?.message}
-              {...register("wholesaleAdvantage")}
-            />
+          {isNewParty && (
+            <div className="grid grid-cols-2 gap-3">
+              <InputField label="Party Name" {...register("newParty.name")} />
+              <InputField label="Contact Person" {...register("newParty.contactPerson")} />
+              <InputField label="Phone" {...register("newParty.phone")} />
+              <InputField label="GST" {...register("newParty.GSTin")} />
+              <InputField label="Address" {...register("newParty.address")} />
+              <InputField label="PAN" {...register("newParty.PAN")} />
+              <InputField label="State + PinCode" {...register("newParty.statePinCode")} />
+              <InputField label="Place of Supply" {...register("newParty.placeOfSupply")} />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {/* Section Title */}
+            <h3 className="font-semibold text-gray-700 text-lg">
+              Product Details
+            </h3>
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              <InputField
+                label="Product Name"
+                error={errors.productName?.message}
+                {...register("productName", { required: "Product Name is required" })}
+              />
+
+              <InputField
+                label="Subtext"
+                error={errors.subtext?.message}
+                {...register("subtext")}
+              />
+
+              <SelectField
+                label="Brand"
+                options={brands}
+                error={errors.brand?.message}
+                {...register("brand", { required: "Brand is required" })}
+              />
+
+              <SelectField
+                label="Category"
+                options={categories}
+                error={errors.category?.message}
+                {...register("category", { required: "Category is required" })}
+              />
+
+              <SelectField
+                label="Subcategory"
+                options={filteredSubcategories}
+                error={errors.subcategory?.message}
+                {...register("subcategory",)}
+              />
+
+              {/* Main Image */}
+              <div>
+                <label className="text-xs font-medium text-gray-600">
+                  Primary Image <span className="text-red-500">*</span>
+                </label>
+
+                {/* Upload Box */}
+                <label
+                  htmlFor="primaryImage"
+                  className={`mt-1 flex flex-col items-center justify-center 
+      border-2 border-dashed rounded-lg h-28 cursor-pointer transition
+      ${errors.primaryImages
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-300 hover:border-[#00E5B0]'
+                    }`}
+                >
+                  {preview ? (
+                    <img
+                      src={preview}
+                      alt="preview"
+                      className="h-20 object-contain"
+                    />
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12v-8m0 0L9 7m3-3l3 3"
+                        />
+                      </svg>
+                      <span className="text-xs text-gray-400 mt-1">
+                        Click to Upload
+                      </span>
+                    </>
+                  )}
+                </label>
+
+                {/* Hidden Input */}
+                <input
+                  id="primaryImage"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  {...register("primaryImages", {
+                    required: "Primary Image is required",
+                    validate: (files) => {
+                      if (!files || files.length === 0) {
+                        return "Primary Image is required";
+                      }
+                      return true;
+                    },
+                    onChange: (e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setPreview(URL.createObjectURL(file));
+                      }
+                    },
+                  })}
+                />
+
+                {errors.primaryImages && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.primaryImages.message}
+                  </p>
+                )}
+
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveBg("primary")}
+                    disabled={isRemovingBg}
+                    className="text-xs px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    {isRemovingBg ? "Processing..." : "Remove Background"}
+                  </button>
+                </div>
+              </div>
+
+
+            </div>
+
+            {/* Textareas */}
+            <div className="space-y-4">
+              <TextareaField
+                label="Description"
+                error={errors.description?.message}
+                {...register("description")}
+              />
+
+              <TextareaField
+                label="Key Features (Comma separated)"
+                error={errors.keyFeatures?.message}
+                {...register("keyFeatures")}
+              />
+
+              <TextareaField
+                label="Wholesale Advantage"
+                error={errors.wholesaleAdvantage?.message}
+                {...register("wholesaleAdvantage")}
+              />
+            </div>
           </div>
 
           {/* Variants */}
@@ -554,7 +671,7 @@ export default function AddProduct() {
                   />
 
 
-                  <div>
+                  {/* <div>
                     <label className="text-xs font-medium text-gray-600">
                       Discount Type
                     </label>
@@ -584,7 +701,8 @@ export default function AddProduct() {
                         e.target.value = 100;
                       }
                     }}
-                  />
+                  /> */}
+
                   <div>
                     <label className="text-xs font-medium text-gray-600">
                       GST Rate

@@ -23,7 +23,7 @@ export default function UsersTable() {
     isError,
     refetch
   } = useGetOrdersByStatusAssignQuery({
-    status: "Assigned",
+    status: "assigned",
     page: currentPage,
     limit: ordersPerPage
   });

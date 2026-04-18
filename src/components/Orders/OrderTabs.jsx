@@ -27,6 +27,11 @@ const tabs = [
     label: "Rejected",
     path: "/orders/rejected",
   },
+  {
+    id: "reassign",
+    label: "Reassign",
+    path: "/orders/reassign",
+  }
 ];
 
 export default function OrderPaymentTabs() {
@@ -43,10 +48,9 @@ export default function OrderPaymentTabs() {
             key={tab.id}
             onClick={() => navigate(tab.path)}
             className={`px-6 py-3 rounded-lg flex items-center justify-center gap-3 font-semibold transition-all duration-300  first:ml-0
-              ${
-                isActive
-                  ? "bg-[#00E5B0] text-white shadow-sm"
-                  : "bg-white text-[#1E264F] hover:bg-opacity-90"
+              ${isActive
+                ? "bg-[#00E5B0] text-white shadow-sm"
+                : "bg-white text-[#1E264F] hover:bg-opacity-90"
               }`}
           >
             <span className={isActive ? "text-white" : "text-[#1E264F]"}>

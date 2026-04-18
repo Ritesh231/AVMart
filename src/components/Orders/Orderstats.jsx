@@ -8,7 +8,7 @@ import StatCardSkeleton from "../statcardskeleton";
 export default function UserStats() {
   const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, isError, } = useGetOrdersByStatusQuery({
-    status: "Pending",
+    status: "pending",
     page: currentPage,
     limit: 20,
   },

@@ -429,14 +429,13 @@ const ProductGrid = () => {
               {/* Price */}
               <div className="flex gap-2 mt-1">
                 <p className="text-sm font-semibold text-gray-800">
-                  ₹{firstVariant?.price || firstVariant?.originalPrice}
+                  ₹{firstVariant?.OutRate}
                 </p>
 
-                {firstVariant?.discountValue && (
-                  <p className="text-sm text-gray-400 line-through">
-                    ₹{firstVariant?.originalPrice}
-                  </p>
-                )}
+
+                <p className="text-sm text-gray-400 line-through">
+                  ₹{firstVariant?.originalPrice}
+                </p>
               </div>
 
               {/* Stock */}

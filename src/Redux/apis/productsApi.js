@@ -165,6 +165,12 @@ export const Productsapi = baseApi.injectEndpoints({
       invalidatesTags: ["Products"],
     }),
 
+    searchParty: builder.query({
+      query: (search) => ({
+        url: `/api/v1/admin/party/search?search=${search}`,
+      }),
+    }),
+
   }),
 });
 
@@ -172,4 +178,5 @@ export const { useGetallproductsQuery, useGetallcategoriesQuery,
   useGetallSubcategoriesQuery, useGetallBrandsQuery, useAddProductMutation,
   useAddCategoryMutation, useAddSubcategoryMutation, useAddBrandMutation, useEditCategoryMutation,
   useDeleteCategoryMutation, useEditSubcategoryMutation, useDeleteSubcategoryMutation,
-  useUpdateProductMutation, useDeleteProductMutation, useUpdateBrandMutation, useDeleteBrandMutation, useUpdateStatusMutation } = Productsapi;
+  useUpdateProductMutation, useDeleteProductMutation, useUpdateBrandMutation, useDeleteBrandMutation, useUpdateStatusMutation,
+  useSearchPartyQuery, } = Productsapi;

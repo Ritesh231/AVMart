@@ -16,9 +16,13 @@ import OrderDetailsModal from "../Orders/OrderdetailedModal";
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
+import useSocket from "../../hooks/useSocket";
+import { getAddressFromCoords } from "../../utils/geocoding";
 
 export default function UsersTable() {
   const navigate = useNavigate();
+  const { socket, isConnected } = useSocket();
+  const [deliveryBoyLocations, setDeliveryBoyLocations] = useState({});
 
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 20;
@@ -29,7 +33,7 @@ export default function UsersTable() {
     isError,
     refetch
   } = useGetOrdersByStatusQuery({
-    status: "Pending",
+    status: "pending",
     page: currentPage,
     limit: ordersPerPage
   });
@@ -145,6 +149,44 @@ export default function UsersTable() {
       toast.error(err?.data?.message || "Failed to reject ❌");
     }
   };
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleLocationUpdate = async (data) => {
+      console.log("Socket: Received location update:", data);
+      // data: { driverId, latitude, longitude, address, ... }
+      const boyId = data.driverId || data.deliveryBoyId;
+      if (boyId) {
+        let updatedData = { ...data };
+
+        // If address is missing, try to geocode
+        if (!updatedData.address && updatedData.latitude && updatedData.longitude) {
+          const address = await getAddressFromCoords(updatedData.latitude, updatedData.longitude);
+          if (address) {
+            updatedData.address = address;
+          }
+        }
+
+        setDeliveryBoyLocations((prev) => ({
+          ...prev,
+          [boyId]: updatedData,
+        }));
+      }
+    };
+
+    socket.on("adminOrderLocationsUpdate", handleLocationUpdate);
+
+    return () => {
+      socket.off("adminOrderLocationsUpdate", handleLocationUpdate);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (deliveryData?.data) {
+      console.log("Delivery Data IDs:", deliveryData.data.map(b => ({ name: b.Name, id: b._id })));
+    }
+  }, [deliveryData]);
 
   const handleAssignDelivery = async (boyId) => {
     try {
@@ -561,9 +603,12 @@ export default function UsersTable() {
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white w-[400px] max-h-[500px] overflow-y-auto rounded-xl p-5">
 
-              <h2 className="text-lg font-semibold mb-4">
+              <h2 className="text-lg font-semibold mb-2">
                 Assign Delivery Boy
               </h2>
+              <div className={`text-xs mb-4 ${isConnected ? "text-green-500" : "text-red-500"}`}>
+                Socket: {isConnected ? "Connected" : "Disconnected"}
+              </div>
 
               {deliveryData?.data?.map((boy) => {
                 const isThisLoading =
@@ -584,6 +629,15 @@ export default function UsersTable() {
                     <p className="text-sm text-gray-500">
                       Status: {boy.deliveryBoyAvailable}
                     </p>
+                    {deliveryBoyLocations[boy._id] ? (
+                      <p className="text-sm text-blue-500 font-semibold">
+                        Location: {deliveryBoyLocations[boy._id].address || `${deliveryBoyLocations[boy._id].latitude}, ${deliveryBoyLocations[boy._id].longitude}`}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">
+                        Waiting for live location...
+                      </p>
+                    )}
 
                     {isThisLoading && (
                       <p className="text-xs text-blue-600 mt-1">

@@ -23,6 +23,7 @@ const OrderOutForDelivery = lazy(() =>
 const OrderDelivered = lazy(() => import("../components/Orders/OrderDelivered"));
 const OrderRejected = lazy(() => import("../components/Orders/OrderRejected"));
 const OrderDetails = lazy(() => import("../components/Orders/OrderDetails"));
+const OrderReassign = lazy(() => import("../components/Orders/OrderReassign"));
 
 /* Product */
 const AllProducts = lazy(() => import("../components/Products/AllProducts"));
@@ -130,6 +131,7 @@ export default function AppRouter() {
             <Route path="out-for-delivery" element={<OrderOutForDelivery />} />
             <Route path="delivered" element={<OrderDelivered />} />
             <Route path="rejected" element={<OrderRejected />} />
+            <Route path="reassign" element={<OrderReassign />} />
           </Route>
           <Route path="/order/details/:id" element={<OrderDetails />} />
 

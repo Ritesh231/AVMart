@@ -18,7 +18,7 @@ export default function UsersTable() {
     isError,
     refetch
   } = useGetOrdersByStatusQuery({
-    status: "Delivered",
+    status: "delivered",
     page: currentPage,
     limit: ordersPerPage
   });

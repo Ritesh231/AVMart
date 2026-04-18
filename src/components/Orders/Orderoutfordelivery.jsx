@@ -6,12 +6,16 @@ import React, { useEffect, useRef, useState } from "react";
 import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
+import useSocket from "../../hooks/useSocket";
+import { getAddressFromCoords } from "../../utils/geocoding";
 
 export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState('All');
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const { socket, isConnected } = useSocket();
+  const [deliveryBoyLocations, setDeliveryBoyLocations] = useState({});
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
   const ordersPerPage = 20;
@@ -23,7 +27,7 @@ export default function UsersTable() {
     isError,
     refetch
   } = useGetOrdersByStatusQuery({
-    status: "OutForDelivery",
+    status: "outfordelivery",
     page: currentPage,
     limit: ordersPerPage
   });
@@ -63,6 +67,36 @@ export default function UsersTable() {
     setCurrentPage(1);
     refetch();
   }, [activeTab, refetch]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleLocationUpdate = async (data) => {
+      // data: { driverId, latitude, longitude, address, ... }
+      const boyId = data.driverId || data.deliveryBoyId;
+      if (boyId) {
+        let updatedData = { ...data };
+
+        // If address is missing, try to geocode
+        if (!updatedData.address && updatedData.latitude && updatedData.longitude) {
+          const address = await getAddressFromCoords(updatedData.latitude, updatedData.longitude);
+          if (address) {
+            updatedData.address = address;
+          }
+        }
+
+        setDeliveryBoyLocations((prev) => ({
+          ...prev,
+          [boyId]: updatedData,
+        }));
+      }
+    };
+
+    socket.on("adminOrderLocationsUpdate", handleLocationUpdate);
+    return () => {
+      socket.off("adminOrderLocationsUpdate", handleLocationUpdate);
+    };
+  }, [socket]);
 
   // Refetch when page changes
   useEffect(() => {
@@ -313,6 +347,10 @@ export default function UsersTable() {
         </div>
       </div>
 
+      <div className={`text-xs mb-2 px-2 ${isConnected ? "text-green-500" : "text-red-500"}`}>
+        Socket Status: {isConnected ? "Connected" : "Disconnected"}
+      </div>
+
       {/* Table */}
       <div className="bg-white rounded-xl border overflow-x-auto">
         <table className="min-w-[900px] w-full text-sm">
@@ -435,9 +473,16 @@ export default function UsersTable() {
                     </span>
                   </td>
                   <td className="p-3">
-                    <div className="flex items-center gap-2 text-[#1A2550] text-sm">
-                      <MdDeliveryDining className="text-xl" />
-                      {u.deliveryBoy?.name || "Not Assigned"}
+                    <div className="flex flex-col gap-1 text-[#1A2550] text-sm">
+                      <div className="flex items-center gap-2">
+                        <MdDeliveryDining className="text-xl" />
+                        {u.deliveryBoy?.name || "Not Assigned"}
+                      </div>
+                      {u.deliveryBoy?._id && deliveryBoyLocations[u.deliveryBoy._id] && (
+                        <div className="text-xs text-blue-500 font-semibold pl-7">
+                          {deliveryBoyLocations[u.deliveryBoy._id].address || `${deliveryBoyLocations[u.deliveryBoy._id].latitude}, ${deliveryBoyLocations[u.deliveryBoy._id].longitude}`}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="p-3">

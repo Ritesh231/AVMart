@@ -20,6 +20,7 @@ export default function UsersTable() {
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const [orderFilter, setOrderFilter] = useState("all");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
@@ -41,17 +42,41 @@ export default function UsersTable() {
 
   // Apply client-side filtering for shopType and search
   const filteredUsers = users.filter((user) => {
-    // Filter by shop type
-    const matchesShopType = shopTypeFilter === "all" || user.shopType === shopTypeFilter;
+    // Shop Type Filter
+    const matchesShopType =
+      shopTypeFilter === "all" || user.shopType === shopTypeFilter;
 
-    // Filter by search term
-    const matchesSearch = searchTerm === "" ||
+    // Search Filter
+    const matchesSearch =
+      searchTerm === "" ||
       user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.contact?.includes(searchTerm) ||
       user.shopName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesShopType && matchesSearch;
+    // ✅ Order Filter Logic
+    let matchesOrderFilter = true;
+
+    if (orderFilter === "recent") {
+      if (!user.latestOrder?.createdAt) return false;
+
+      const orderDate = new Date(user.latestOrder.createdAt);
+      const now = new Date();
+
+      const diffDays = (now - orderDate) / (1000 * 60 * 60 * 24);
+
+      matchesOrderFilter = diffDays <= 7; // last 7 days
+    }
+
+    if (orderFilter === "no_orders") {
+      matchesOrderFilter = user.ordersCount === 0 || !user.ordersCount;
+    }
+
+    if (orderFilter === "high_orders") {
+      matchesOrderFilter = user.ordersCount >= 5;
+    }
+
+    return matchesShopType && matchesSearch && matchesOrderFilter;
   });
 
   // Reset to page 1 when filters change
@@ -298,18 +323,37 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          <div className="flex items-center gap-2 border border-brand-cyan px-3 py-3 rounded-2xl bg-white">
-            <select
-              value={shopTypeFilter}
-              onChange={(e) => setShopTypeFilter(e.target.value)}
-              className="bg-transparent font-semibold text-brand-navy outline-none"
-            >
-              <option value="all">All Shop Types</option>
-              <option value="medical">Medical</option>
-              <option value="general">General</option>
-              <option value="kirana">Kirana</option>
-              <option value="cosmetics">Cosmetics</option>
-            </select>
+          <div className="flex items-center gap-3">
+
+            {/* Shop Type */}
+            <div className="flex items-center border border-brand-cyan px-3 py-3 rounded-2xl bg-white">
+              <select
+                value={shopTypeFilter}
+                onChange={(e) => setShopTypeFilter(e.target.value)}
+                className="bg-transparent font-semibold text-brand-navy outline-none"
+              >
+                <option value="all">All Shop Types</option>
+                <option value="medical">Medical</option>
+                <option value="general">General</option>
+                <option value="kirana">Kirana</option>
+                <option value="cosmetics">Cosmetics</option>
+              </select>
+            </div>
+
+            {/* Order Filter */}
+            <div className="flex items-center border border-brand-cyan px-3 py-3 rounded-2xl bg-white">
+              <select
+                value={orderFilter}
+                onChange={(e) => setOrderFilter(e.target.value)}
+                className="bg-transparent font-semibold text-brand-navy outline-none"
+              >
+                <option value="all">All Orders</option>
+                <option value="recent">Recent Orders</option>
+                <option value="no_orders">No Orders</option>
+                <option value="high_orders">High Orders (5+)</option>
+              </select>
+            </div>
+
           </div>
 
           <div className="relative">

@@ -16,7 +16,7 @@ export default function UsersTable() {
     isError,
     refetch
   } = useGetOrdersByStatusQuery({
-    status: "shop_closed",
+    status: "rejected",
     page: currentPage,
     limit: ordersPerPage
   });
@@ -451,13 +451,13 @@ export default function UsersTable() {
                     >
                       <FaEye size={18} />
                     </button>
-                    <button
+                    {/* <button
                       className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all
                         bg-[#1E264F] text-white hover:bg-opacity-90"
                       onClick={() => handleReassign(u._id)}
                     >
                       Reassign
-                    </button>
+                    </button> */}
                   </td>
 
                 </tr>
