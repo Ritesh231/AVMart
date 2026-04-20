@@ -79,6 +79,14 @@ export const deliveryapi = baseApi.injectEndpoints({
       invalidatesTags: ["DeliveryBoys"], // refresh list after action
     }),
 
+    updateDeliveryCharges: builder.mutation({
+      query: (amount) => ({
+        url: `/api/v1/adminauth/update-deliverycharges`,
+        method: "PUT",
+        body: { amount },
+      }),
+    }),
+
 
 
   }),
@@ -86,4 +94,4 @@ export const deliveryapi = baseApi.injectEndpoints({
 
 export const { useGetAllDeliveryBoysQuery, useGetAssignDeliveryBoysMutation,
   useUpdateDeliveryStatusMutation, useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery,
-  useGetDeliveryBoyOrderDetailsQuery, useGetWithdrawalRequestsQuery, useVerifyWithdrawalMutation } = deliveryapi;
+  useGetDeliveryBoyOrderDetailsQuery, useGetWithdrawalRequestsQuery, useVerifyWithdrawalMutation, useUpdateDeliveryChargesMutation } = deliveryapi;

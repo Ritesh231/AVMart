@@ -49,6 +49,7 @@ export default function UserStats() {
       icon: <FaSackDollar size={24} />,
       variant: "normal",
     },
+
   ];
 
   if (isError) {

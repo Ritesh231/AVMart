@@ -5,10 +5,12 @@ import { BsWallet2 } from "react-icons/bs";
 import { useGetOrdersByStatusAssignQuery } from "../../Redux/apis/ordersApi";
 import {
   useGetAllDeliveryBoysQuery,
-  useGetAssignDeliveryBoysMutation
+  useGetAssignDeliveryBoysMutation,
+
+
 } from "../../Redux/apis/deliveryApi";
 import { useState, useEffect, useRef } from "react";
-import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
+import { useGetOrdersByIdMutation, useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { toast } from "react-toastify";
 
@@ -16,14 +18,13 @@ export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 20; // Match API limit
 
-  // ✅ Server-side pagination - send page and limit to API
   const {
     data,
     isLoading,
     isError,
     refetch
-  } = useGetOrdersByStatusAssignQuery({
-    status: "assigned",
+  } = useGetOrdersByStatusQuery({
+    status: "confirmed",
     page: currentPage,
     limit: ordersPerPage
   });

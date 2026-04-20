@@ -47,9 +47,21 @@ export const Orderapi = baseApi.injectEndpoints({
       invalidatesTags: ["Orders"],
     }),
 
+    deleteOrderItem: builder.mutation({
+      query: ({ orderId, itemId }) => ({
+        url: `/api/v1/admin/order/remove-item`,
+        method: "POST",
+        body: {
+          orderId,
+          itemId,
+        },
+      }),
+      invalidatesTags: ["Orders"],
+    }),
+
   }),
 });
 
 export const { useGetOrdersByStatusQuery, useGetOrdersByIdMutation,
   useAssignOrderStatusMutation, useGetOrderDetailsByIdMutation,
-  useGetOrdersByStatusAssignQuery } = Orderapi;
+  useGetOrdersByStatusAssignQuery, useDeleteOrderItemMutation } = Orderapi;

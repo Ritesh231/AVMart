@@ -38,6 +38,7 @@ const ProductViewCard = ({ product }) => {
                         ₹{product.mrp}
                     </span>
                 )}
+
             </div>
         </div>
     );

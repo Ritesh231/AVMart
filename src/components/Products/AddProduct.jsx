@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -7,6 +7,7 @@ import {
   useGetallBrandsQuery,
   useGetallcategoriesQuery,
   useSearchPartyQuery,
+  useUpdatePartyMutation
 } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
@@ -65,12 +66,60 @@ export default function AddProduct() {
   const [selectedParty, setSelectedParty] = useState(null);
   const [addProduct, { isLoading }] = useAddProductMutation();
 
+  useEffect(() => {
+    if (selectedParty) {
+      setPartyUpdateData({
+        OpeningBalance: selectedParty.OpeningBalance || 0,
+        CreditLimit: selectedParty.CreditLimit || 0,
+        PaymentTerms: selectedParty.PaymentTerms || 0,
+      });
+    }
+  }, [selectedParty]);
+
   const { data: subcategoryData } = useGetallSubcategoriesQuery();
   const { data: brandData } = useGetallBrandsQuery();
   const { data: categoryData } = useGetallcategoriesQuery();
   const { data: partyData } = useSearchPartyQuery(partySearch, {
     skip: !partySearch,
   });
+
+  const [updateParty, { isLoading: isUpdatingParty }] = useUpdatePartyMutation();
+
+  const [partyUpdateData, setPartyUpdateData] = useState({
+    OpeningBalance: "",
+    CreditLimit: "",
+    PaymentTerms: "",
+  });
+
+  const handlePartyUpdateChange = (e) => {
+    const { name, value } = e.target;
+    setPartyUpdateData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleUpdateParty = async () => {
+    if (!selectedParty?._id) {
+      return toast.error("Please select a party first");
+    }
+
+    try {
+      await updateParty({
+        id: selectedParty._id,
+        body: {
+          OpeningBalance: Number(partyUpdateData.OpeningBalance),
+          CreditLimit: Number(partyUpdateData.CreditLimit),
+          PaymentTerms: partyUpdateData.PaymentTerms,
+        },
+      }).unwrap();
+
+      toast.success("Party Updated Successfully ✅");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update party ❌");
+    }
+  };
 
   const partyList = partyData?.data || [];
   const [isNewParty, setIsNewParty] = useState(false);
@@ -154,10 +203,8 @@ export default function AddProduct() {
         if (fileInput) {
           fileInput.files = dataTransfer.files;
         }
-
         setVariants(updated);
       }
-
       toast.success("Background Removed ✅");
 
     } catch (err) {
@@ -240,16 +287,12 @@ export default function AddProduct() {
   const handleVariantImageChange = (index, e) => {
     const files = Array.from(e.target.files);
     const updated = [...variants];
-
-    // Store the actual file objects in imageFiles
     updated[index].imageFiles = files;
 
-    // Create preview URLs
     updated[index].previewImages = files.map((file) =>
       URL.createObjectURL(file)
     );
 
-    // For now, keep imageUrls empty since you don't have URLs yet
     updated[index].imageUrls = [];
 
     setVariants(updated);
@@ -454,8 +497,48 @@ export default function AddProduct() {
                 </div>
               )}
               {selectedParty && (
-                <div className="mt-2 p-2 bg-green-50 border border-green-300 rounded text-sm">
-                  ✅ Selected: {selectedParty.PartName}
+                <div className="mt-3 p-3 border rounded-lg bg-green-50 space-y-3">
+
+                  <p className="text-sm font-medium text-green-700">
+                    ✅ Selected: {selectedParty.PartName}
+                  </p>
+
+                  {/* Update Fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <InputField
+                      label="Opening Balance"
+                      name="OpeningBalance"
+                      type="number"
+                      value={partyUpdateData.OpeningBalance}
+                      onChange={handlePartyUpdateChange}
+                    />
+
+                    <InputField
+                      label="Credit Limit"
+                      name="CreditLimit"
+                      type="number"
+                      value={partyUpdateData.CreditLimit}
+                      onChange={handlePartyUpdateChange}
+                    />
+
+                    <InputField
+                      label="Payment Terms"
+                      name="PaymentTerms"
+                      placeholder="e.g. 10 days"
+                      value={partyUpdateData.PaymentTerms}
+                      onChange={handlePartyUpdateChange}
+                    />
+                  </div>
+
+                  {/* Update Button */}
+                  <button
+                    type="button"
+                    onClick={handleUpdateParty}
+                    disabled={isUpdatingParty}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isUpdatingParty ? "Updating..." : "Update Party"}
+                  </button>
                 </div>
               )}
             </>

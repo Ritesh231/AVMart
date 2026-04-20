@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLogoutMutation } from "../Redux/apis/authApi";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
+import { HiDocumentReport } from "react-icons/hi";
 
 const Header = () => {
     const location = useLocation();
@@ -68,6 +69,7 @@ const Header = () => {
         { name: 'Offers', path: '/offers', icon: <Tag size={18} /> },
         { name: 'Wallet', path: '/wallet', icon: <Wallet size={18} /> },
         { name: 'Suggestions', path: '/suggestions', icon: <MessageSquare size={18} /> },
+        { name: 'Reports', path: '/reports', icon: <HiDocumentReport size={18} /> },
     ];
 
     const isActiveRoute = (path) => {

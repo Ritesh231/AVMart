@@ -1,5 +1,8 @@
 import { X } from "lucide-react";
 import { useRef } from "react";
+import { MdDelete } from "react-icons/md";
+import { useDeleteOrderItemMutation } from "../../Redux/apis/ordersApi";
+import toast from "react-hot-toast";
 
 function OrderDetailsModal({ order, loading, onClose }) {
   if (!order && !loading) return null;
@@ -11,6 +14,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
   );
 
   const printRef = useRef();
+  const [deleteOrderItem] = useDeleteOrderItemMutation();
 
   const handlePrint = () => {
     const printContents = printRef.current.innerHTML;
@@ -61,6 +65,25 @@ function OrderDetailsModal({ order, loading, onClose }) {
       printWindow.print();
       printWindow.close();
     }, 500);
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this item?");
+    if (!isConfirmed) return;
+
+    try {
+      const res = await deleteOrderItem({ orderId: order._id, itemId }).unwrap();
+
+      toast.success(res?.message || "Item deleted successfully");
+
+      // ✅ Close modal after short delay (so toast is visible)
+      setTimeout(() => {
+        onClose();
+      }, 500);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete item");
+    }
   };
 
   return (
@@ -122,6 +145,8 @@ function OrderDetailsModal({ order, loading, onClose }) {
           <div className="border rounded-xl p-3 bg-gray-50 space-y-3">
             {order?.items?.map((item, index) => (
               <div key={index} className="flex justify-between items-center">
+
+                {/* LEFT SIDE */}
                 <div className="flex gap-3 items-center">
                   <img
                     src={item.image}
@@ -137,113 +162,23 @@ function OrderDetailsModal({ order, loading, onClose }) {
                     </p>
                   </div>
                 </div>
-                <p className="font-semibold">₹{item.itemTotal.toFixed(2)}</p>
-              </div>
-            ))}
 
-            <div className="border-t pt-2 text-sm space-y-2">
-
-              {/* ✅ Wallet (only if > 0) */}
-              {order?.walletAmountUsed > 0 && (
-                <div className="flex justify-between">
-                  <span>Wallet Used</span>
-                  <span>₹{order.walletAmountUsed.toFixed(2)}</span>
-                </div>
-              )}
-
-              {/* ✅ Discount Breakdown (only if exists) */}
-              {order?.discounts?.length > 0 && (
-                <div className="space-y-1">
-                  {/* <p className="text-xs font-semibold text-gray-500">
-                    Discount Breakdown
-                  </p> */}
-
-                  {/* {order.discounts.map((disc, index) => (
-                    disc?.discountAmount > 0 && (
-                      <div
-                        key={index}
-                        className="flex justify-between text-green-600 text-sm"
-                      >
-                        <span>
-                          {disc.name} ({disc.value}%)
-                        </span>
-                        <span>- ₹{disc.discountAmount.toFixed(2)}</span>
-                      </div>
-                    )
-                  ))} */}
-                </div>
-              )}
-
-              {order?.totalDiscount > 0 && (
-                <div className="flex justify-between text-green-700 font-semibold border-t pt-1">
-                  <span>Total Discount</span>
-                  <span>- ₹{order.totalDiscount.toFixed(2)}</span>
-                </div>
-              )}
-
-              {order?.deliveryCharge > 0 && (
-                <div className="flex justify-between">
-                  <span>Delivery Charges</span>
-                  <span>₹{order.deliveryCharge.toFixed(2)}</span>
-                </div>
-              )}
-
-              {order?.remainingAmount > 0 && (
-                <div className="flex justify-between">
-                  <span>Remaining</span>
-                  <span>₹{order.remainingAmount.toFixed(2)}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between font-bold text-base pt-2">
-                <span>Total</span>
-                <span>{order?.priceFormatted}</span>
-              </div>
-
-              {order?.paidAmount > 0 && (
-                <div className="flex justify-between font-bold text-base pt-2 text-green-800">
-                  <span>Paid Amount</span>
-                  <span>₹{order.paidAmount.toFixed(2)}</span>
-                </div>
-              )}
-            </div>
-
-            {order?.deliveryStatus === "Cancelled" && (
-              <div className="border-t pt-3">
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-3">
-
-                  {/* Title */}
-                  <p className="text-sm font-bold text-red-600">
-                    ⚠ Order Cancelled
+                {/* RIGHT SIDE (PRICE + DELETE) */}
+                <div className="flex items-center gap-3">
+                  <p className="font-semibold">
+                    ₹{item.itemTotal.toFixed(2)}
                   </p>
 
-                  {/* Reason */}
-                  <div className="flex flex-col text-sm gap-1">
-                    <span className="font-medium text-gray-700">
-                      Reason
-                    </span>
-                    <span className="text-red-500 font-semibold break-words">
-                      {order?.cancellationReason || "N/A"}
-                    </span>
-                  </div>
+                  <MdDelete
+                    className="text-red-500 cursor-pointer hover:scale-110 transition"
+                    size={18}
+                    onClick={() => handleDeleteItem(item._id)}
+                  />
 
-                  {/* Image */}
-                  {order?.cancellationImage && (
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm font-medium text-gray-700">
-                        Proof Image
-                      </span>
-
-                      <img
-                        src={order.cancellationImage}
-                        alt="Cancellation"
-                        className="w-full max-h-40 object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
                 </div>
+
               </div>
-            )}
+            ))}
           </div>
 
           {/* Shipping Address */}

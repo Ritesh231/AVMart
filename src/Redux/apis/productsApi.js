@@ -43,8 +43,6 @@ export const Productsapi = baseApi.injectEndpoints({
           url: "/api/v1/admin/products/create",
           method: "POST",
           body: body,
-          // Don't set Content-Type header for FormData
-          // Browser will automatically set it with the correct boundary
           headers: isFormData ? {} : {
             'Content-Type': 'application/json',
           },
@@ -171,6 +169,15 @@ export const Productsapi = baseApi.injectEndpoints({
       }),
     }),
 
+    updateParty: builder.mutation({
+      query: ({ id, body }) => ({
+        url: `/api/v1/admin/party/update/${id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["Party"],
+    }),
+
   }),
 });
 
@@ -179,4 +186,4 @@ export const { useGetallproductsQuery, useGetallcategoriesQuery,
   useAddCategoryMutation, useAddSubcategoryMutation, useAddBrandMutation, useEditCategoryMutation,
   useDeleteCategoryMutation, useEditSubcategoryMutation, useDeleteSubcategoryMutation,
   useUpdateProductMutation, useDeleteProductMutation, useUpdateBrandMutation, useDeleteBrandMutation, useUpdateStatusMutation,
-  useSearchPartyQuery, } = Productsapi;
+  useSearchPartyQuery, useUpdatePartyMutation } = Productsapi;

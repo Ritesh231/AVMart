@@ -29,6 +29,12 @@ const tabs = [
     icon: <BsCashCoin size={20} />,
     path: "/delivery/Paymentrequest",
   },
+  {
+    id: "Update Delivery Charges",
+    label: "Update Delivery Charges",
+    icon: <BsCashCoin size={20} />,
+    path: "/delivery/UpdateDeliveryCharges",
+  }
 
 ];
 

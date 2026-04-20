@@ -52,6 +52,10 @@ const DeliveryBoyDetail = lazy(() =>
   import("../components/Delivery Boys/DeliveryBoyDetailedPage")
 );
 
+const UpdateDeliveryCharges = lazy(() =>
+  import("../components/Delivery Boys/UpdateDeliveryCharges")
+);
+
 /*Queries */
 const PendingQueries = lazy(() => import("../components/Queries/PendingQueries"));
 
@@ -65,6 +69,8 @@ const WalletTable = lazy(() => import("../components/Wallet/TotalBalanceTable"))
 
 /*Suggestions*/
 const Suggestion = lazy(() => import("../components/Suggestions/Suggestion"));
+
+const Reports = lazy(() => import("../components/Reports/Report"));
 
 /*Protected Route*/
 import ProtectedRoute from "../routes/ProtectRoute";
@@ -156,6 +162,7 @@ export default function AppRouter() {
             <Route path="approved" element={<DeliveryRequests />} />
             <Route path="rejected" element={<DeliveryRequests />} />
             <Route path="Paymentrequest" element={<DeliveryApproved />} />
+            <Route path="UpdateDeliveryCharges" element={<UpdateDeliveryCharges />} />
 
           </Route>
 
@@ -179,6 +186,8 @@ export default function AppRouter() {
             <Route index element={<Navigate to="Suggestion" replace />} />
             <Route path="Suggestion" element={<Suggestion />} />
           </Route>
+
+          <Route path="/reports" element={<Reports />} />
 
         </Route>
         <Route path="*" element={<div>404 - Page Not Found</div>} />
