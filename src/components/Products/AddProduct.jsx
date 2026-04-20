@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -12,6 +12,7 @@ import {
 import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
+
 
 /* -------------------- Reusable Fields -------------------- */
 
@@ -65,6 +66,24 @@ export default function AddProduct() {
   const [partySearch, setPartySearch] = useState("");
   const [selectedParty, setSelectedParty] = useState(null);
   const [addProduct, { isLoading }] = useAddProductMutation();
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedParty) {
@@ -468,34 +487,38 @@ export default function AddProduct() {
 
           {!isNewParty && (
             <>
-              <input
-                type="text"
-                placeholder="Search Party"
-                value={partySearch}
-                onChange={(e) => {
-                  setPartySearch(e.target.value);
-                  setShowDropdown(true);
-                }}
-                className="w-full px-3 py-2 border rounded-lg text-sm"
-              />
 
-              {showDropdown && partyList.length > 0 && (
-                <div className="border rounded-lg max-h-40 overflow-y-auto bg-white shadow">
-                  {partyList.map((party) => (
-                    <div
-                      key={party._id}
-                      onClick={() => {
-                        setSelectedParty(party);
-                        setPartySearch(party.PartName);
-                        setShowDropdown(false);
-                      }}
-                      className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
-                    >
-                      {party.PartName} ({party.phone})
-                    </div>
-                  ))}
-                </div>
-              )}
+
+              <div ref={dropdownRef} className="relative">
+                <input
+                  type="text"
+                  placeholder="Search Party"
+                  value={partySearch}
+                  onChange={(e) => {
+                    setPartySearch(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                />
+
+                {showDropdown && partyList.length > 0 && (
+                  <div className="absolute z-10 w-full border rounded-lg max-h-40 overflow-y-auto bg-white shadow">
+                    {partyList.map((party) => (
+                      <div
+                        key={party._id}
+                        onClick={() => {
+                          setSelectedParty(party);
+                          setPartySearch(party.PartName);
+                          setShowDropdown(false);
+                        }}
+                        className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                      >
+                        {party.PartName} ({party.phone})
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               {selectedParty && (
                 <div className="mt-3 p-3 border rounded-lg bg-green-50 space-y-3">
 
