@@ -487,8 +487,6 @@ export default function AddProduct() {
 
           {!isNewParty && (
             <>
-
-
               <div ref={dropdownRef} className="relative">
                 <input
                   type="text"

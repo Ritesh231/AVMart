@@ -20,7 +20,7 @@ export const EditCategoryModal = ({ isOpen, onClose, productData }) => {
       setFormData({
         name: productData.name || "",
         HscCode: productData.HscCode || "",
-        GstRate: productData.GstRate || "",
+        // GstRate: productData.GstRate || "",
       });
 
       setPreview(productData.image || ""); // existing image
@@ -50,7 +50,7 @@ export const EditCategoryModal = ({ isOpen, onClose, productData }) => {
 
       data.append("name", formData.name);
       data.append("HscCode", formData.HscCode);
-      data.append("GstRate", formData.GstRate);
+      // data.append("GstRate", formData.GstRate);
 
       if (image) {
         data.append("image", image);
@@ -120,14 +120,14 @@ export const EditCategoryModal = ({ isOpen, onClose, productData }) => {
             className="w-full border p-2 rounded-lg"
           />
 
-          <input
+          {/* <input
             type="number"
             name="GstRate"
             placeholder="GST Rate"
             value={formData.GstRate}
             onChange={handleChange}
             className="w-full border p-2 rounded-lg"
-          />
+          /> */}
         </div>
 
         {/* Buttons */}

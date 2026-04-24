@@ -42,6 +42,7 @@ export default function DeliveryBoyDetails() {
 
   const withdrawals = withdrawalData?.data || [];
   const profile = data?.data || [];
+  const [vehicleFilter, setVehicleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
   const [fromDate, setFromDate] = useState("");
@@ -385,6 +386,14 @@ export default function DeliveryBoyDetails() {
     setCurrentPage(1);
   };
 
+
+  // Apply vehicle filter
+  if (vehicleFilter !== "All") {
+    data = data.filter(
+      (item) => item.vehicleType === vehicleFilter
+    );
+  }
+
   // Calculate display range
   const startItem = (paginationMeta.page - 1) * paginationMeta.per_page + 1;
   const endItem = Math.min(paginationMeta.page * paginationMeta.per_page, paginationMeta.total);
@@ -565,41 +574,40 @@ export default function DeliveryBoyDetails() {
       <div className="flex flex-col gap-4 mb-6">
 
         {/* 🔍 Search Bar */}
-        <div className="w-full">
-          <div className="flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl px-3 py-2 focus-within:border-brand-teal transition-all">
-            <Search className="text-brand-gray" size={18} />
-            <input
-              className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-sm text-brand-navy placeholder:text-brand-gray"
-              type="text"
-              placeholder={
-                activeTab === "attendance"
-                  ? "Search by date / hours"
-                  : "Search by Order ID / Txn ID"
-              }
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+
+          {/* Search Box */}
+          <div className="w-full lg:w-[40%] md:w-[50%]">
+            <div className="flex items-center gap-2 bg-white border-2 border-brand-soft rounded-2xl p-3 focus-within:border-brand-teal transition-all">
+              <Search className="text-brand-gray" size={20} />
+              <input
+                className="w-full bg-transparent outline-none text-sm text-brand-navy placeholder:text-brand-gray"
+                type="text"
+                placeholder={
+                  activeTab === "attendance"
+                    ? "Search by date / hours"
+                    : "Search by Order ID / Txn ID"
+                }
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* ⚙️ Controls */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full">
+          {/* Right Side Controls */}
+          <div className="flex gap-2 items-center flex-wrap">
 
-          {/* Select All */}
-          <label className="flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-2 text-sm font-semibold text-brand-navy bg-white w-fit">
-            <input
-              ref={selectAllRef}
-              type="checkbox"
-              checked={isAllSelected}
-              onChange={(e) => toggleSelectAll(e.target.checked)}
-            />
-            Select All
-          </label>
+            {/* Select All */}
+            <label className="inline-flex items-center gap-2 border border-brand-cyan rounded-xl px-3 py-3 text-sm font-semibold text-brand-navy bg-white whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                onChange={(e) => toggleSelectAll(e.target.checked)}
+              />
+              Select All
+            </label>
 
-          {/* Filters Row */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
-
-            {/* Status Filter */}
+            {/* Filter Dropdown */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -647,7 +655,48 @@ export default function DeliveryBoyDetails() {
               <option value="Last7Days">Last 7 Days</option>
               <option value="Custom">Custom Range</option>
             </select>
+
+
+            {/* Export Button */}
+            <div className="relative">
+              <button
+                className="bg-brand-navy px-6 py-3 rounded-2xl text-white flex items-center gap-2"
+                onClick={() => setIsExportMenuOpen((prev) => !prev)}
+              >
+                <Download size={20} /> Export
+              </button>
+
+              {isExportMenuOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">
+                  <button
+                    onClick={exportToPdf}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  >
+                    PDF
+                  </button>
+                  <button
+                    onClick={exportToDoc}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  >
+                    DOC
+                  </button>
+                  <button
+                    onClick={exportToExcel}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  >
+                    Excel
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
+        </div>
+
+        {/* ⚙️ Controls */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full">
+
+
 
           {/* 📅 Custom Date Range */}
           {dateFilter === "Custom" && (
@@ -677,25 +726,6 @@ export default function DeliveryBoyDetails() {
               />
             </div>
           )}
-
-          {/* 📥 Export Button */}
-          <div className="relative w-full sm:w-auto">
-            <button
-              className="w-full sm:w-auto bg-brand-navy px-4 py-2 rounded-xl flex justify-center gap-2 items-center text-white text-sm font-semibold hover:bg-opacity-90 transition-all"
-              onClick={() => setIsExportMenuOpen((prev) => !prev)}
-            >
-              <Download size={16} /> Export
-            </button>
-
-            {isExportMenuOpen && (
-              <div className="absolute right-0 mt-2 w-full sm:w-40 bg-white rounded-xl shadow-lg border z-20">
-                <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">PDF</button>
-                <button onClick={exportToDoc} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">DOC</button>
-                <button onClick={exportToExcel} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Excel</button>
-              </div>
-            )}
-          </div>
-
         </div>
       </div>
 

@@ -9,11 +9,9 @@ const UpdateDeliveryCharges = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!amount || amount <= 0) {
             return toast.error("Please enter valid amount");
         }
-
         try {
             await updateDeliveryCharges(Number(amount)).unwrap();
             toast.success("Delivery charges updated successfully ✅");
@@ -58,6 +56,7 @@ const UpdateDeliveryCharges = () => {
                     >
                         {isLoading ? "Updating..." : "Update Charges"}
                     </button>
+
                 </form>
             </div>
         </div>

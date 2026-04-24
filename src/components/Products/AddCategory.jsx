@@ -10,7 +10,7 @@ export default function AddCategory() {
   const [formData, setFormData] = useState({
     name: "",
     HscCode: "",
-    GstRate: "",
+    // GstRate: "",
     image: null,
   });
 
@@ -40,7 +40,7 @@ export default function AddCategory() {
 
       data.append("name", formData.name);
       data.append("HscCode", formData.HscCode);
-      data.append("GstRate", formData.GstRate);
+      // data.append("GstRate", formData.GstRate);
       data.append("image", formData.image);
 
       await addCategory(data).unwrap();
@@ -52,7 +52,7 @@ export default function AddCategory() {
       setFormData({
         name: "",
         HscCode: "",
-        GstRate: "",
+        // GstRate: "",
         image: null,
       });
       setPreview(null);
@@ -78,7 +78,7 @@ export default function AddCategory() {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
 
           {/* Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <div>
               <label className="text-xs font-medium text-gray-600">
@@ -106,7 +106,7 @@ export default function AddCategory() {
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="text-xs font-medium text-gray-600">
                 GST Rate (%)
               </label>
@@ -117,7 +117,7 @@ export default function AddCategory() {
                 onChange={handleChange}
                 className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none"
               />
-            </div>
+            </div> */}
 
           </div>
 

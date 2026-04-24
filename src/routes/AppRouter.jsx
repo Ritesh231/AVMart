@@ -70,7 +70,15 @@ const WalletTable = lazy(() => import("../components/Wallet/TotalBalanceTable"))
 /*Suggestions*/
 const Suggestion = lazy(() => import("../components/Suggestions/Suggestion"));
 
-const Reports = lazy(() => import("../components/Reports/Report"));
+/*Reports*/
+const ReportsLayout = lazy(() => import("../pages/Reports"));
+const TotalReports = lazy(() => import("../components/Reports/TotalReports"));
+const TotalProfit = lazy(() => import("../components/Reports/TotalProfit"));
+const InOutReports = lazy(() => import("../components/Reports/InOutReport"));
+const RevenueReport = lazy(() => import("../components/Reports/RevenueReports"));
+const TotalSales = lazy(() => import("../components/Reports/TotalSales"));
+const AllReports = lazy(() => import("../components/Reports/AllReports"));
+
 
 /*Protected Route*/
 import ProtectedRoute from "../routes/ProtectRoute";
@@ -187,7 +195,16 @@ export default function AppRouter() {
             <Route path="Suggestion" element={<Suggestion />} />
           </Route>
 
-          <Route path="/reports" element={<Reports />} />
+          {/*Reports*/}
+          <Route path="/reports" element={<ReportsLayout />}>
+            <Route index element={<Navigate to="TotalReports" replace />} />
+            <Route path="TotalReports" element={<TotalReports />} />
+            <Route path="TotalProfit" element={<TotalProfit />} />
+            <Route path="InOutReports" element={<InOutReports />} />
+            <Route path="RevenueReport" element={<RevenueReport />} />
+            <Route path="TotalSales" element={<TotalSales />} />
+            <Route path="AllReports" element={<AllReports />} />
+          </Route>
 
         </Route>
         <Route path="*" element={<div>404 - Page Not Found</div>} />
