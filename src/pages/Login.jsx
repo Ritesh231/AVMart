@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Logo from "../../public/images/logo.svg"
+import Logo from "../../public/AVMartLogo.png"
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../Redux/apis/authApi"
 import { useEffect } from "react";
@@ -13,51 +13,51 @@ const Login = () => {
   const [login, { isLoading, isError }] = useLoginMutation();
 
   useEffect(() => {
-  const token = localStorage.getItem("Admin_token");
+    const token = localStorage.getItem("Admin_token");
 
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const isExpired = payload.exp * 1000 < Date.now();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const isExpired = payload.exp * 1000 < Date.now();
 
-      if (!isExpired) {
-        navigate("/dashboard");
-      } else {
+        if (!isExpired) {
+          navigate("/dashboard");
+        } else {
+          localStorage.removeItem("Admin_token");
+          localStorage.removeItem("admin");
+        }
+      } catch (err) {
         localStorage.removeItem("Admin_token");
-        localStorage.removeItem("admin");
       }
-    } catch (err) {
-      localStorage.removeItem("Admin_token");
     }
-  }
-}, [navigate]);
+  }, [navigate]);
 
-const handleSubmit = async () => {
-  try {
-    const res = await login({ email, password }).unwrap();
+  const handleSubmit = async () => {
+    try {
+      const res = await login({ email, password }).unwrap();
 
-    // Store token
-    localStorage.setItem("Admin_token", res.token);
+      // Store token
+      localStorage.setItem("Admin_token", res.token);
 
-    // Store admin details
-    localStorage.setItem("admin", JSON.stringify(res.admin));
+      // Store admin details
+      localStorage.setItem("admin", JSON.stringify(res.admin));
 
-    navigate("/dashboard");
+      navigate("/dashboard");
 
-    toast.success(res.message || "Login Successfully");
+      toast.success(res.message || "Login Successfully");
 
-  } catch (err) {
-    console.error("Login failed", err);
-    toast.error(err?.data?.error || "Invalid email or password");
-  }
-};
+    } catch (err) {
+      console.error("Login failed", err);
+      toast.error(err?.data?.error || "Invalid email or password");
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A2550] to-[#62CDB9] p-4">
       <div className="bg-white w-full max-w-md rounded-xl shadow-md p-6">
 
         {/* Heading */}
-        <img className="text-center justify-center items-center ml-32 mb-4" src={Logo}></img>
+        <img className="text-center justify-center items-center ml-24 w-48 h-32 mb-4" src={Logo}></img>
         <h2 className="text-2xl font-semibold text-center mb-4">
           Login
         </h2>
@@ -82,7 +82,7 @@ const handleSubmit = async () => {
             className="w-full mt-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#07d8ab]"
           />
         </div>
-        
+
         <button
           onClick={handleSubmit}
           disabled={isLoading}
