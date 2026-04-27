@@ -9,9 +9,19 @@ import { Download, ChevronDown } from "lucide-react";
 
 const ProfitReport = ({ }) => {
     const [filterType, setFilterType] = useState("month");
+    const [page, setPage] = useState(1);
+    const limit = 10;
     const { data, isLoading, isError } = useGetTotalProfitQuery({ filterType }, {
         refetchOnMountOrArgChange: true,
     });
+    const reports = data?.orderWiseProfit || [];
+
+    const totalPages = Math.ceil(reports.length / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedReports = [...reports]
+        .reverse()
+        .slice(startIndex, endIndex);
 
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
@@ -382,9 +392,9 @@ const ProfitReport = ({ }) => {
                         </thead>
 
                         <tbody>
-                            {[...report.orderWiseProfit].reverse().map((item, index) => (
+                            {paginatedReports.map((item, index) => (
                                 <tr key={item.orderId} className="border-b hover:bg-gray-50 text-center">
-                                    <td className="px-4 py-3 border-r">{index + 1}</td>
+                                    <td className="px-4 py-3 border-r">{startIndex + index + 1}</td>
                                     <td className="px-4 py-3 text-blue-600 font-medium border-r">
                                         {item.orderId.slice(-6)}
                                     </td>
@@ -408,6 +418,62 @@ const ProfitReport = ({ }) => {
                     </table>
                 </div>
             </div>
+            {reports.length > limit && (
+                <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t rounded-xl">
+                    <p className="text-sm text-gray-600 hidden md:block">
+                        Showing {startIndex + 1} to {Math.min(endIndex, reports.length)} of{" "}
+                        {reports.length} reports
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                        {/* Prev */}
+                        <button
+                            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={page === 1}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+                    ${page === 1
+                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                                }`}
+                        >
+                            Prev
+                        </button>
+
+                        {/* Page Numbers */}
+                        {[...Array(totalPages)].map((_, index) => {
+                            const p = index + 1;
+                            return (
+                                <button
+                                    key={p}
+                                    onClick={() => setPage(p)}
+                                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+                            ${page === p
+                                            ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
+                                            : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                                        }`}
+                                >
+                                    {p}
+                                </button>
+                            );
+                        })}
+
+                        {/* Next */}
+                        <button
+                            onClick={() =>
+                                setPage((prev) => Math.min(prev + 1, totalPages))
+                            }
+                            disabled={page === totalPages}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+                    ${page === totalPages
+                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                                }`}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

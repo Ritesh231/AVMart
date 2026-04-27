@@ -18,6 +18,67 @@ function AllReports() {
 
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
+    const ITEMS_PER_PAGE = 10;
+
+    const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+        if (totalPages <= 1) return null;
+
+        const getPageNumbers = () => {
+            const pages = [];
+            const maxVisible = 5;
+            if (totalPages <= maxVisible) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                let start = Math.max(1, currentPage - 2);
+                let end = Math.min(totalPages, start + maxVisible - 1);
+                if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+            return pages;
+        };
+
+        return (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 px-4 py-4 bg-white border-t">
+                <p className="text-sm text-gray-600">Page {currentPage} of {totalPages}</p>
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <button
+                        onClick={() => onPageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-[#1E264F] text-white hover:bg-opacity-90"}`}
+                    >Prev</button>
+
+                    {getPageNumbers().map((page) => (
+                        <button
+                            key={page}
+                            onClick={() => onPageChange(page)}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${currentPage === page ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white" : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"}`}
+                        >{page}</button>
+                    ))}
+
+                    <button
+                        onClick={() => onPageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${currentPage === totalPages ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-[#1E264F] text-white hover:bg-opacity-90"}`}
+                    >Next</button>
+                </div>
+            </div>
+        );
+    };
+
+    const [page, setPage] = useState(1);
+
+    // Reset page when tab changes
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        setPage(1);
+    };
+
+    // Reset page when filter changes
+    const handleChange = (key, value) => {
+        setFilters((prev) => ({ ...prev, [key]: value }));
+        setPage(1);
+    };
+
     // Add these helper functions inside AllReports component (above return)
 
     const getRowsForExport = () => {
@@ -241,9 +302,7 @@ function AllReports() {
         refetchOnMountOrArgChange: true,
     });
 
-    const handleChange = (key, value) => {
-        setFilters((prev) => ({ ...prev, [key]: value }));
-    };
+
 
     const TableSkeleton = ({ rows = 7, columns = 7 }) => (
         <div className="overflow-x-auto animate-pulse">
@@ -316,6 +375,12 @@ function AllReports() {
         },
     ];
 
+    const records = data?.Data || [];
+    const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
+    const paginatedRecords = [...records]
+        .reverse()
+        .slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
     return (
         <div className="p-6 space-y-6">
 
@@ -339,24 +404,14 @@ function AllReports() {
             {/* 🔥 Tabs */}
             <div className="flex gap-4">
                 <button
-                    onClick={() => setActiveTab("product")}
-                    className={`px-4 py-2 rounded-xl ${activeTab === "product"
-                        ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white"
-                        : "bg-gray-200"
-                        }`}
-                >
-                    Products
-                </button>
+                    onClick={() => handleTabChange("product")}
+                    className={`px-4 py-2 rounded-xl ${activeTab === "product" ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white" : "bg-gray-200"}`}
+                >Products</button>
 
                 <button
-                    onClick={() => setActiveTab("order")}
-                    className={`px-4 py-2 rounded-xl ${activeTab === "order"
-                        ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white"
-                        : "bg-gray-200"
-                        }`}
-                >
-                    Orders
-                </button>
+                    onClick={() => handleTabChange("order")}
+                    className={`px-4 py-2 rounded-xl ${activeTab === "order" ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white" : "bg-gray-200"}`}
+                >Orders</button>
             </div>
 
             {/* 🔍 Filters */}
@@ -466,43 +521,29 @@ function AllReports() {
                                 <th className="p-3 border">Date</th>
                             </tr>
                         </thead>
-
                         <tbody>
-                            {data?.Data?.length ? (
-                                [...data.Data]
-                                    .reverse()
-                                    .map((item) => {
-                                        const variant = item.variants?.[0] || {};
-
-                                        return (
-                                            <tr key={item.productId} className="text-center hover:bg-gray-50">
-                                                <td className="p-3 border text-left">{item.productName}</td>
-                                                <td className="p-3 border">{item.category || "N/A"}</td>
-                                                <td className="p-3 border">{item.brand || "N/A"}</td>
-                                                <td className="p-3 border">
-                                                    {item.party?.PartName || "N/A"}
-                                                </td>
-                                                <td className="p-3 border">₹ {variant.price ?? 0}</td>
-                                                <td className="p-3 border">{variant.stock ?? 0}</td>
-                                                <td className="p-3 border">{variant.marginPercentage ?? 0}</td>
-                                                <td className="p-3 border">{item.totalVariants ?? 0}</td>
-                                                <td className="p-3 border">
-                                                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-                                                        {item.status}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 border">
-                                                    {new Date(item.date).toLocaleDateString()}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
+                            {paginatedRecords.length ? (       // ✅ paginatedRecords
+                                paginatedRecords.map((item) => {
+                                    const variant = item.variants?.[0] || {};
+                                    return (
+                                        <tr key={item.productId} className="text-center hover:bg-gray-50">
+                                            <td className="p-3 border text-left">{item.productName}</td>
+                                            <td className="p-3 border">{item.category || "N/A"}</td>
+                                            <td className="p-3 border">{item.brand || "N/A"}</td>
+                                            <td className="p-3 border">{item.party?.PartName || "N/A"}</td>
+                                            <td className="p-3 border">₹ {variant.price ?? 0}</td>
+                                            <td className="p-3 border">{variant.stock ?? 0}</td>
+                                            <td className="p-3 border">{variant.marginPercentage ?? 0}</td>
+                                            <td className="p-3 border">{item.totalVariants ?? 0}</td>
+                                            <td className="p-3 border">
+                                                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">{item.status}</span>
+                                            </td>
+                                            <td className="p-3 border">{new Date(item.date).toLocaleDateString()}</td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
-                                <tr>
-                                    <td colSpan="9" className="p-6 text-center text-gray-500">
-                                        No product data found
-                                    </td>
-                                </tr>
+                                <tr><td colSpan="10" className="p-6 text-center text-gray-500">No product data found</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -517,72 +558,40 @@ function AllReports() {
                                 <th className="p-3 border">Date</th>
                             </tr>
                         </thead>
-
                         <tbody>
-                            {data?.Data?.length ? (
-                                [...data.Data]
-                                    .reverse()
-                                    .map((order, index) => {
-                                        const totalAmount =
-                                            order.products?.reduce(
-                                                (sum, product) =>
-                                                    sum + product.price * product.quantity,
-                                                0
-                                            ) || 0;
-
-                                        const totalItems =
-                                            order.products?.reduce(
-                                                (sum, product) => sum + product.quantity,
-                                                0
-                                            ) || 0;
-
-                                        return (
-                                            <tr
-                                                key={order.paymentInvoice || index}
-                                                className="text-center hover:bg-gray-50"
-                                            >
-                                                <td className="p-3 border font-medium">
-                                                    #{order.paymentInvoice}
-                                                </td>
-
-
-
-                                                <td className="p-3 border">{totalItems}</td>
-
-                                                <td className="p-3 border font-semibold">
-                                                    ₹ {totalAmount.toLocaleString()}
-                                                </td>
-
-                                                <td className="p-3 border text-left">
-                                                    {order.products?.length > 0 ? (
-                                                        <div className="space-y-1">
-                                                            {order.products.map((product, idx) => (
-                                                                <div key={idx} className="text-sm">
-                                                                    {product.productName} × {product.quantity}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-gray-400">No products</span>
-                                                    )}
-                                                </td>
-
-                                                <td className="p-3 border">
-                                                    {new Date(order.date).toLocaleDateString()}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
+                            {paginatedRecords.length ? (
+                                paginatedRecords.map((order, index) => {
+                                    const totalAmount = order.products?.reduce((sum, p) => sum + p.price * p.quantity, 0) || 0;
+                                    const totalItems = order.products?.reduce((sum, p) => sum + p.quantity, 0) || 0;
+                                    return (
+                                        <tr key={order.paymentInvoice || index} className="text-center hover:bg-gray-50">
+                                            <td className="p-3 border font-medium">#{order.paymentInvoice}</td>
+                                            <td className="p-3 border">{totalItems}</td>
+                                            <td className="p-3 border font-semibold">₹ {totalAmount.toLocaleString()}</td>
+                                            <td className="p-3 border text-left">
+                                                {order.products?.length > 0 ? (
+                                                    <div className="space-y-1">
+                                                        {order.products.map((product, idx) => (
+                                                            <div key={idx} className="text-sm">{product.productName} × {product.quantity}</div>
+                                                        ))}
+                                                    </div>
+                                                ) : <span className="text-gray-400">No products</span>}
+                                            </td>
+                                            <td className="p-3 border">{new Date(order.date).toLocaleDateString()}</td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
-                                <tr>
-                                    <td colSpan="6" className="p-6 text-center text-gray-500">
-                                        No order data found
-                                    </td>
-                                </tr>
+                                <tr><td colSpan="5" className="p-6 text-center text-gray-500">No order data found</td></tr>
                             )}
                         </tbody>
                     </table>
                 )}
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                />
             </div>
 
         </div>

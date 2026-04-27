@@ -269,7 +269,7 @@ function WithdrawalTable() {
                                         onClick={() => handlePageChange(pageNum)}
                                         className={`px-3 py-1 rounded-md 
                                             ${pagination.page === pageNum
-                                                ? "bg-gradient-to-r from-[#00E5B0] to-[#00E5B0]  text-white"
+                                                ? "bg-orange-500  text-white"
                                                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                             }`}
                                     >

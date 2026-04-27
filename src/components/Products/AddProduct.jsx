@@ -13,7 +13,6 @@ import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 
-
 /* -------------------- Reusable Fields -------------------- */
 
 const InputField = ({ label, error, ...props }) => (
@@ -278,14 +277,19 @@ export default function AddProduct() {
       discountType: "",
       discountValue: "",
       gstRate: "",
+      gstAmount: "",
+      sgst: "",
+      cgst: "",
       stock: "",
+      InPrice: "",
+      MrpPrice: "",
       marginPercentage: "",
       InRate: "",
       OutRate: "",
       // sku: "",
-      imageFiles: [], // For storing file objects
-      imageUrls: [], // For storing URLs (if you have them)
-      previewImages: [], // For preview
+      imageFiles: [],
+      imageUrls: [],
+      previewImages: [],
     },
   ]);
 
@@ -301,40 +305,48 @@ export default function AddProduct() {
 
     updated[index][name] = value;
 
-    // MRP should always be more than original price
-    if (name === "mrpPrice") {
-      const inPrice = parseFloat(updated[index].originalPrice) || 0;
+    // MRP validation
+    if (name === "MrpPrice") {
+      const outRate = parseFloat(updated[index].OutRate) || 0;
       const mrp = parseFloat(value) || 0;
 
-      if (inPrice > 0 && mrp < inPrice) {
-        updated[index].mrpError = `MRP must be greater than In Price (₹${inPrice})`;
-        // Don't update the value — block it
+      if (outRate > 0 && mrp < outRate) {
+        updated[index].mrpError = `MRP must be greater than Out Rate (₹${outRate})`;
         setVariants(updated);
         return;
       }
       updated[index].mrpError = "";
     }
 
-    if (name === "originalPrice") {
-      const mrp = parseFloat(updated[index].mrpPrice) || 0;
-      const inPrice = parseFloat(value) || 0;
-      updated[index].mrpError = mrp && mrp <= inPrice ? "MRP must be greater than In Price" : "";
+    // Revalidate MRP live when OutRate changes
+    // MRP revalidation block
+    if (name === "originalPrice" || name === "gstRate" || name === "marginPercentage") {
+      const mrp = parseFloat(updated[index].MrpPrice) || 0;
+      const inP = parseFloat(name === "originalPrice" ? value : updated[index].originalPrice) || 0; // ✅
+      const gst = parseFloat(name === "gstRate" ? value : updated[index].gstRate) || 0;
+      const margin = parseFloat(name === "marginPercentage" ? value : updated[index].marginPercentage) || 0;
+      const gstAmt = (inP * gst) / 100;
+      const computedOutRate = Math.round((inP + gstAmt) + ((inP + gstAmt) * margin) / 100);
+      updated[index].mrpError = mrp && mrp < computedOutRate ? `MRP must be greater than Out Rate (₹${computedOutRate})` : "";
     }
 
+    // Auto-calculate block
+    const originalPrice = parseFloat(name === "originalPrice" ? value : updated[index].originalPrice) || 0; // ✅
 
-
-    // ─── Auto-calculate InRate & OutRate ───
-    const originalPrice = parseFloat(name === "originalPrice" ? value : updated[index].originalPrice) || 0;
     const gstRate = parseFloat(name === "gstRate" ? value : updated[index].gstRate) || 0;
     const marginPercentage = parseFloat(name === "marginPercentage" ? value : updated[index].marginPercentage) || 0;
 
     const gstAmount = (originalPrice * gstRate) / 100;
+    const sgstAmount = gstAmount / 2;
+    const cgstAmount = gstAmount / 2;
     const inRate = originalPrice + gstAmount;
     const outRate = inRate + (inRate * marginPercentage) / 100;
 
-    updated[index].InRate = inRate > 0 ? parseFloat(inRate.toFixed(2)) : "";
+    updated[index].sgst = sgstAmount > 0 ? parseFloat(sgstAmount.toFixed(2)) : "";
+    updated[index].cgst = cgstAmount > 0 ? parseFloat(cgstAmount.toFixed(2)) : "";
+    updated[index].gstAmount = gstAmount > 0 ? parseFloat(gstAmount.toFixed(2)) : "";
+    updated[index].InRate = inRate > 0 ? Math.round(inRate) : "";
     updated[index].OutRate = outRate > 0 ? Math.round(outRate) : "";
-
     setVariants(updated);
   };
 
@@ -361,8 +373,13 @@ export default function AddProduct() {
         originalPrice: "",
         discountType: "percent",
         discountValue: "",
+        InPrice: "",
         gstRate: "",
+        gstAmount: "",
+        sgst: "",
+        cgst: "",
         marginPercentage: "",
+        MrpPrice: "",
         InRate: "",
         OutRate: "",
         stock: "",
@@ -453,13 +470,18 @@ export default function AddProduct() {
         submitData.append("primaryImages", formData.primaryImages[0]);
       }
 
-      // 3. Format variants JSON (keeping existing URLs)
       const formattedVariants = variants.map((v) => ({
         _id: v._id,
         quantityValue: Number(v.quantityValue),
         quantityUnit: v.quantityUnit,
         originalPrice: Number(v.originalPrice),
-        gstRate: v.gstRate,
+        InPrice: Number(v.InPrice || 0),
+        price: Number(v.price || 0),
+        gstRate: Number(v.gstRate || 0),
+        gstAmount: Number(v.gstAmount || 0),
+        SGSTprice: Number(v.sgst || 0),
+        CGSTprice: Number(v.cgst || 0),
+        MrpPrice: Number(v.MrpPrice || 0),
         discountType: v.discountType || null,
         discountValue: Number(v.discountValue || 0),
         stock: Number(v.stock),
@@ -554,6 +576,7 @@ export default function AddProduct() {
                   </div>
                 )}
               </div>
+
               {selectedParty && (
                 <div className="mt-3 p-3 border rounded-lg bg-green-50 space-y-3">
 
@@ -813,29 +836,13 @@ export default function AddProduct() {
 
                   <InputField
                     label="In Price"
-                    name="originalPrice"
+                    name="originalPrice"             // ✅ InPrice
                     placeholder="Value should be Number"
                     type="number"
-                    value={variant.originalPrice}
+                    value={variant.originalPrice}    // ✅ InPrice
                     onChange={(e) => handleVariantChange(index, e)}
                   />
 
-                  <div>
-                    <label className="text-xs font-medium text-gray-600">MRP Price</label>
-                    <input
-                      name="mrpPrice"
-                      type="number"
-                      placeholder="Value should be Number"
-                      value={variant.mrpPrice || ""}
-                      min={variant.originalPrice || 0}
-                      onChange={(e) => handleVariantChange(index, e)}
-                      className={`w-full mt-1 px-3 py-2 text-sm border ${variant.mrpError ? "border-red-500" : "border-gray-200"
-                        } rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none`}
-                    />
-                    {variant.mrpError && (
-                      <p className="text-red-500 text-xs mt-1">{variant.mrpError}</p>
-                    )}
-                  </div>
 
                   {/* <div>
                     <label className="text-xs font-medium text-gray-600">
@@ -871,45 +878,56 @@ export default function AddProduct() {
 
                   <div>
                     <label className="text-xs font-medium text-gray-600">GST Rate</label>
-                    <select
-                      name="gstRate"
-                      value={variant.gstRate}
-                      onChange={(e) => handleVariantChange(index, e)}
-                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none"
-                    >
-                      <option value="">Select</option>
-                      <option value="0">0%</option>
-                      <option value="3">3%</option>
-                      <option value="5">5%</option>
-                      <option value="12">12%</option>
-                      <option value="18">18%</option>
-                      <option value="28">28%</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        name="gstRate"
+                        value={variant.gstRate}
+                        onChange={(e) => handleVariantChange(index, e)}
+                        className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none appearance-none"
+                      >
+                        <option value="">Select</option>
+                        <option value="0">0%</option>
+                        <option value="3">3%</option>
+                        <option value="5">5%</option>
+                        <option value="12">12%</option>
+                        <option value="18">18%</option>
+                      </select>
+
+                      {variant.gstRate && variant.originalPrice && (
+                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-semibold pointer-events-none mt-[2px]">
+                          ₹{variant.gstAmount || ""}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* SGST Display */}
                   <div>
-                    <label className="text-xs font-medium text-gray-600">
-                      SGST
-                    </label>
+                    <label className="text-xs font-medium text-gray-600">SGST</label>
                     <input
                       readOnly
-                      value={variant.sgst ? `₹ ${variant.sgst}` : ""}
-                      placeholder={variant.gstRate ? `(${variant.gstRate / 2}%)` : ""}
-                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 outline-none text-orange-600 font-semibold"
+                      value={
+                        variant.sgst
+                          ? `₹ ${variant.sgst}  (${variant.gstRate / 2}%)`
+                          : ""
+                      }
+                      placeholder={variant.gstRate ? `SGST @ ${variant.gstRate / 2}%` : "Select GST first"}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 outline-none font-semibold"
                     />
                   </div>
 
                   {/* CGST Display */}
                   <div>
-                    <label className="text-xs font-medium text-gray-600">
-                      CGST
-                    </label>
+                    <label className="text-xs font-medium text-gray-600">CGST</label>
                     <input
                       readOnly
-                      value={variant.cgst ? `₹ ${variant.cgst}` : ""}
-                      placeholder={variant.gstRate ? `(${variant.gstRate / 2}%)` : ""}
-                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 outline-none text-purple-600 font-semibold"
+                      value={
+                        variant.cgst
+                          ? `₹ ${variant.cgst}  (${variant.gstRate / 2}%)`
+                          : ""
+                      }
+                      placeholder={variant.gstRate ? `CGST @ ${variant.gstRate / 2}%` : "Select GST first"}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 outline-none font-semibold"
                     />
                   </div>
 
@@ -945,6 +963,23 @@ export default function AddProduct() {
                       value={variant.OutRate || ""}
                       className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-green-50 outline-none text-green-700 font-bold"
                     />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">MRP Price</label>
+                    <input
+                      name="MrpPrice"
+                      type="number"
+                      placeholder="Value should be Number"
+                      value={variant.MrpPrice || ""}
+                      min={variant.OutRate || 0}
+                      onChange={(e) => handleVariantChange(index, e)}
+                      className={`w-full mt-1 px-3 py-2 text-sm border ${variant.mrpError ? "border-red-500" : "border-gray-200"
+                        } rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none`}
+                    />
+                    {variant.mrpError && (
+                      <p className="text-red-500 text-xs mt-1">{variant.mrpError}</p>
+                    )}
                   </div>
 
                   {/* <InputField

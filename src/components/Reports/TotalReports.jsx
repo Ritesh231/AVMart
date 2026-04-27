@@ -39,6 +39,8 @@ const TotalReports = () => {
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const limit = 10;
 
     const { data, isLoading, isError } = useGetReportsQuery(
         filterType === "custom"
@@ -50,6 +52,15 @@ const TotalReports = () => {
     );
 
     const reports = data?.Data || [];
+    const totalPages = Math.ceil(reports.length / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedReports = [...reports].reverse().slice(startIndex, endIndex);
+
+    const handleFilterChange = (e) => {
+        setFilterType(e.target.value);
+        setPage(1);
+    };
 
     const getRowsForExport = () => {
         if (!reports.length) {
@@ -242,7 +253,7 @@ const TotalReports = () => {
                         <div className="flex flex-wrap items-center gap-3 border border-brand-cyan rounded-xl px-3 py-2">
                             <select
                                 value={filterType}
-                                onChange={(e) => setFilterType(e.target.value)}
+                                onChange={handleFilterChange}
                                 className="outline-none bg-transparent text-sm font-medium cursor-pointer px-2 py-1 min-w-[140px]"
                             >
                                 <option value="">All</option>
@@ -334,7 +345,7 @@ const TotalReports = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {[...reports].reverse().map((item, index) => {
+                            {paginatedReports.map((item, index) => {
                                 const totalAmount = item.products?.reduce(
                                     (sum, p) => sum + p.price * p.quantity,
                                     0
@@ -345,7 +356,7 @@ const TotalReports = () => {
                                         key={index}
                                         className="border-b hover:bg-gray-50 text-center"
                                     >
-                                        <td className="px-4 py-3 border">{index + 1}</td>
+                                        <td className="px-4 py-3 border">{startIndex + index + 1}</td>
                                         <td className="px-4 py-3 font-medium border">
                                             #{item.paymentInvoice}
                                         </td>
@@ -377,11 +388,69 @@ const TotalReports = () => {
                 </div>
             )}
 
+            {reports.length > limit && (
+                <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t rounded-xl">
+                    <p className="text-sm text-gray-600 hidden md:block">
+                        Showing {startIndex + 1} to {Math.min(endIndex, reports.length)} of{" "}
+                        {reports.length} reports
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                        {/* Prev */}
+                        <button
+                            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={page === 1}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+                    ${page === 1
+                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                                }`}
+                        >
+                            Prev
+                        </button>
+
+                        {/* Page Numbers */}
+                        {[...Array(totalPages)].map((_, index) => {
+                            const p = index + 1;
+                            return (
+                                <button
+                                    key={p}
+                                    onClick={() => setPage(p)}
+                                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
+                            ${page === p
+                                            ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
+                                            : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
+                                        }`}
+                                >
+                                    {p}
+                                </button>
+                            );
+                        })}
+
+                        {/* Next */}
+                        <button
+                            onClick={() =>
+                                setPage((prev) => Math.min(prev + 1, totalPages))
+                            }
+                            disabled={page === totalPages}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all
+                    ${page === totalPages
+                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-[#1E264F] text-white hover:bg-opacity-90"
+                                }`}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {!isLoading && reports.length === 0 && !isError && (
                 <div className="bg-white shadow rounded-2xl p-4 text-center">
                     <p className="text-gray-500">No data found</p>
                 </div>
             )}
+
         </div>
     );
 };

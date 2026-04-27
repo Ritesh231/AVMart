@@ -19,7 +19,63 @@ function InrateOutrateReport() {
 
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
+    const ITEMS_PER_PAGE = 10;
+
+    const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+        if (totalPages <= 1) return null;
+
+        const getPageNumbers = () => {
+            const pages = [];
+            const maxVisible = 5;
+
+            if (totalPages <= maxVisible) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                let start = Math.max(1, currentPage - 2);
+                let end = Math.min(totalPages, start + maxVisible - 1);
+                if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+            return pages;
+        };
+
+        return (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 px-4 py-4 bg-white border-t">
+                <p className="text-sm text-gray-600">Page {currentPage} of {totalPages}</p>
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <button
+                        onClick={() => onPageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-[#1E264F] text-white hover:bg-opacity-90"}`}
+                    >Prev</button>
+
+                    {getPageNumbers().map((page) => (
+                        <button
+                            key={page}
+                            onClick={() => onPageChange(page)}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${currentPage === page ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white" : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"}`}
+                        >{page}</button>
+                    ))}
+
+                    <button
+                        onClick={() => onPageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${currentPage === totalPages ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-[#1E264F] text-white hover:bg-opacity-90"}`}
+                    >Next</button>
+                </div>
+            </div>
+        );
+    };
+
     const isCustom = filters.filterType === "custom";
+
+    const [page, setPage] = useState(1);
+
+    const records = data?.Data || [];
+    const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
+    const paginatedRecords = [...records]
+        .reverse()
+        .slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
     const handleChange = (key, value) => {
         setFilters((prev) => ({ ...prev, [key]: value }));
@@ -319,38 +375,37 @@ function InrateOutrateReport() {
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     {/* Filter Section */}
-                    <div className="flex flex-wrap items-center gap-3 border border-brand-cyan rounded-xl px-3 py-2">
-                        <select
-                            value={filters}
-                            onChange={(e) => setFilters(e.target.value)}
-                            className="outline-none bg-transparent text-sm font-medium cursor-pointer px-2 py-1 min-w-[140px]"
-                        >
-                            <option value="">All</option>
-                            <option value="week">Week</option>
-                            <option value="month">Month</option>
-                            <option value="custom">Custom Range</option>
-                        </select>
+                    <select
+                        value={filters.filterType}                              // ✅ was: filters
+                        onChange={(e) => {
+                            handleChange("filterType", e.target.value);
+                            setPage(1);                                         // ✅ reset page on filter change
+                        }}
+                        className="outline-none bg-transparent text-sm font-medium cursor-pointer px-2 py-1 min-w-[140px]"
+                    >
+                        <option value="">All</option>
+                        <option value="week">Week</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
 
-                        {filters === "custom" && (
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <input
-                                    type="date"
-                                    value={fromDate}
-                                    onChange={(e) => setFromDate(e.target.value)}
-                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan"
-                                />
-
-                                <span className="text-gray-400 text-sm">to</span>
-
-                                <input
-                                    type="date"
-                                    value={toDate}
-                                    onChange={(e) => setToDate(e.target.value)}
-                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan"
-                                />
-                            </div>
-                        )}
-                    </div>
+                    {filters.filterType === "custom" && (   // ✅ was: filters === "custom"
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <input
+                                type="date"
+                                value={filters.fromDate}                        // ✅ was: fromDate (undefined)
+                                onChange={(e) => handleChange("fromDate", e.target.value)}
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan"
+                            />
+                            <span className="text-gray-400 text-sm">to</span>
+                            <input
+                                type="date"
+                                value={filters.toDate}                          // ✅ was: toDate (undefined)
+                                onChange={(e) => handleChange("toDate", e.target.value)}
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan"
+                            />
+                        </div>
+                    )}
 
                     {/* Export Dropdown */}
                     <div className="relative">
@@ -408,46 +463,33 @@ function InrateOutrateReport() {
                         </thead>
 
                         <tbody>
-                            {[...(data?.Data || [])]
-                                .reverse()
-                                .map((item) => (
+                            {paginatedRecords.length ? (     // ✅ use paginatedRecords
+                                paginatedRecords.map((item) => (
                                     <tr key={item.variantId} className="text-center">
                                         <td className="p-2 border text-left">{item.productName}</td>
-
                                         <td className="p-2 border">{item.quantity}</td>
-
-                                        <td className="p-2 border">
-                                            ₹ {Number(item.InRate).toFixed(2)}
-                                        </td>
-
-                                        <td className="p-2 border">
-                                            ₹ {Number(item.OutRate).toFixed(2)}
-                                        </td>
-
-                                        <td className="p-2 border font-semibold text-green-600">
-                                            ₹ {Number(item.margin).toFixed(2)}
-                                        </td>
-
+                                        <td className="p-2 border">₹ {Number(item.InRate).toFixed(2)}</td>
+                                        <td className="p-2 border">₹ {Number(item.OutRate).toFixed(2)}</td>
+                                        <td className="p-2 border font-semibold text-green-600">₹ {Number(item.margin).toFixed(2)}</td>
                                         <td className="p-2 border">{item.stock}</td>
-
-                                        <td className="p-2 border">
-                                            {new Date(item.date).toLocaleDateString()}
-                                        </td>
+                                        <td className="p-2 border">{new Date(item.date).toLocaleDateString()}</td>
                                     </tr>
-                                ))}
-
-                            {!data?.Data?.length && (
+                                ))
+                            ) : (
                                 <tr>
-                                    <td colSpan="7" className="p-4 text-center text-gray-500">
-                                        No records found
-                                    </td>
+                                    <td colSpan="7" className="p-4 text-center text-gray-500">No records found</td>
                                 </tr>
                             )}
                         </tbody>
+
                     </table>
                 </div>
             </div>
-
+            <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+            />
         </div>
     );
 }

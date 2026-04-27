@@ -163,16 +163,30 @@ export default function EditProductModal({
         // shelfLife: productData.shelfLife || "",
         // storage: productData.storage || "",
         primaryImage: null,
-        variants: productData.variants.map(v => ({
-          ...v,
-          discountType: v.discountType || "percentage",
-          discountValue: v.discountValue ?? 0,
-          imageUrls: v.images || [],
-          imageFiles: [],
-          gstRate: v.gstRate ?? 18,
-          marginPercentage: v.marginPercentage ?? 0,
-          InRate: v.InRate ?? 0,
-        })),
+        variants: productData.variants.map(v => {
+          const originalPrice = Number(v.originalPrice) || 0;
+          const gstRate = Number(v.gstRate ?? 18);
+          const gstAmount = parseFloat(((originalPrice * gstRate) / 100).toFixed(2));
+          const marginPercentage = v.marginPercentage ?? 0;
+          const inRate = parseFloat((originalPrice + gstAmount).toFixed(2));
+          const outRate = Math.round(inRate + (inRate * marginPercentage) / 100);
+
+          return {
+            ...v,
+            discountType: v.discountType || "percentage",
+            discountValue: v.discountValue ?? 0,
+            imageUrls: v.images || [],
+            imageFiles: [],
+            gstRate,
+            gstAmount,
+            CGST: parseFloat((gstAmount / 2).toFixed(2)),
+            SGST: parseFloat((gstAmount / 2).toFixed(2)),
+            marginPercentage,
+            InRate: inRate,
+            OutRate: outRate,
+            MrpPrice: v.MrpPrice || "",
+          };
+        }),
       });
 
       setPreviewImage(productData.primaryImages?.[0] || null);
@@ -199,6 +213,42 @@ export default function EditProductModal({
   const handleVariantChange = (index, field, value) => {
     const updatedVariants = [...formData.variants];
     updatedVariants[index][field] = value;
+
+    // Recalculate whenever originalPrice, gstRate, or marginPercentage changes
+    const originalPrice = parseFloat(field === "originalPrice" ? value : updatedVariants[index].originalPrice) || 0;
+    const gstRate = parseFloat(field === "gstRate" ? value : updatedVariants[index].gstRate) || 0;
+    const marginPercentage = parseFloat(field === "marginPercentage" ? value : updatedVariants[index].marginPercentage) || 0;
+
+    const gstAmount = Math.round(((originalPrice * gstRate) / 100));
+    const sgstAmount = Math.round((gstAmount / 2));
+    const cgstAmount = Math.round((gstAmount / 2));
+    const inRate = Math.round((originalPrice + gstAmount));
+    const outRate = Math.round(inRate + (inRate * marginPercentage) / 100);
+
+    updatedVariants[index].gstAmount = gstAmount || "";
+    updatedVariants[index].SGST = sgstAmount || "";
+    updatedVariants[index].CGST = cgstAmount || "";
+    updatedVariants[index].InRate = inRate || "";
+    updatedVariants[index].OutRate = outRate || "";
+
+    if (field === "MrpPrice") {
+      const mrp = parseFloat(value) || 0;
+      if (outRate > 0 && mrp < outRate) {
+        updatedVariants[index].mrpError = `MRP must be greater than Out Rate (₹${outRate})`;
+      } else {
+        updatedVariants[index].mrpError = "";
+      }
+    }
+
+    if (field === "originalPrice" || field === "gstRate" || field === "marginPercentage") {
+      const mrp = parseFloat(updatedVariants[index].MrpPrice) || 0;
+      if (mrp && mrp < outRate) {
+        updatedVariants[index].mrpError = `MRP must be greater than Out Rate (₹${outRate})`;
+      } else {
+        updatedVariants[index].mrpError = "";
+      }
+    }
+
     setFormData({ ...formData, variants: updatedVariants });
   };
 
@@ -251,7 +301,7 @@ export default function EditProductModal({
         submitData.append("primaryImages", formData.primaryImage);
       }
 
-      // ✅ Format variants (KEEP EXISTING URLS)
+      // ✅ Format variants 
       const formattedVariants = formData.variants.map((v) => ({
         _id: v._id,
         quantityValue: Number(v.quantityValue),
@@ -262,8 +312,13 @@ export default function EditProductModal({
         stock: Number(v.stock),
         images: v.imageUrls || [],
         gstRate: Number(v.gstRate || 0),
+        gstAmount: v.gstAmount,
+        SGSTprice: v.SGSTprice,
+        CGSTprice: v.CGSTprice,
         marginPercentage: Number(v.marginPercentage || 0),
         InRate: Number(v.InRate || 0),
+        OutRate: Number(v.OutRate || 0),
+        MrpPrice: Number(v.MrpPrice || 0),
       }));
 
       submitData.append("variants", JSON.stringify(formattedVariants));
@@ -327,7 +382,6 @@ export default function EditProductModal({
             </label>
           </div>
 
-
           <div className="relative">
             <select
               name="brand"
@@ -347,7 +401,6 @@ export default function EditProductModal({
               Brand
             </label>
           </div>
-
 
           <div className="relative">
             <select
@@ -539,28 +592,69 @@ export default function EditProductModal({
                   </select>
                 </div> */}
 
-                {/* GST */}
+                {/* GST Rate */}
                 <div className="relative">
-                  <select
-                    value={variant.gstRate || ""}
-                    onChange={(e) =>
-                      handleVariantChange(index, "gstRate", e.target.value)
-                    }
-                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-white focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="">GST</option>
-                    {GST_RATES.map((g) => (
-                      <option key={g} value={g}>
-                        {g}%
-                      </option>
-                    ))}
-                  </select>
-
-                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
-                    GST Rate
-                  </label>
+                  <div className="relative">
+                    <select
+                      value={variant.gstRate ?? ""}
+                      onChange={(e) => handleVariantChange(index, "gstRate", Number(e.target.value))}
+                      className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-white focus:outline-none focus:border-indigo-500 appearance-none"
+                    >
+                      <option value="">Select GST</option>
+                      {GST_RATES.map((g) => (
+                        <option key={g} value={g}>{g}%</option>
+                      ))}
+                    </select>
+                    <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+                      GST Rate
+                    </label>
+                    {variant.gstRate !== "" && variant.originalPrice && (
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-semibold pointer-events-none">
+                        ₹{variant.gstAmount || ""} ({variant.gstRate}%)
+                      </span>
+                    )}
+                  </div>
                 </div>
 
+                {/* CGST */}
+                <div className="relative">
+                  <div className="relative">
+                    <input
+                      readOnly
+                      value={variant.CGST ? `₹ ${variant.CGST}` : ""}
+                      placeholder={variant.gstRate ? `CGST @ ${variant.gstRate / 2}%` : "Select GST first"}
+                      className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-gray-50 outline-none  font-semibold"
+                    />
+                    <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+                      CGST
+                    </label>
+                    {variant.CGST && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold pointer-events-none">
+                        ({variant.gstRate / 2}%)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* SGST */}
+                <div className="relative">
+                  <div className="relative">
+                    <input
+                      readOnly
+                      value={variant.SGST ? `₹ ${variant.SGST}` : ""}
+                      placeholder={variant.gstRate ? `SGST @ ${variant.gstRate / 2}%` : "Select GST first"}
+                      className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-gray-50 outline-none  font-semibold"
+                    />
+                    <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+                      SGST
+                    </label>
+                    {variant.SGST && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold pointer-events-none">
+                        ({variant.gstRate / 2}%)
+                      </span>
+                    )}
+                  </div>
+                </div>
 
                 {/* Margin % */}
                 <div className="relative">
@@ -593,6 +687,39 @@ export default function EditProductModal({
     peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
                     In Rate
                   </label>
+                </div>
+
+                {/* Out Rate */}
+                <div className="relative">
+                  <input
+                    readOnly
+                    value={variant.OutRate || ""}
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-green-50 outline-none text-green-700 font-bold"
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+                    Out Rate
+                  </label>
+                </div>
+
+                {/* MRP Price */}
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={variant.MrpPrice || ""}
+                    onChange={(e) => handleVariantChange(index, "MrpPrice", e.target.value)}
+                    placeholder=" "
+                    min={variant.OutRate || 0}
+                    className={`peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500 ${variant.mrpError ? "border-red-500" : ""
+                      }`}
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all
+    peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
+                    MRP Price
+                  </label>
+                  {variant.mrpError && (
+                    <p className="text-red-500 text-xs mt-1">{variant.mrpError}</p>
+                  )}
                 </div>
 
                 {/* Images */}

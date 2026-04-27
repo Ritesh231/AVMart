@@ -434,7 +434,7 @@ const ProductGrid = () => {
 
 
                 <p className="text-sm text-gray-400 line-through">
-                  ₹{firstVariant?.originalPrice}
+                  ₹{firstVariant?.MrpPrice}
                 </p>
               </div>
 
