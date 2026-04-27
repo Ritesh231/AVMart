@@ -2,10 +2,10 @@ import React from 'react';
 
 const StatCard = ({ title, number, statement, icon, variant = 'normal', onClick, className }) => {
     // Styles for the "Special" Gradient Card
-    const specialStyles = "bg-gradient-to-br from-[#1E294B] via-[#1E294B] to-[#49D1B1] text-white";
+    const specialStyles = "bg-gradient-to-br from-[#1E294B] via-[#1E294B] to-[#FF8800]/40 text-white";
 
     // Styles for the "Normal" Light Card
-    const normalStyles = "bg-brand-soft text-brand-navy border border-transparent";
+    const normalStyles = "bg-brand-blue text-brand-navy border border-transparent";
 
     return (
         <div

@@ -22,10 +22,10 @@ const AddBanner = ({ closeModal, activeTab }) => {
   const [addSubcategory, { isLoading: subLoading }] =
     useAddSubcategoryBannerMutation();
 
-  const { data: categoryData, isLoading: categoryFetchLoading } =
-    useGetallcategoriesQuery(undefined, {
-      skip: activeTab !== "category",
-    });
+  const {
+    data: categoryData,
+    isLoading: categoryFetchLoading,
+  } = useGetallcategoriesQuery();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -69,10 +69,8 @@ const AddBanner = ({ closeModal, activeTab }) => {
       data.append("isActive", formData.isActive);
       data.append("displayOrder", formData.displayOrder);
       data.append("image", image);
+      data.append("category", formData.category);
 
-      if (activeTab === "category") {
-        data.append("category", formData.category);
-      }
 
       // 🔥 Dynamic API call based on activeTab
       if (activeTab === "main") {
@@ -135,29 +133,29 @@ const AddBanner = ({ closeModal, activeTab }) => {
           />
         </div> */}
 
-          {activeTab === "category" && (
-            <div>
-              <label className="text-sm font-medium text-gray-700">
-                Select Category
-              </label>
 
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-                required
-              >
-                <option value="">Select Category</option>
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Select Category
+            </label>
 
-                {categoryData?.data?.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
+              required
+            >
+              <option value="">Select Category</option>
+
+              {categoryData?.data?.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
 
           {/* IMAGE UPLOAD + PREVIEW */}
           <div>

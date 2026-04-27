@@ -321,7 +321,7 @@ const OrderDetails = () => {
       <div className="">
 
         {/* Profile Card */}
-        <div className="bg-[#E0F5F1] rounded-xl p-4 md:p-6 flex flex-col md:flex-row md:justify-between md:items-start gap-6">
+        <div className="bg-brand-blue/50 rounded-xl p-4 md:p-6 flex flex-col md:flex-row md:justify-between md:items-start gap-6">
 
           {/* LEFT SECTION */}
           <div className="space-y-2 flex-1 min-w-0">

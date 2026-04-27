@@ -291,7 +291,7 @@ export default function UsersTable() {
             className={`px-6 py-3 rounded-lg flex items-center justify-center sm:justify-start
         gap-3 font-semibold transition-all duration-300
         ${activeTab === tab.id
-                ? "bg-[#00E5B0] text-white shadow-sm"
+                ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800]  text-white shadow-sm"
                 : "bg-white text-[#1E264F] hover:bg-opacity-90"
               }
         sm:ml-2 mb-2 sm:mb-0 w-full sm:w-auto
@@ -569,7 +569,7 @@ export default function UsersTable() {
                       onClick={() => setCurrentPage(page)}
                       className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
                 ${currentPage === page
-                          ? "bg-[#00E5B0] text-white shadow-md"
+                          ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
                           : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
                         }`}
                     >

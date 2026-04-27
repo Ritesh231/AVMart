@@ -57,7 +57,7 @@ export default function ProductCategories() {
   }
 
   return (
-    <div className="p-6 bg-[#F8FAFC] rounded-xl border border-teal-200">
+    <div className="p-6 bg-[#F8FAFC] rounded-xl border border-[#0F172A]/20 ">
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -103,7 +103,7 @@ export default function ProductCategories() {
                   onClick={() => setPage(p)}
                   className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
             ${page === p
-                      ? "bg-[#00E5B0] text-white shadow-md"
+                      ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
                       : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
                     }`}
                 >

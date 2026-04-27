@@ -126,7 +126,7 @@ export default function AddBrand() {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-[#00E5B0] text-white px-6 py-2 rounded-lg"
+              className="bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white px-6 py-2 rounded-lg"
             >
               {isLoading ? "Adding..." : "Add Brand"}
             </button>

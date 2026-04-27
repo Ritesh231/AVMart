@@ -421,7 +421,7 @@ export default function DeliveryBoyDetails() {
         onClick={() => handlePageChange(page)}
         className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
           ${currentPageNum === page
-            ? "bg-[#00E5B0] text-white shadow-md"
+            ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
             : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
           }`}
       >
@@ -505,7 +505,7 @@ export default function DeliveryBoyDetails() {
           }}
           className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300
       ${activeTab === "attendance"
-              ? "bg-[#00E5B0] text-white"
+              ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white"
               : "bg-white text-[#1E264F] hover:bg-gray-100"
             }`}
         >
@@ -520,7 +520,7 @@ export default function DeliveryBoyDetails() {
           }}
           className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300
       ${activeTab === "revenue"
-              ? "bg-[#00E5B0] text-white"
+              ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white"
               : "bg-white text-[#1E264F] hover:bg-gray-100"
             }`}
         >
@@ -535,7 +535,7 @@ export default function DeliveryBoyDetails() {
           }}
           className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300
       ${activeTab === "orders"
-              ? "bg-[#00E5B0] text-white"
+              ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white"
               : "bg-white text-[#1E264F] hover:bg-gray-100"
             }`}
         >

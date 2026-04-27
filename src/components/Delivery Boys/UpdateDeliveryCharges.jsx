@@ -52,7 +52,7 @@ const UpdateDeliveryCharges = () => {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-[#00E5B0] text-white py-2 rounded-lg hover:bg-green-900 transition disabled:opacity-50"
+                        className="w-full bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white py-2 rounded-lg hover:bg-green-900 transition disabled:opacity-50"
                     >
                         {isLoading ? "Updating..." : "Update Charges"}
                     </button>

@@ -140,7 +140,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 {/* LEFT COLUMN: Finance & Transaction History (Span 4 of 12) */}
-                <section className="lg:col-span-4 flex flex-col gap-6 p-6 border-2 border-[#62CDB969]/40 rounded-[3rem] bg-white h-full">
+                <section className="lg:col-span-4 flex flex-col gap-6 p-6 border-2 border-[#0F172A]/20  rounded-[3rem] bg-white h-full">
                     <div className="total-revenue">
                         {isLoading ? (
                             <div className="bg-white rounded-[2.5rem] p-8 shadow-xl">
@@ -151,7 +151,7 @@ const Dashboard = () => {
                             </div>
                         ) : (
                             <div className="relative overflow-hidden bg-brand-navy rounded-[2.5rem] p-8 text-white shadow-xl min-h-[240px] flex flex-col justify-between">
-                                <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-brand-cyan/70 rounded-full blur-[50px]"></div>
+                                <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-[#FF8800]/50 rounded-full blur-[50px]"></div>
                                 <div className="flex justify-between items-start relative z-10">
                                     <h3 className="text-xl font-medium opacity-90">Total Revenue</h3>
                                     <span className="text-xs font-semibold bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
@@ -204,7 +204,7 @@ const Dashboard = () => {
                 <div className="lg:col-span-8 flex flex-col gap-6">
 
                     {/* TOP RIGHT: Short Overview */}
-                    <section className="bg-white border-2 border-[#62CDB969]/40 rounded-[2.5rem] p-6">
+                    <section className="bg-white border-2 border-[#0F172A]/20   rounded-[2.5rem] p-6">
                         <div className='flex justify-between items-center mb-6 px-2'>
                             <h2 className="text-xl font-bold text-brand-navy">Short Overview</h2>
                             <div className="flex flex-col gap-2">
@@ -298,7 +298,7 @@ const Dashboard = () => {
                     </section>
 
                     {/* BOTTOM RIGHT: Recently Added Products */}
-                    <section className="bg-white border-2 border-[#62CDB969] rounded-[2.5rem] p-6">
+                    <section className="bg-white border-2 border-[#0F172A]/20   rounded-[2.5rem] p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-brand-navy">Recently Added Products</h2>
                             <button className="flex items-center gap-2 bg-brand-navy text-white px-5 py-2 rounded-xl text-sm font-semibold" onClick={() => navigate("/AddProduct")}>
@@ -320,7 +320,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* BOTTOM FULL WIDTH: Quick Overview */}
-                <section className="lg:col-span-12 bg-white border-2 border-[#62CDB969] rounded-[3rem] p-8">
+                <section className="lg:col-span-12 bg-white border-2 border-[#0F172A]/20   rounded-[3rem] p-8">
                     <h2 className="text-xl font-bold text-brand-navy mb-6">Quick Overview For You</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {isLoading

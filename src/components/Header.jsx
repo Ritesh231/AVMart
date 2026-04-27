@@ -62,7 +62,7 @@ const Header = () => {
         { name: 'Users', path: '/users', icon: <Users size={18} /> },
         { name: 'Orders', path: '/orders', icon: <ShoppingCart size={18} /> },
         { name: 'Products', path: '/products', icon: <Package size={18} /> },
-        { name: 'Invoices', path: '/invoices', icon: <FileText size={18} /> },
+        // { name: 'Invoices', path: '/invoices', icon: <FileText size={18} /> },
         { name: 'Payments', path: '/payments', icon: <CreditCard size={18} /> },
         { name: 'Delivery Boy', path: '/delivery', icon: <Truck size={18} /> },
         { name: 'Queries', path: '/queries', icon: <MessageSquare size={18} /> },
@@ -91,14 +91,14 @@ const Header = () => {
                 </div>
 
                 <div className="flex items-center gap-4 md:gap-6">
-                    <div className="hidden md:flex items-center bg-brand-cyan px-4 py-2 rounded-xl text-brand-navy font-bold gap-3">
+                    <div className="hidden md:flex items-center bg-gradient-to-r from-[#FD610D] to-[#FF8800] px-4 py-2 rounded-xl text-white font-bold gap-3">
                         <span>{new Date().toLocaleDateString("en-GB")}</span>
                         <Calendar size={18} />
                     </div>
 
                     <button className="relative p-2 text-brand-navy hover:bg-slate-100 rounded-full transition-colors">
                         <Bell size={22} />
-                        <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-brand-teal rounded-full border-2 border-white"></span>
+                        <span className="absolute top-2 right-2 h-2.5 w-2.5  bg-gradient-to-r from-[#FD610D] to-[#FF8800] rounded-full border-2 border-white"></span>
                     </button>
 
                     <div className="relative">
@@ -140,7 +140,7 @@ const Header = () => {
             </div>
 
             {/* Navigation Bar */}
-            <nav className="bg-brand-soft border-t border-brand-teal/10">
+            <nav className="bg-[#FD610D]/10 border-t border-brand-teal/10">
                 <div className="overflow-x-auto no-scrollbar scroll-smooth">
 
                     <ul className="flex items-center gap-2 px-3 sm:px-6 py-3 min-w-max">
@@ -177,7 +177,7 @@ const Header = () => {
                                     <>
                                         <span
                                             className={`text-lg ${isActiveRoute(item.path)
-                                                ? "text-[#00E9BE]"
+                                                ? "text-[#FD610D]"
                                                 : "text-current"
                                                 }`}
                                         >

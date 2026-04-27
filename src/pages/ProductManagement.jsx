@@ -23,31 +23,31 @@ export default function OrderManagement() {
 
         {/* Right Side Buttons */}
         <div className="flex flex-wrap gap-3">
-          
+
           <Link to="/AddProduct">
-          <button className="bg-[#00E5B0] hover:bg-[#00c79a] text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-            + Add Product
-          </button>
+            <button className="bg-gradient-to-r from-[#FD610D] to-[#FF8800]  hover:bg-[#00c79a] text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+              + Add Product
+            </button>
           </Link>
 
-         <Link to="/AddCategory">
-          <button className="bg-[#1E293B] hover:bg-[#0f172a] text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-            + Add Category
-          </button>
+          <Link to="/AddCategory">
+            <button className="bg-[#1E293B] hover:bg-[#0f172a] text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+              + Add Category
+            </button>
           </Link>
 
           <Link to="/AddSubcategory">
-          <button className="bg-[#1E293B] hover:bg-[#0f172a] text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-            + Add Sub Category
-          </button>
+            <button className="bg-[#1E293B] hover:bg-[#0f172a] text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+              + Add Sub Category
+            </button>
           </Link>
-           
+
           <Link to="/AddBrand">
-          <button className="bg-[#1E293B] hover:bg-[#0f172a] text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-            + Add Brand
-          </button>
+            <button className="bg-[#1E293B] hover:bg-[#0f172a] text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+              + Add Brand
+            </button>
           </Link>
-           
+
         </div>
       </div>
 

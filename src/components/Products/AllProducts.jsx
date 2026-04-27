@@ -405,7 +405,7 @@ const ProductGrid = () => {
               {/* Status Dot */}
               <span
                 onClick={() => navigate("/AddProduct")}
-                className="absolute top-2 right-2 h-6 w-6 bg-green-500 rounded-full 
+                className="absolute top-2 right-2 h-6 w-6 bg-gradient-to-r from-[#FD610D] to-[#FF8800] rounded-full 
                    flex items-center justify-center 
                    cursor-pointer hover:bg-green-600 transition"
               >
@@ -413,7 +413,7 @@ const ProductGrid = () => {
               </span>
 
               {/* Image */}
-              <div className="flex justify-center mb-3 bg-[#62CDB929]">
+              <div className="flex justify-center mb-3 bg-brand-blue/50">
                 <img
                   src={product.primaryImages?.[0]}
                   alt={product.productName}
@@ -545,7 +545,7 @@ const ProductGrid = () => {
                   onClick={() => setCurrentPage(page)}
                   className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                      ? "bg-[#00E5B0] text-white shadow-md"
+                      ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
                       : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
                     }`}
                 >

@@ -65,7 +65,7 @@ export default function CategoryCard({ category }) {
     <>
       <div
         className="flex flex-col sm:flex-row sm:items-center justify-between
-      p-4 rounded-xl border border-teal-200 bg-white
+      p-4 rounded-xl border  bg-white
       hover:shadow-md transition gap-4"
       >
         {/* Left section */}

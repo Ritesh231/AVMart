@@ -553,7 +553,7 @@ export default function UsersTable() {
                     onClick={() => setCurrentPage(page)}
                     className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                        ? "bg-[#00E5B0] text-white shadow-md"
+                        ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
                         : "bg-gray-100 text-[#1A2550] hover:bg-gray-200"
                       }`}
                   >

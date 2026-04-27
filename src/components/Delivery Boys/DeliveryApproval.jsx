@@ -250,10 +250,10 @@ function WithdrawalTable() {
                         <button
                             onClick={() => handlePageChange(pagination.page - 1)}
                             disabled={pagination.page === 1}
-                            className={`px-3 py-1 rounded-md flex items-center gap-1 transition-colors
+                            className={`px-3 py-1 rounded-md flex items-center gap-1 
                                 ${pagination.page === 1
                                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                    : "bg-brand-navy text-white hover:bg-brand-navy"
+                                    : "bg-gradient-to-r from-[#00E5B0] to-[#00E5B0]  text-white"
                                 }`}
                         >
                             <ChevronLeft size={16} />
@@ -267,9 +267,9 @@ function WithdrawalTable() {
                                     <button
                                         key={pageNum}
                                         onClick={() => handlePageChange(pageNum)}
-                                        className={`px-3 py-1 rounded-md transition-colors
+                                        className={`px-3 py-1 rounded-md 
                                             ${pagination.page === pageNum
-                                                ? "bg-brand-cyan text-white"
+                                                ? "bg-gradient-to-r from-[#00E5B0] to-[#00E5B0]  text-white"
                                                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                             }`}
                                     >
@@ -284,7 +284,7 @@ function WithdrawalTable() {
                                     onClick={() => handlePageChange(1)}
                                     className={`px-3 py-1 rounded-md transition-colors
                                         ${pagination.page === 1
-                                            ? "bg-brand-cyan text-white"
+                                            ? "bg-gradient-to-r from-[#00E5B0] to-[#00E5B0]  text-white"
                                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                         }`}
                                 >
@@ -294,20 +294,20 @@ function WithdrawalTable() {
                                 {pagination.page > 2 && (
                                     <button
                                         onClick={() => handlePageChange(pagination.page - 1)}
-                                        className="px-3 py-1 rounded-md bg-brand-cyan text-white"
+                                        className="px-3 py-1 rounded-md bg-gradient-to-r from-[#00E5B0] to-[#00E5B0]  text-white"
                                     >
                                         {pagination.page - 1}
                                     </button>
                                 )}
                                 {pagination.page !== 1 && pagination.page !== pagination.total_pages && (
-                                    <button className="px-3 py-1 rounded-md bg-brand-cyan text-white">
+                                    <button className="px-3 py-1 rounded-mdbg-gradient-to-r from-[#00E5B0] to-[#00E5B0] text-white">
                                         {pagination.page}
                                     </button>
                                 )}
                                 {pagination.page < pagination.total_pages - 1 && (
                                     <button
                                         onClick={() => handlePageChange(pagination.page + 1)}
-                                        className="px-3 py-1 rounded-md bg-brand-cyan text-white"
+                                        className="px-3 py-1 rounded-md bg-gradient-to-r from-[#00E5B0] to-[#00E5B0]  text-white"
                                     >
                                         {pagination.page + 1}
                                     </button>
@@ -317,7 +317,7 @@ function WithdrawalTable() {
                                     onClick={() => handlePageChange(pagination.total_pages)}
                                     className={`px-3 py-1 rounded-md transition-colors
                                         ${pagination.page === pagination.total_pages
-                                            ? "bg-brand-cyan text-white"
+                                            ? "bg-gradient-to-r from-[#00E5B0] to-[#00E5B0]  text-white"
                                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                         }`}
                                 >

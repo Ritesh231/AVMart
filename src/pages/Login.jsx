@@ -53,11 +53,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A2550] to-[#62CDB9] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A2550] to-[#FF8800]/60 p-4">
       <div className="bg-white w-full max-w-md rounded-xl shadow-md p-6">
 
         {/* Heading */}
-        <img className="text-center justify-center items-center ml-24 w-48 h-32 mb-4" src={Logo}></img>
+        <img className="text-center justify-center items-center ml-24 w-48 h-28 mb-4" src={Logo}></img>
         <h2 className="text-2xl font-semibold text-center mb-4">
           Login
         </h2>
@@ -88,8 +88,8 @@ const Login = () => {
           disabled={isLoading}
           className={`w-full mt-4 py-2 rounded-lg font-medium transition
        ${isLoading
-              ? "bg-emerald-400 cursor-not-allowed text-white"
-              : "bg-emerald-600 hover:bg-emerald-700 text-white"}`}
+              ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] cursor-not-allowed text-white"
+              : "bg-gradient-to-br from-[#FD610D] to-[#FF8800] hover:bg-emerald-700 text-white"}`}
         >
           {isLoading ? "Logging in..." : "Submit"}
         </button>

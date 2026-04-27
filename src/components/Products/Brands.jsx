@@ -238,7 +238,7 @@ export default function BrandsSection() {
   }
 
   return (
-    <div className="p-6 bg-[#F8FAFC] rounded-xl border border-teal-200">
+    <div className="p-6 bg-[#F8FAFC] rounded-xl border border-[#0F172A]/20 ">
 
       {/* Search + Export */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
@@ -249,7 +249,7 @@ export default function BrandsSection() {
           <input
             type="text"
             placeholder="Search By Brand Name"
-            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-teal-200 text-sm 
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-[#0F172A]/20  text-sm 
       focus:outline-none focus:ring-2 focus:ring-teal-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -260,7 +260,7 @@ export default function BrandsSection() {
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 
           <label className="flex items-center justify-center sm:justify-start gap-2 
-    border border-teal-200 rounded-lg px-3 py-2 text-sm font-medium 
+    border border-[#0F172A]/20  rounded-lg px-3 py-2 text-sm font-medium 
     bg-white text-[#1A2550] w-full sm:w-auto">
             <input
               ref={selectAllRef}
@@ -310,7 +310,7 @@ export default function BrandsSection() {
           : currentOrders.map((brand) => (
             <div
               key={brand._id}
-              className="relative w-40 h-36 bg-[#ECFDFB] rounded-xl p-4 flex flex-col items-center gap-3 border border-teal-100"
+              className="relative w-40 h-36 bg-brand-blue/50 rounded-xl p-4 flex flex-col items-center gap-3 border border-teal-100"
             >
               <input
                 type="checkbox"
@@ -388,7 +388,7 @@ export default function BrandsSection() {
                   onClick={() => setCurrentPage(page)}
                   className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
               ${currentPage === page
-                      ? "bg-[#00E5B0] text-white shadow-md"
+                      ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
                       : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
                     }`}
                 >

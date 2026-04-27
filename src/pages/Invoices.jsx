@@ -19,7 +19,7 @@ const Invoices = () => {
             icon: <ReceiptText size={24} />,
         },
     ]
-    
+
     const [activeTab, setActiveTab] = useState('GST');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -65,7 +65,7 @@ const Invoices = () => {
         { id: 28, invoiceNo: "INV2008", contactNo: "+91 9800000008", date: "27/05/2026", gstNo: "N/A", name: "Nisha Bansal", value: 3500, taxable: 3500, place: "Thane", type: "NON-GST" },
         { id: 29, invoiceNo: "INV2009", contactNo: "+91 9800000009", date: "28/05/2026", gstNo: "N/A", name: "Sanjay More", value: 6200, taxable: 6200, place: "Latur", type: "NON-GST" },
         { id: 30, invoiceNo: "INV2010", contactNo: "+91 9811111110", date: "29/05/2026", gstNo: "N/A", name: "Pankaj Yadav", value: 4100, taxable: 4100, place: "Beed", type: "NON-GST" },
-       
+
         { id: 31, invoiceNo: "INV2011", contactNo: "+91 9811111111", date: "30/05/2026", gstNo: "N/A", name: "Ayesha Khan", value: 5300, taxable: 5300, place: "Parbhani", type: "NON-GST" },
         { id: 32, invoiceNo: "INV2012", contactNo: "+91 9811111112", date: "31/05/2026", gstNo: "N/A", name: "Imran Shaikh", value: 4800, taxable: 4800, place: "Jalna", type: "NON-GST" },
         { id: 33, invoiceNo: "INV2013", contactNo: "+91 9811111113", date: "01/06/2026", gstNo: "N/A", name: "Farhan Ali", value: 3600, taxable: 3600, place: "Akola", type: "NON-GST" },
@@ -98,9 +98,9 @@ const Invoices = () => {
                     <button className='bg-brand-navy px-4 py-2.5 rounded-xl flex justify-center gap-1 items-center text-white'><Upload /> Upload Invoice</button>
                 </div>
             </section>
-            
+
             {/* Cards Section */}
-            <section className="stat-card-sec mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
+            <section className="stat-card-sec mb-6 bg-white border-2 border-[#0F172A]/20 rounded-[2.5rem] p-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {invoiceTypeStat.map((stat, index) => (
                         <StatCard
@@ -114,7 +114,7 @@ const Invoices = () => {
                     ))}
                 </div>
             </section>
-            
+
             {/* TOGGLE BUTTONS SECTION */}
             <section className="flex items-center bg-brand-navy p-1.5 rounded-2xl w-fit mb-6 shadow-lg">
                 {/* GST Button */}

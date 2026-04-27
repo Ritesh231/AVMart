@@ -360,7 +360,7 @@ const Payments = () => {
                 onClick={() => handlePageChange(page)}
                 className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all
                     ${currentPage === page
-                        ? "bg-[#00E5B0] text-white shadow-md"
+                        ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-md"
                         : "bg-gray-100 text-[#1E264F] hover:bg-gray-200"
                     }`}
             >
@@ -376,7 +376,7 @@ const Payments = () => {
                     <div className="h-6 bg-gray-300 rounded w-1/4 mb-2"></div>
                     <div className="h-4 bg-gray-300 rounded w-1/3"></div>
                 </div>
-                <section className="mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
+                <section className="mb-6 bg-white border-2 border-[#0F172A]/20 rounded-[2.5rem] p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {[...Array(3)].map((_, i) => (
                             <StatCardSkeleton key={i} />
@@ -408,7 +408,7 @@ const Payments = () => {
             </section>
 
             {/* Stats Cards */}
-            <section className="stat-card-sec mb-6 bg-white border-2 border-[#62CDB999] rounded-[2.5rem] p-6">
+            <section className="stat-card-sec mb-6 bg-white border-2 border-[#0F172A]/20 rounded-[2.5rem] p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {paymentTypeStat.map((stat, index) => (
                         <StatCard
@@ -434,7 +434,7 @@ const Payments = () => {
                         }}
                         className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all duration-300 first:ml-0 
                         ${activeTab === tab.id
-                                ? 'bg-[#00E5B0] text-white shadow-sm'
+                                ? 'bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-sm'
                                 : 'bg-white text-[#1E264F] hover:bg-opacity-90'
                             }`}
                     >
@@ -446,7 +446,7 @@ const Payments = () => {
                 ))}
             </section>
 
-            <section className="bg-white border-2 border-brand-soft rounded-[2.5rem] p-6 shadow-sm overflow-hidden">
+            <section className="bg-white border-2 border-[#0F172A]/20  rounded-[2.5rem] p-6 shadow-sm overflow-hidden">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
 
                     {/* 🔍 Search Bar */}

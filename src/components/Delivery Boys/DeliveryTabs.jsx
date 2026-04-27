@@ -53,7 +53,7 @@ export default function OrderPaymentTabs() {
             onClick={() => navigate(tab.path)}
             className={`px-6 py-3 rounded-lg flex items-center gap-3 font-semibold transition-all
               ${isActive
-                ? "bg-[#00E5B0] text-white"
+                ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white"
                 : "bg-white text-[#1E264F]"
               }`}
           >

@@ -90,15 +90,15 @@ const Loader = () => (
 
       {/* Logo */}
       <img
-        src="/images/logo.svg"
+        src="/AVMartLogo.png"
         alt="Logo"
-        className="w-48 h-48 animate-pulse"
+        className="w-64 h-48 animate-pulse"
       />
 
       {/* Animated Spinner Ring */}
       <div className="relative">
         <div className="w-14 h-14 border-4 border-white/20 rounded-full"></div>
-        <div className="absolute top-0 left-0 w-14 h-14 border-4 border-brand-teal border-t-transparent rounded-full animate-spin"></div>
+        <div className="absolute top-0 left-0 w-14 h-14 border-4 border-[#008080] border-t-transparent rounded-full animate-spin"></div>
       </div>
 
       {/* Loading Text */}

@@ -229,6 +229,7 @@ export default function EditProductModal({
     setFormData({ ...formData, variants: updatedVariants });
   };
 
+
   const handleSubmit = async () => {
     try {
       const submitData = new FormData();
@@ -301,67 +302,118 @@ export default function EditProductModal({
 
         {/* Basic Fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input name="productName" value={formData.productName} onChange={handleChange} placeholder="Product Name" className="border p-2 rounded-lg text-sm" />
-          <input name="slug" value={formData.slug} onChange={handleChange} placeholder="Slug" className="border p-2 rounded-lg text-sm" />
+          <div className="relative">
+            <input
+              name="productName"
+              value={formData.productName}
+              onChange={handleChange}
+              placeholder=" "
+              className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+            />
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600 peer-focus:bg-white">
+              Product Name
+            </label>
+          </div>
+          <div className="relative">
+            <input
+              name="slug"
+              value={formData.slug}
+              onChange={handleChange}
+              placeholder=" "
+              className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+            />
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600 peer-focus:bg-white">
+              Slug
+            </label>
+          </div>
 
-          <select
-            name="brand"
-            value={formData.brand}
-            onChange={handleChange}
-            className="border p-2 rounded-lg text-sm"
-          >
-            <option value="">Select Brand</option>
-            {brands.map((b) => (
-              <option key={b._id} value={b._id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
 
-          <select
-            name="category"
-            value={formData.category}
-            onChange={(e) => {
-              setFormData({
-                ...formData,
-                category: e.target.value,
-                subcategory: ""
-              });
-            }}
-            className="border p-2 rounded-lg text-sm"
-          >
-            <option value="">Select Category</option>
-            {categories.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              name="brand"
+              value={formData.brand}
+              onChange={handleChange}
+              className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-white focus:outline-none focus:border-indigo-500"
+            >
+              <option value="">Select Brand</option>
+              {brands.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
 
-          <select
-            name="subcategory"
-            value={formData.subcategory}
-            onChange={handleChange}
-            className="border p-2 rounded-lg text-sm"
-          >
-            <option value="">Select Subcategory</option>
-            {filteredSubcategories.map((s) => (
-              <option key={s._id} value={s._id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+              Brand
+            </label>
+          </div>
 
-          <input name="status" value={formData.status} onChange={handleChange} placeholder="Status" className="border p-2 rounded-lg text-sm" />
+
+          <div className="relative">
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-white focus:outline-none focus:border-indigo-500"
+            >
+              <option value="">Select Category</option>
+              {categories.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+              Category
+            </label>
+          </div>
+
+          <div className="relative">
+            <select
+              name="subcategory"
+              value={formData.subcategory}
+              onChange={handleChange}
+              className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-white focus:outline-none focus:border-indigo-500"
+            >
+              <option value="">Select Subcategory</option>
+              {filteredSubcategories.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+              Subcategory
+            </label>
+          </div>
+
+          <div className="relative">
+            <input
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              placeholder=" "
+              className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+            />
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+              Status
+            </label>
+          </div>
         </div>
 
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          placeholder="Description"
-          className="w-full border p-2 rounded-lg mt-3 text-sm"
-        />
+        <div className="relative mt-4">
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder=" "
+            className="peer w-full border rounded-lg px-3 pt-5 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+          />
+          <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+            Description
+          </label>
+        </div>
 
         {/* Main Image Upload */}
         <div className="mt-4">
@@ -402,43 +454,57 @@ export default function EditProductModal({
             <div key={index} className="border p-3 sm:p-4 rounded-lg mb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-                <input
-                  type="number"
-                  value={variant.quantityValue || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "quantityValue", e.target.value)
-                  }
-                  placeholder="Quantity"
-                  className="border p-2 rounded text-sm"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={variant.quantityValue || ""}
+                    onChange={(e) => handleVariantChange(index, "quantityValue", e.target.value)}
+                    placeholder=" "
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all
+    peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
+                    Quantity
+                  </label>
+                </div>
 
-                <select
-                  value={variant.quantityUnit || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "quantityUnit", e.target.value)
-                  }
-                  className="border p-2 rounded text-sm"
-                >
-                  <option value="">Select Unit</option>
-                  {QUANTITY_UNITS.map((unit) => (
-                    <option key={unit} value={unit}>
-                      {unit || "None"}
-                    </option>
-                  ))}
-                </select>
 
-                <input
-                  type="number"
-                  value={variant.originalPrice || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "originalPrice", e.target.value)
-                  }
-                  placeholder="Original Price"
-                  className="border p-2 rounded text-sm"
-                />
+                <div className="relative">
+                  <select
+                    value={variant.quantityUnit || ""}
+                    onChange={(e) => handleVariantChange(index, "quantityUnit", e.target.value)}
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">Select Unit</option>
+                    {QUANTITY_UNITS.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit || "None"}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+                    Unit
+                  </label>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={variant.originalPrice || ""}
+                    onChange={(e) => handleVariantChange(index, "originalPrice", e.target.value)}
+                    placeholder=" "
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all
+    peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
+                    Original Price
+                  </label>
+                </div>
 
                 {/* Discount */}
-                <div className="flex flex-col sm:flex-row gap-2">
+                {/* <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative w-full">
                     <input
                       type="number"
@@ -471,48 +537,63 @@ export default function EditProductModal({
                     <option value="percentage">Percentage</option>
                     <option value="flat">Flat</option>
                   </select>
-                </div>
+                </div> */}
 
                 {/* GST */}
-                <select
-                  value={variant.gstRate || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "gstRate", e.target.value)
-                  }
-                  className="border p-2 rounded text-sm"
-                >
-                  <option value="">GST</option>
-                  {GST_RATES.map((g) => (
-                    <option key={g} value={g}>
-                      {g}%
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={variant.gstRate || ""}
+                    onChange={(e) =>
+                      handleVariantChange(index, "gstRate", e.target.value)
+                    }
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm bg-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">GST</option>
+                    {GST_RATES.map((g) => (
+                      <option key={g} value={g}>
+                        {g}%
+                      </option>
+                    ))}
+                  </select>
+
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+                    GST Rate
+                  </label>
+                </div>
+
 
                 {/* Margin % */}
-                <input
-                  type="number"
-                  value={variant.marginPercentage || ""}
-                  onChange={(e) => {
-                    let value = Number(e.target.value);
-                    if (value > 100) value = 100;
-                    if (value < 0) value = 0;
-                    handleVariantChange(index, "marginPercentage", value);
-                  }}
-                  placeholder="Margin %"
-                  className="border p-2 rounded text-sm"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={variant.marginPercentage || ""}
+                    onChange={(e) => handleVariantChange(index, "marginPercentage", e.target.value)}
+                    placeholder=" "
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all
+    peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
+                    Margin %
+                  </label>
+                </div>
 
                 {/* InRate */}
-                <input
-                  type="number"
-                  value={variant.InRate || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "InRate", e.target.value)
-                  }
-                  placeholder="In Rate"
-                  className="border rounded text-sm px-2 py-1.5 sm:py-2 h-9 sm:h-10"
-                />
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={variant.InRate || ""}
+                    onChange={(e) => handleVariantChange(index, "InRate", e.target.value)}
+                    placeholder=" "
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all
+    peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
+                    In Rate
+                  </label>
+                </div>
 
                 {/* Images */}
                 <div className="mt-3">
@@ -570,15 +651,21 @@ export default function EditProductModal({
                   </div>
                 </div>
 
-                <input
-                  type="number"
-                  value={variant.stock || ""}
-                  onChange={(e) =>
-                    handleVariantChange(index, "stock", e.target.value)
-                  }
-                  placeholder="Stock"
-                  className="border rounded text-sm px-2 py-1.5 sm:py-2 h-9 sm:h-10"
-                />
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={variant.stock || ""}
+                    onChange={(e) => handleVariantChange(index, "stock", e.target.value)}
+                    placeholder=" "
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all
+    peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
+                    Stock
+                  </label>
+                </div>
               </div>
             </div>
           ))}
@@ -600,7 +687,7 @@ export default function EditProductModal({
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg w-full sm:w-auto"
+            className="px-4 py-2 bg-gradient-to-r from-[#FF8800] to-[#FF6600] text-white rounded-lg w-full sm:w-auto"
           >
             {isLoading ? "Updating..." : "Update"}
           </button>

@@ -281,6 +281,7 @@ export default function AddProduct() {
       stock: "",
       marginPercentage: "",
       InRate: "",
+      OutRate: "",
       // sku: "",
       imageFiles: [], // For storing file objects
       imageUrls: [], // For storing URLs (if you have them)
@@ -293,13 +294,47 @@ export default function AddProduct() {
     const updated = [...variants];
     let { name, value } = e.target;
 
-    // ✅ Restrict marginPercentage
     if (name === "marginPercentage") {
       if (value > 100) value = 100;
       if (value < 0) value = 0;
     }
 
     updated[index][name] = value;
+
+    // MRP should always be more than original price
+    if (name === "mrpPrice") {
+      const inPrice = parseFloat(updated[index].originalPrice) || 0;
+      const mrp = parseFloat(value) || 0;
+
+      if (inPrice > 0 && mrp < inPrice) {
+        updated[index].mrpError = `MRP must be greater than In Price (₹${inPrice})`;
+        // Don't update the value — block it
+        setVariants(updated);
+        return;
+      }
+      updated[index].mrpError = "";
+    }
+
+    if (name === "originalPrice") {
+      const mrp = parseFloat(updated[index].mrpPrice) || 0;
+      const inPrice = parseFloat(value) || 0;
+      updated[index].mrpError = mrp && mrp <= inPrice ? "MRP must be greater than In Price" : "";
+    }
+
+
+
+    // ─── Auto-calculate InRate & OutRate ───
+    const originalPrice = parseFloat(name === "originalPrice" ? value : updated[index].originalPrice) || 0;
+    const gstRate = parseFloat(name === "gstRate" ? value : updated[index].gstRate) || 0;
+    const marginPercentage = parseFloat(name === "marginPercentage" ? value : updated[index].marginPercentage) || 0;
+
+    const gstAmount = (originalPrice * gstRate) / 100;
+    const inRate = originalPrice + gstAmount;
+    const outRate = inRate + (inRate * marginPercentage) / 100;
+
+    updated[index].InRate = inRate > 0 ? parseFloat(inRate.toFixed(2)) : "";
+    updated[index].OutRate = outRate > 0 ? Math.round(outRate) : "";
+
     setVariants(updated);
   };
 
@@ -329,6 +364,7 @@ export default function AddProduct() {
         gstRate: "",
         marginPercentage: "",
         InRate: "",
+        OutRate: "",
         stock: "",
         // sku: "",
         imageFiles: [],
@@ -429,6 +465,7 @@ export default function AddProduct() {
         stock: Number(v.stock),
         marginPercentage: Number(v.marginPercentage || 0),
         InRate: Number(v.InRate || 0),
+        OutRate: Number(v.OutRate || 0),
         images: v.imageUrls || []
       }));
 
@@ -766,7 +803,16 @@ export default function AddProduct() {
                   </div>
 
                   <InputField
-                    label="Original Price"
+                    label="Stock"
+                    name="stock"
+                    type="number"
+                    placeholder="Value should be a Number"
+                    value={variant.stock}
+                    onChange={(e) => handleVariantChange(index, e)}
+                  />
+
+                  <InputField
+                    label="In Price"
                     name="originalPrice"
                     placeholder="Value should be Number"
                     type="number"
@@ -774,6 +820,22 @@ export default function AddProduct() {
                     onChange={(e) => handleVariantChange(index, e)}
                   />
 
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">MRP Price</label>
+                    <input
+                      name="mrpPrice"
+                      type="number"
+                      placeholder="Value should be Number"
+                      value={variant.mrpPrice || ""}
+                      min={variant.originalPrice || 0}
+                      onChange={(e) => handleVariantChange(index, e)}
+                      className={`w-full mt-1 px-3 py-2 text-sm border ${variant.mrpError ? "border-red-500" : "border-gray-200"
+                        } rounded-lg focus:ring-2 focus:ring-[#00E5B0] outline-none`}
+                    />
+                    {variant.mrpError && (
+                      <p className="text-red-500 text-xs mt-1">{variant.mrpError}</p>
+                    )}
+                  </div>
 
                   {/* <div>
                     <label className="text-xs font-medium text-gray-600">
@@ -808,9 +870,7 @@ export default function AddProduct() {
                   /> */}
 
                   <div>
-                    <label className="text-xs font-medium text-gray-600">
-                      GST Rate
-                    </label>
+                    <label className="text-xs font-medium text-gray-600">GST Rate</label>
                     <select
                       name="gstRate"
                       value={variant.gstRate}
@@ -827,14 +887,31 @@ export default function AddProduct() {
                     </select>
                   </div>
 
-                  <InputField
-                    label="Stock"
-                    name="stock"
-                    type="number"
-                    placeholder="Value should be a Number"
-                    value={variant.stock}
-                    onChange={(e) => handleVariantChange(index, e)}
-                  />
+                  {/* SGST Display */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">
+                      SGST
+                    </label>
+                    <input
+                      readOnly
+                      value={variant.sgst ? `₹ ${variant.sgst}` : ""}
+                      placeholder={variant.gstRate ? `(${variant.gstRate / 2}%)` : ""}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 outline-none text-orange-600 font-semibold"
+                    />
+                  </div>
+
+                  {/* CGST Display */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">
+                      CGST
+                    </label>
+                    <input
+                      readOnly
+                      value={variant.cgst ? `₹ ${variant.cgst}` : ""}
+                      placeholder={variant.gstRate ? `(${variant.gstRate / 2}%)` : ""}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 outline-none text-purple-600 font-semibold"
+                    />
+                  </div>
 
                   <InputField
                     label="Margin %"
@@ -852,14 +929,23 @@ export default function AddProduct() {
                     }}
                   />
 
-                  <InputField
-                    label="In Rate"
-                    name="InRate"
-                    type="number"
-                    placeholder="Enter In Rate"
-                    value={variant.InRate}
-                    onChange={(e) => handleVariantChange(index, e)}
-                  />
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">In Rate</label>
+                    <input
+                      readOnly
+                      value={variant.InRate || ""}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 outline-none text-blue-700 font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600">Out Rate</label>
+                    <input
+                      readOnly
+                      value={variant.OutRate || ""}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-green-50 outline-none text-green-700 font-bold"
+                    />
+                  </div>
 
                   {/* <InputField
                     label="SKU"
@@ -954,7 +1040,7 @@ export default function AddProduct() {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-[#00E5B0] text-white px-5 py-2 rounded-lg hover:bg-opacity-90 disabled:opacity-50"
+              className="bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white px-5 py-2 rounded-lg hover:bg-opacity-90 disabled:opacity-50"
             >
               {isLoading ? "Adding..." : "Add Product"}
             </button>

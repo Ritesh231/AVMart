@@ -341,7 +341,7 @@ function AllReports() {
                 <button
                     onClick={() => setActiveTab("product")}
                     className={`px-4 py-2 rounded-xl ${activeTab === "product"
-                        ? "bg-[#00E5B0] text-white"
+                        ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white"
                         : "bg-gray-200"
                         }`}
                 >
@@ -351,7 +351,7 @@ function AllReports() {
                 <button
                     onClick={() => setActiveTab("order")}
                     className={`px-4 py-2 rounded-xl ${activeTab === "order"
-                        ? "bg-[#00E5B0] text-white"
+                        ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white"
                         : "bg-gray-200"
                         }`}
                 >
@@ -460,6 +460,7 @@ function AllReports() {
                                 <th className="p-3 border">Party</th>
                                 <th className="p-3 border">Price</th>
                                 <th className="p-3 border">Stock</th>
+                                <th className="p-3 border">Margin %</th>
                                 <th className="p-3 border">Variants</th>
                                 <th className="p-3 border">Status</th>
                                 <th className="p-3 border">Date</th>
@@ -483,6 +484,7 @@ function AllReports() {
                                                 </td>
                                                 <td className="p-3 border">₹ {variant.price ?? 0}</td>
                                                 <td className="p-3 border">{variant.stock ?? 0}</td>
+                                                <td className="p-3 border">{variant.marginPercentage ?? 0}</td>
                                                 <td className="p-3 border">{item.totalVariants ?? 0}</td>
                                                 <td className="p-3 border">
                                                     <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">

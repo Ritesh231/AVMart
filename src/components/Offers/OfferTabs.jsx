@@ -8,7 +8,7 @@ export default function OrderPaymentTabs({ activeTab, setActiveTab }) {
     { id: "mostselling", label: "Top Selling" },
     { id: "subcategory", label: "Product" },
   ];
-  
+
   return (
     <section className="flex flex-col sm:flex-row bg-[#1E264F] p-2 my-6 rounded-xl gap-2 md:w-fit w-full shadow-lg">
       {tabs.map((tab) => {
@@ -19,10 +19,9 @@ export default function OrderPaymentTabs({ activeTab, setActiveTab }) {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300
-              ${
-                isActive
-                  ? "bg-[#00E5B0] text-white shadow-sm"
-                  : "bg-white text-[#1E264F]"
+              ${isActive
+                ? "bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white shadow-sm"
+                : "bg-white text-[#1E264F]"
               }`}
           >
             {tab.label}
