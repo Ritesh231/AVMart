@@ -9,12 +9,52 @@ export default function FeedbackList() {
         limit: 5,
     });
 
+    const TableSkeleton = () => (
+
+        <div className="border rounded-xl p-4 shadow-sm bg-white animate-pulse">
+
+            <div className="flex justify-between items-center mb-4">
+                <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                <div className="h-6 w-16 bg-gray-200 rounded-full"></div>
+            </div>
+
+            <div className="mb-4">
+                <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+                <div className="h-4 w-full bg-gray-200 rounded"></div>
+                <div className="h-4 w-5/6 bg-gray-200 rounded"></div>
+                <div className="h-4 w-2/3 bg-gray-200 rounded"></div>
+            </div>
+
+            <div className="flex justify-between items-center">
+                <div className="h-4 w-40 bg-gray-200 rounded"></div>
+                <div className="h-4 w-32 bg-gray-200 rounded"></div>
+            </div>
+
+        </div>
+    );
+
     if (isLoading) {
-        return <p className="p-4">Loading...</p>;
+        return (
+            <div className="p-4">
+                <h2 className="text-xl font-semibold mb-4">User Feedback</h2>
+                <div className="grid gap-4">
+                    {[...Array(5)].map((_, index) => (
+                        <TableSkeleton key={index} />
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     if (isError) {
-        return <p className="p-4 text-red-500">Failed to load data</p>;
+        return (
+            <p className="p-4 text-red-500">
+                Failed to load feedback data.
+            </p>
+        );
     }
 
     const feedbacks = data?.data || [];
@@ -27,7 +67,7 @@ export default function FeedbackList() {
             <div className="grid gap-4">
                 {feedbacks.map((item) => (
                     <div
-                        key={item.id}
+                        key={item._id || item.id}
                         className="border rounded-xl p-4 shadow-sm bg-white hover:shadow-md transition"
                     >
                         <div className="flex justify-between items-center mb-2">
@@ -69,7 +109,7 @@ export default function FeedbackList() {
                 ))}
             </div>
 
-            {/* ✅ Pagination Controls */}
+            {/* Pagination Controls */}
             <div className="flex justify-between items-center mt-6">
                 <button
                     disabled={page === 1}
@@ -97,6 +137,7 @@ export default function FeedbackList() {
                     Next
                 </button>
             </div>
+
         </div>
     );
 }

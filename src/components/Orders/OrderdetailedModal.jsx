@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { MdDelete } from "react-icons/md";
 import { useDeleteOrderItemMutation } from "../../Redux/apis/ordersApi";
 import toast from "react-hot-toast";
+import { IoPrint } from "react-icons/io5";
 
 function OrderDetailsModal({ order, loading, onClose }) {
   if (!order && !loading) return null;
@@ -107,9 +108,9 @@ function OrderDetailsModal({ order, loading, onClose }) {
 
             <button
               onClick={handlePrint}
-              className="bg-white text-black text-xs px-3 py-1 rounded-full font-semibold"
+              className="bg-gray-300 text-black text-xs px-3 py-1 rounded-full font-semibold"
             >
-              Print
+              <IoPrint size={20} />
             </button>
 
             <button onClick={onClose}>
@@ -144,7 +145,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
           {/* Items */}
           <div className="border rounded-xl p-3 bg-gray-50 space-y-3">
             {order?.items?.map((item, index) => (
-              <div key={index} className="flex justify-between items-center">
+              <div key={index} className="flex justify-between items-center border-b border-gray-200 pb-2">
 
                 {/* LEFT SIDE */}
                 <div className="flex gap-3 items-center">
@@ -164,13 +165,13 @@ function OrderDetailsModal({ order, loading, onClose }) {
                 </div>
 
                 {/* RIGHT SIDE (PRICE + DELETE) */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 ">
                   <p className="font-semibold">
                     ₹{item.itemTotal.toFixed(2)}
                   </p>
 
                   <MdDelete
-                    className="text-red-500 cursor-pointer hover:scale-110 transition"
+                    className="text-red-500 cursor-pointer hover:scale-110 transition no-print"
                     size={18}
                     onClick={() => handleDeleteItem(item._id)}
                   />
@@ -179,6 +180,16 @@ function OrderDetailsModal({ order, loading, onClose }) {
 
               </div>
             ))}
+            <div className="flex justify-between items-center text-sm">
+              <span>Total Delivery Charge</span>
+              <span>₹{order?.deliveryCharge?.toFixed(2)}</span>
+            </div>
+
+            <div className="flex justify-between text-green-600 items-center text-sm">
+              <span>Total Amount</span>
+              <span>₹{order?.grandTotal?.toFixed(2)}</span>
+            </div>
+
           </div>
 
           {/* Shipping Address */}
