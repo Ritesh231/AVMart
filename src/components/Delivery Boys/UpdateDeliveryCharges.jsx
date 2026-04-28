@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useUpdateDeliveryChargesMutation } from "../../Redux/apis/deliveryApi";
+import React, { useState, useEffect } from "react";
+import { useUpdateDeliveryChargesMutation, useGetProfileQuery } from "../../Redux/apis/deliveryApi";
 import { toast } from "react-toastify";
 
 const UpdateDeliveryCharges = () => {
@@ -7,15 +7,23 @@ const UpdateDeliveryCharges = () => {
     const [updateDeliveryCharges, { isLoading }] =
         useUpdateDeliveryChargesMutation();
 
+    const { data: profile } = useGetProfileQuery();
+
+    useEffect(() => {
+        if (profile?.data?.freeDelivery !== undefined) {
+            setAmount(profile.data.freeDelivery);
+        }
+    }, [profile]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (!amount || amount <= 0) {
-            return toast.error("Please enter valid amount");
+            return toast.error("Please enter a valid amount");
         }
         try {
             await updateDeliveryCharges(Number(amount)).unwrap();
             toast.success("Delivery charges updated successfully ✅");
-            setAmount("");
         } catch (err) {
             console.error(err);
             toast.error("Failed to update delivery charges ❌");

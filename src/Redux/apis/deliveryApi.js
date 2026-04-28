@@ -3,7 +3,7 @@ import { baseApi } from "../apis/baseApi";
 export const deliveryapi = baseApi.injectEndpoints({
   overrideExisting: false,
 
-  tagTypes: ["DeliveryBoys"],
+  tagTypes: ["DeliveryBoys", "Profile"],
 
   endpoints: (builder) => ({
 
@@ -76,22 +76,30 @@ export const deliveryapi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["DeliveryBoys"], // refresh list after action
+      invalidatesTags: ["DeliveryBoys"],
+    }),
+
+    getProfile: builder.query({
+      query: () => ({
+        url: "/api/v1/adminauth/profiles",
+        method: "GET",
+      }),
+      providesTags: ["Profile"],
     }),
 
     updateDeliveryCharges: builder.mutation({
       query: (amount) => ({
-        url: `/api/v1/adminauth/update-deliverycharges`,
+        url: "/api/v1/adminauth/update-deliverycharges",
         method: "PUT",
         body: { amount },
       }),
+      invalidatesTags: ["Profile"],
     }),
-
-
 
   }),
 });
 
 export const { useGetAllDeliveryBoysQuery, useGetAssignDeliveryBoysMutation,
   useUpdateDeliveryStatusMutation, useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery,
-  useGetDeliveryBoyOrderDetailsQuery, useGetWithdrawalRequestsQuery, useVerifyWithdrawalMutation, useUpdateDeliveryChargesMutation } = deliveryapi;
+  useGetDeliveryBoyOrderDetailsQuery, useGetWithdrawalRequestsQuery, useVerifyWithdrawalMutation,
+  useUpdateDeliveryChargesMutation, useGetProfileQuery } = deliveryapi;

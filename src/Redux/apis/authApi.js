@@ -5,23 +5,24 @@ export const Authapi = baseApi.injectEndpoints({
     login: builder.mutation({
       query: (credentials) => ({
         url: "/api/v1/adminauth/login",
-        method: "POST", 
+        method: "POST",
         body: credentials,
       }),
       transformResponse: (response) => {
         return response;
       },
-    }),        
-    logout:builder.mutation({
-      query:(credentials)=>({
-        url:"/api/v1/adminauth/logout",
-          method: "POST", 
-          body: credentials,
+    }),
+    logout: builder.mutation({
+      query: (credentials) => ({
+        url: "/api/v1/adminauth/logout",
+        method: "POST",
+        body: credentials,
       })
-    })
+    }),
+
   }),
 });
 
-export const { 
+export const {
   useLoginMutation, useLogoutMutation,
 } = Authapi;
