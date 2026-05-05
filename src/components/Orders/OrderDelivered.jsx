@@ -4,7 +4,7 @@ import { BsWallet2 } from "react-icons/bs";
 import { MdDeliveryDining } from "react-icons/md";
 import {
   useGetOrdersByStatusQuery, useSendCashVerificationOtpMutation,
-  useVerifyCashAndDeductMutation
+  useVerifyCashAndDeductMutation,
 } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";

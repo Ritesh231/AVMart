@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
     useSendCashVerificationOtpMutation,
     useVerifyCashAndDeductMutation,
-} from "../../Redux/apis/deliveryApi";
+} from "../../Redux/apis/ordersApi";
 import toast from "react-hot-toast";
 
 function CashDeductionBox({ deliveryBoyId }) {

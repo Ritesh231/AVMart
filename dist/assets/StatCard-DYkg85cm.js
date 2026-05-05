@@ -1,0 +1,6 @@
+import{j as e}from"./index-waVYHeq7.js";const x=({title:a,number:l,statement:n,icon:r,variant:t="normal",onClick:s,className:i})=>e.jsxs("div",{onClick:s,className:`relative pointer-events-auto z-10 flex flex-col justify-between p-5 rounded-2xl w-full min-h-[160px] shadow-sm transition-transform hover:scale-[1.02] 
+  ${t==="special"?"bg-gradient-to-br from-[#1E294B] via-[#1E294B] to-[#FF8800]/40 text-white":"bg-brand-blue text-brand-navy border border-transparent"} 
+  ${i||""} 
+  
+  ${s?"cursor-pointer":""}`,children:[e.jsxs("div",{className:"flex justify-between items-start",children:[e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx("span",{className:`h-2.5 w-2.5 rounded-full ${t==="special"?"bg-white":"bg-brand-navy"}`}),e.jsx("h3",{className:"text-lg font-medium opacity-90",children:a})]}),e.jsx("div",{className:`flex items-center justify-center h-12 w-12 rounded-full shadow-inner 
+          ${t==="special"?"bg-white text-brand-navy":"bg-brand-navy text-white"}`,children:r})]}),e.jsxs("div",{className:"mt-4",children:[e.jsx("h3",{className:"text-5xl font-bold tracking-tight",children:l}),e.jsx("p",{className:`mt-3 text-xs font-semibold ${t==="special"?"text-white/80":"text-brand-navy/70"}`,children:n})]})]});export{x as S};
