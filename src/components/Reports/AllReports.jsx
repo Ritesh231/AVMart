@@ -295,14 +295,20 @@ function AllReports() {
 
     const isCustom = filters.filterType === "custom";
 
-    const { data, isLoading } = useGetAllReportsQuery({
-        ...filters,
-        status: activeTab, // 🔥 key logic
-    }, {
-        refetchOnMountOrArgChange: true,
-    });
+    const { data: productReport } = useGetAllReportsQuery(
+        { ...filters, status: "product" },
+        { refetchOnMountOrArgChange: true }
+    );
 
+    const { data: orderReport } = useGetAllReportsQuery(
+        { ...filters, status: "order" },
+        { refetchOnMountOrArgChange: true }
+    );
 
+    const { data, isLoading } = useGetAllReportsQuery(
+        { ...filters, status: activeTab },
+        { refetchOnMountOrArgChange: true }
+    );
 
     const TableSkeleton = ({ rows = 7, columns = 7 }) => (
         <div className="overflow-x-auto animate-pulse">
@@ -368,10 +374,15 @@ function AllReports() {
 
     const stats = [
         {
-            title: "Total Records",
-            number: data?.total || 0,
+            title: "Total Products",
+            number: productReport?.total || 0,
             icon: <IoCheckmarkDoneOutline size={24} />,
             variant: "special",
+        },
+        {
+            title: "Total Orders",
+            number: orderReport?.total || 0,
+            icon: <IoCheckmarkDoneOutline size={24} />,
         },
     ];
 
@@ -502,7 +513,6 @@ function AllReports() {
                 </div>
             </div>
 
-            {/* 📋 Table */}
             {/* 📋 Dynamic Table */}
             <div className="bg-white shadow rounded-2xl p-4 overflow-x-auto">
                 {activeTab === "product" ? (

@@ -2,10 +2,14 @@ import { FaEye } from "react-icons/fa";
 import { ChevronDown, Download, Search, SlidersHorizontal } from "lucide-react";
 import { BsWallet2 } from "react-icons/bs";
 import { MdDeliveryDining } from "react-icons/md";
-import { useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
+import {
+  useGetOrdersByStatusQuery, useSendCashVerificationOtpMutation,
+  useVerifyCashAndDeductMutation
+} from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,6 +40,17 @@ export default function UsersTable() {
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+
+  const startIndex = (pagination.page - 1) * pagination.limit + 1;
+  const endIndex = Math.min(pagination.page * pagination.limit, pagination.total);
+
+  const [sendOtp] = useSendCashVerificationOtpMutation();
+  const [verifyOtp] = useVerifyCashAndDeductMutation();
+
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [selectedDeliveryBoyId, setSelectedDeliveryBoyId] = useState(null);
+  const [otp, setOtp] = useState("");
+  const [amount, setAmount] = useState("");
 
   // ✅ Filter and search on current page data (API already paginated)
   const filteredUsers =
@@ -236,9 +251,42 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
-  // ✅ Calculate display values from API pagination
-  const startIndex = (pagination.page - 1) * pagination.limit + 1;
-  const endIndex = Math.min(pagination.page * pagination.limit, pagination.total);
+  const handleSendOtp = async (deliveryBoyId) => {
+    try {
+      const res = await sendOtp({ deliveryBoyId }).unwrap();
+
+      toast.success(res?.message || "OTP sent");
+
+      setSelectedDeliveryBoyId(deliveryBoyId);
+      setOtpModalOpen(true);
+
+    } catch (err) {
+      toast.error("Failed to send OTP");
+    }
+  };
+
+  const handleVerifyAndDeduct = async () => {
+    if (!otp || !amount) {
+      return toast.error("OTP & Amount required");
+    }
+
+    try {
+      const res = await verifyOtp({
+        deliveryBoyId: selectedDeliveryBoyId,
+        otp,
+        amount
+      }).unwrap();
+
+      toast.success(res?.message || "Cash deducted");
+
+      setOtpModalOpen(false);
+      setOtp("");
+      setAmount("");
+
+    } catch (err) {
+      toast.error("Invalid OTP or failed");
+    }
+  };
 
   return (
     <>
@@ -443,7 +491,8 @@ export default function UsersTable() {
                       {u.deliveryBoy?.name || "Not Assigned"}
                     </div>
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 flex items-center gap-2">
+                    {/* View Button */}
                     <button
                       className="p-1 text-blue-900"
                       title="View"
@@ -454,6 +503,17 @@ export default function UsersTable() {
                     >
                       <FaEye size={18} />
                     </button>
+
+                    {/* 🔥 COD → Show Send OTP */}
+                    {u.paymentMethod === "COD" && u.deliveryBoy?._id && (
+                      <button
+                        onClick={() => handleSendOtp(u.deliveryBoy._id)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg text-xs font-semibold"
+                      >
+                        Send OTP
+                      </button>
+                    )}
+
                   </td>
                 </tr>
               ))}
@@ -535,6 +595,54 @@ export default function UsersTable() {
               >
                 Next
               </button>
+            </div>
+          </div>
+        )}
+
+        {otpModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+            <div className="bg-white p-6 rounded-xl w-[350px] space-y-4 shadow-lg">
+
+              <h2 className="text-lg font-semibold text-gray-800">
+                Verify OTP & Deduct Cash
+              </h2>
+
+              {/* OTP */}
+              <input
+                type="text"
+                placeholder="Enter OTP"
+                value={otp}
+                maxLength={6}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                className="w-full border px-3 py-2 rounded-lg"
+              />
+
+              {/* Amount */}
+              <input
+                type="text"
+                placeholder="Enter Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
+                className="w-full border px-3 py-2 rounded-lg"
+              />
+
+              {/* Buttons */}
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setOtpModalOpen(false)}
+                  className="px-4 py-2 bg-gray-200 rounded-lg"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleVerifyAndDeduct}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg"
+                >
+                  Submit
+                </button>
+              </div>
+
             </div>
           </div>
         )}

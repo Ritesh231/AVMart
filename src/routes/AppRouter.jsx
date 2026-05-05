@@ -55,6 +55,9 @@ const DeliveryBoyDetail = lazy(() =>
 const UpdateDeliveryCharges = lazy(() =>
   import("../components/Delivery Boys/UpdateDeliveryCharges")
 );
+const PaymentVerification = lazy(() =>
+  import("../components/Delivery Boys/PaymentVerification")
+);
 
 /*Queries */
 const PendingQueries = lazy(() => import("../components/Queries/PendingQueries"));
@@ -171,6 +174,7 @@ export default function AppRouter() {
             <Route path="rejected" element={<DeliveryRequests />} />
             <Route path="Paymentrequest" element={<DeliveryApproved />} />
             <Route path="UpdateDeliveryCharges" element={<UpdateDeliveryCharges />} />
+            <Route path="PaymentVerification" element={<PaymentVerification />} />
 
           </Route>
 

@@ -96,6 +96,8 @@ export const deliveryapi = baseApi.injectEndpoints({
       invalidatesTags: ["Profile"],
     }),
 
+
+
   }),
 });
 

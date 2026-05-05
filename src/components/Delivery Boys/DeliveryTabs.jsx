@@ -34,8 +34,7 @@ const tabs = [
     label: "Update Delivery Charges",
     icon: <BsCashCoin size={20} />,
     path: "/delivery/UpdateDeliveryCharges",
-  }
-
+  },
 ];
 
 export default function OrderPaymentTabs() {

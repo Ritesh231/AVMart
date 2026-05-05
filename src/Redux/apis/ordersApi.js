@@ -59,9 +59,37 @@ export const Orderapi = baseApi.injectEndpoints({
       invalidatesTags: ["Orders"],
     }),
 
+    QtyDecrease: builder.mutation({
+      query: ({ orderId, productId }) => ({
+        url: `/api/v1/adminauth/decrease-item-quantity`,
+        method: "POST",
+        body: {
+          orderId,
+          productId,
+        }
+      })
+    }),
+    sendCashVerificationOtp: builder.mutation({
+      query: (body) => ({
+        url: "/api/v1/adminauth/send-cash-verification-otp",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    verifyCashAndDeduct: builder.mutation({
+      query: (body) => ({
+        url: "/api/v1/adminauth/verify-cash-and-deduct",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["DeliveryBoys"],
+    }),
+
   }),
 });
 
 export const { useGetOrdersByStatusQuery, useGetOrdersByIdMutation,
   useAssignOrderStatusMutation, useGetOrderDetailsByIdMutation,
-  useGetOrdersByStatusAssignQuery, useDeleteOrderItemMutation } = Orderapi;
+  useGetOrdersByStatusAssignQuery, useDeleteOrderItemMutation,
+  useQtyDecreaseMutation, useSendCashVerificationOtpMutation, useVerifyCashAndDeductMutation } = Orderapi;

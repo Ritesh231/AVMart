@@ -1,9 +1,11 @@
 import { X } from "lucide-react";
 import { useRef } from "react";
 import { MdDelete } from "react-icons/md";
-import { useDeleteOrderItemMutation } from "../../Redux/apis/ordersApi";
-import toast from "react-hot-toast";
+import { CiCircleMinus } from "react-icons/ci";
+import { useDeleteOrderItemMutation, useQtyDecreaseMutation } from "../../Redux/apis/ordersApi";
+import { toast } from "react-toastify";
 import { IoPrint } from "react-icons/io5";
+import { useDispatch } from "react-redux";
 
 function OrderDetailsModal({ order, loading, onClose }) {
   if (!order && !loading) return null;
@@ -16,6 +18,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
 
   const printRef = useRef();
   const [deleteOrderItem] = useDeleteOrderItemMutation();
+  const [qtyDecrease] = useQtyDecreaseMutation();
 
   const handlePrint = () => {
     const printContents = printRef.current.innerHTML;
@@ -86,6 +89,19 @@ function OrderDetailsModal({ order, loading, onClose }) {
       toast.error("Failed to delete item");
     }
   };
+
+  const qtyDecreaseHandler = async (item) => {
+    try {
+      const res = await qtyDecrease({ orderId: order._id, productId: item.productId }).unwrap();
+      toast.success(res?.message || "Item quantity decreased successfully");
+      setTimeout(() => {
+        onClose();
+      }, 1200);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to decrease item quantity");
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm no-scrollbar">
@@ -161,6 +177,15 @@ function OrderDetailsModal({ order, loading, onClose }) {
                     <p className="text-xs text-gray-500">
                       Qty: {item.quantity}
                     </p>
+                    {item.quantity > 1 && (
+                      <button
+                        onClick={() => qtyDecreaseHandler(item)}
+                        className="flex items-center mt-1 mr-1 gap-1 text-red-500 border border-red-300 px-2 py-[2px] rounded-md text-xs hover:bg-red-50 transition no-print"
+                      >
+                        <CiCircleMinus size={14} />
+                        <span>Qty Decrease</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

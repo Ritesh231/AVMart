@@ -247,6 +247,7 @@ export default function AddProduct() {
     defaultValues: {
       productName: "",
       subtext: "",
+      HSNCODE: "",
       description: "",
       keyFeatures: "",
       wholesaleAdvantage: "",
@@ -286,6 +287,7 @@ export default function AddProduct() {
       marginPercentage: "",
       InRate: "",
       OutRate: "",
+      minQuantity: "",
       // sku: "",
       imageFiles: [],
       imageUrls: [],
@@ -383,6 +385,7 @@ export default function AddProduct() {
         InRate: "",
         OutRate: "",
         stock: "",
+        minQuantity: "",
         // sku: "",
         imageFiles: [],
         imageUrls: [],
@@ -433,6 +436,7 @@ export default function AddProduct() {
       submitData.append("category", formData.category);
       submitData.append("subcategory", formData.subcategory || "");
       submitData.append("status", formData.status);
+      submitData.append("HSNCODE", formData.HSNCODE?.trim() || "");
 
       // ✅ FIXED: Handle Party data properly
       if (!isNewParty && selectedParty) {
@@ -490,7 +494,8 @@ export default function AddProduct() {
         marginPercentage: Number(v.marginPercentage || 0),
         InRate: Number(v.InRate || 0),
         OutRate: Number(v.OutRate || 0),
-        images: v.imageUrls || []
+        images: v.imageUrls || [],
+        minQuantity: Number(v.minQuantity || 0),
       }));
 
       submitData.append("variants", JSON.stringify(formattedVariants));
@@ -681,6 +686,12 @@ export default function AddProduct() {
                 {...register("subcategory",)}
               />
 
+              <InputField
+                label="HSN Code"
+                error={errors.HSNCODE?.message}
+                {...register("HSNCODE")}
+              />
+
               {/* Main Image */}
               <div>
                 <label className="text-xs font-medium text-gray-600">
@@ -772,6 +783,7 @@ export default function AddProduct() {
 
             {/* Textareas */}
             <div className="space-y-4">
+
               <TextareaField
                 label="Description"
                 error={errors.description?.message}
@@ -826,6 +838,15 @@ export default function AddProduct() {
                       <option value="box">box</option>
                     </select>
                   </div>
+
+                  <InputField
+                    label="Minimum Quantity"
+                    name="minQuantity"
+                    type="number"
+                    placeholder="Value should be a Number"
+                    value={variant.minQuantity}
+                    onChange={(e) => handleVariantChange(index, e)}
+                  />
 
                   <InputField
                     label="Stock"
