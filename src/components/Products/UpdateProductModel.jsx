@@ -34,6 +34,7 @@ export default function EditProductModal({
     subcategoryname: "",
     status: "active",
     slug: "",
+    HSNCODE: "",
     primaryImage: null,
     variants: [],
   });
@@ -75,11 +76,9 @@ export default function EditProductModal({
       }
     }
 
-    // ✅ ADD THIS BLOCK FOR VARIANT
     else if (type === "variant") {
       const variant = formData.variants[index];
 
-      // ✅ New uploaded file
       if (variant?.imageFiles?.length > 0) {
         file = variant.imageFiles[0];
       }
@@ -125,8 +124,8 @@ export default function EditProductModal({
       if (type === "variant") {
         const updated = [...formData.variants];
 
-        updated[index].imageFiles = [newFile]; // replace with new bg removed file
-        updated[index].imageUrls = []; // optional: clear old URL
+        updated[index].imageFiles = [newFile];
+        updated[index].imageUrls = [];
 
         setFormData({
           ...formData,
@@ -159,6 +158,7 @@ export default function EditProductModal({
         subcategoryname: productData.subcategory?.name || "",
         status: productData.status || "active",
         slug: productData.slug || "",
+        HSNCODE: productData.HSNCODE || "",
         // origin: productData.origin || "",
         // shelfLife: productData.shelfLife || "",
         // storage: productData.storage || "",
@@ -170,6 +170,7 @@ export default function EditProductModal({
           const marginPercentage = v.marginPercentage ?? 0;
           const inRate = parseFloat((originalPrice + gstAmount).toFixed(2));
           const outRate = Math.round(inRate + (inRate * marginPercentage) / 100);
+
 
           return {
             ...v,
@@ -185,6 +186,7 @@ export default function EditProductModal({
             InRate: inRate,
             OutRate: outRate,
             MrpPrice: v.MrpPrice || "",
+            minQuantity: v.minQuantity || "",
           };
         }),
       });
@@ -295,6 +297,7 @@ export default function EditProductModal({
       submitData.append("subcategory", formData.subcategory || "");
       submitData.append("status", formData.status);
       submitData.append("slug", formData.slug);
+      submitData.append("HSNCODE", formData.HSNCODE);
 
       // Primary Image
       if (formData.primaryImage instanceof File) {
@@ -321,6 +324,7 @@ export default function EditProductModal({
         InRate: Number(v.InRate || 0),
         OutRate: Number(v.OutRate || 0),
         MrpPrice: Number(v.MrpPrice || 0),
+        minQuantity: Number(v.minQuantity || 0),
       }));
 
       submitData.append("variants", JSON.stringify(formattedVariants));
@@ -445,6 +449,19 @@ export default function EditProductModal({
 
           <div className="relative">
             <input
+              name="HSNCODE"
+              value={formData.HSNCODE}
+              onChange={handleChange}
+              placeholder=" "
+              className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+            />
+            <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+              HSN Code
+            </label>
+          </div>
+
+          <div className="relative">
+            <input
               name="status"
               value={formData.status}
               onChange={handleChange}
@@ -469,6 +486,8 @@ export default function EditProductModal({
             Description
           </label>
         </div>
+
+
 
         {/* Main Image Upload */}
         <div className="mt-4">
@@ -521,6 +540,19 @@ export default function EditProductModal({
     peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
     peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
                     Quantity
+                  </label>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={variant.minQuantity || ""}
+                    onChange={(e) => handleVariantChange(index, "minQuantity", e.target.value)}
+                    placeholder=" "
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600">
+                    Min Quantity
                   </label>
                 </div>
 

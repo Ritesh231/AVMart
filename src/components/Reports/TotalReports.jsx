@@ -41,6 +41,7 @@ const TotalReports = () => {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const [page, setPage] = useState(1);
     const limit = 10;
+    const [selectedIds, setSelectedIds] = useState([]);
 
     const { data, isLoading, isError } = useGetReportsQuery(
         filterType === "custom"
@@ -57,18 +58,49 @@ const TotalReports = () => {
     const endIndex = startIndex + limit;
     const paginatedReports = [...reports].reverse().slice(startIndex, endIndex);
 
+    const isAllSelected =
+        paginatedReports.length > 0 &&
+        paginatedReports.every((item) => selectedIds.includes(item.paymentInvoice));
+
     const handleFilterChange = (e) => {
         setFilterType(e.target.value);
         setPage(1);
     };
 
+    const toggleSelectAll = (checked) => {
+        const currentPageIds = paginatedReports.map((item) => item.paymentInvoice);
+        if (checked) {
+            setSelectedIds((prev) => [...new Set([...prev, ...currentPageIds])]);
+        } else {
+            setSelectedIds((prev) => prev.filter((id) => !currentPageIds.includes(id)));
+        }
+    };
+
+    const toggleRowSelection = (id) => {
+        setSelectedIds((prev) => {
+            if (prev.includes(id)) {
+                return prev.filter((i) => i !== id);
+            } else {
+                return [...prev, id];
+            }
+        });
+    };
+
     const getRowsForExport = () => {
-        if (!reports.length) {
+        let filteredReports = reports;
+
+        if (selectedIds.length > 0) {
+            filteredReports = reports.filter((item) =>
+                selectedIds.includes(item.paymentInvoice)
+            );
+        }
+
+        if (!filteredReports.length) {
             toast.info("No reports available to export");
             return [];
         }
 
-        return [...reports].reverse().map((item) => {
+        return [...filteredReports].reverse().map((item) => {
             const totalAmount =
                 item.products?.reduce(
                     (sum, product) => sum + product.price * product.quantity,
@@ -333,17 +365,32 @@ const TotalReports = () => {
 
             {!isLoading && reports.length > 0 && (
                 <div className="overflow-x-auto bg-white shadow rounded-2xl p-4">
-                    <table className="min-w-full text-sm text-left border">
-                        <thead className="bg-gray-100 text-gray-700 uppercase text-xs text-center">
+                    <table className="min-w-[900px] w-full text-sm">
+                        <thead className="bg-[#F1F5F9] text-gray-600">
                             <tr>
-                                <th className="px-4 py-3 border">#</th>
-                                <th className="px-4 py-3 border">Invoice</th>
-                                <th className="px-4 py-3 border">HSN Code</th>
-                                <th className="px-4 py-3 border">Products</th>
-                                <th className="px-4 py-3 border">Total Amount</th>
-                                {/* <th className="px-4 py-3 border">Date</th> */}
+                                {/* ✅ Select All */}
+                                <th className="px-4 py-3">
+                                    <input
+                                        type="checkbox"
+                                        ref={(el) => {
+                                            if (el) {
+                                                const someSelected = paginatedReports.some(item => selectedIds.includes(item.paymentInvoice));
+                                                const allSelected = isAllSelected;
+                                                el.indeterminate = someSelected && !allSelected;
+                                            }
+                                        }}
+                                        checked={isAllSelected}
+                                        onChange={(e) => toggleSelectAll(e.target.checked)}
+                                    />
+                                </th>
+                                <th className="px-4 py-3 text-left">#</th>
+                                <th className="px-4 py-3 text-left">Invoice</th>
+                                <th className="px-4 py-3 text-left">HSN Code</th>
+                                <th className="px-4 py-3 text-left">Products</th>
+                                <th className="px-4 py-3 text-left">Total Amount</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             {paginatedReports.map((item, index) => {
                                 const totalAmount = item.products?.reduce(
@@ -353,33 +400,44 @@ const TotalReports = () => {
 
                                 return (
                                     <tr
-                                        key={index}
-                                        className="border-b hover:bg-gray-50 text-center"
+                                        key={item._id}
+                                        className="border-t hover:bg-gray-50"
                                     >
-                                        <td className="px-4 py-3 border">{startIndex + index + 1}</td>
-                                        <td className="px-4 py-3 font-medium border">
+                                        {/* ✅ Checkbox */}
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(item.paymentInvoice)}
+                                                onChange={() => toggleRowSelection(item.paymentInvoice)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </td>
+
+                                        <td className="px-4 py-3">
+                                            {startIndex + index + 1}
+                                        </td>
+
+                                        <td className="px-4 py-3 font-medium">
                                             #{item.paymentInvoice}
                                         </td>
-                                        <td className="px-4 py-3 border">
+
+                                        <td className="px-4 py-3">
                                             {item.HSNCODE || "-"}
                                         </td>
-                                        <td className="px-4 py-3 border text-left">
+
+                                        <td className="px-4 py-3 text-left">
                                             {item.products?.length > 0 ? (
                                                 item.products.map((p, i) => (
-                                                    <div key={i} className="text-xs">
-                                                        {p.productName} (x{p.quantity})
+                                                    <div key={i} className="text-sm">
+                                                        {p.productName}
                                                     </div>
                                                 ))
-                                            ) : (
-                                                "-"
-                                            )}
+                                            ) : "-"}
                                         </td>
-                                        <td className="px-4 py-3 font-semibold text-green-600 border">
+
+                                        <td className="px-4 py-3 font-semibold text-green-600">
                                             ₹{totalAmount || 0}
                                         </td>
-                                        {/* <td className="px-4 py-3 border">
-                                            {new Date(item.date).toLocaleDateString()}
-                                        </td> */}
                                     </tr>
                                 );
                             })}

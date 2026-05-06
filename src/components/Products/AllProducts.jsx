@@ -392,110 +392,113 @@ const ProductGrid = () => {
           const firstVariant = product.variants?.[0];
 
           return (
-            <div
-              key={product._id}
-              className="relative border border-emerald-200 rounded-xl p-3 hover:shadow-md transition"
-            >
-              <input
-                type="checkbox"
-                className="absolute top-2 left-2 z-10"
-                checked={selectedProductIds.includes(product._id)}
-                onChange={() => toggleProductSelection(product._id)}
-              />
-              {/* Status Dot */}
-              <span
-                onClick={() => navigate("/AddProduct")}
-                className="absolute top-2 right-2 h-6 w-6 bg-gradient-to-r from-[#FD610D] to-[#FF8800] rounded-full 
+            <div className="p-[1px] rounded-xl bg-gradient-to-r from-[#FD610D]/40 to-[#FF8800]/40 hover:shadow-md transition">
+
+              <div
+                key={product._id}
+                className="relative bg-white rounded-xl p-3"
+              >
+                <input
+                  type="checkbox"
+                  className="absolute top-2 left-2 z-10"
+                  checked={selectedProductIds.includes(product._id)}
+                  onChange={() => toggleProductSelection(product._id)}
+                />
+                {/* Status Dot */}
+                <span
+                  onClick={() => navigate("/AddProduct")}
+                  className="absolute top-2 right-2 h-6 w-6 bg-gradient-to-r from-[#FD610D] to-[#FF8800] rounded-full 
                    flex items-center justify-center 
                    cursor-pointer hover:bg-green-600 transition"
-              >
-                <Plus size={14} className="text-white" />
-              </span>
-
-              {/* Image */}
-              <div className="flex justify-center mb-3 bg-brand-blue/50">
-                <img
-                  src={product.primaryImages?.[0]}
-                  alt={product.productName}
-                  className="h-24 object-contain"
-                />
-              </div>
-
-              {/* Product Name */}
-              <h3 className="text-sm font-semibold text-gray-800 leading-tight">
-                {product.productName}
-              </h3>
-
-              {/* Price */}
-              <div className="flex gap-2 mt-1">
-                <p className="text-sm font-semibold text-gray-800">
-                  ₹{firstVariant?.OutRate}
-                </p>
-
-
-                <p className="text-sm text-gray-400 line-through">
-                  ₹{firstVariant?.MrpPrice}
-                </p>
-              </div>
-
-              {/* Stock */}
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-gray-600">
-                  In Stock :
-                  <span className="ml-1 text-green-600 font-semibold">
-                    {firstVariant?.stock || 0}
-                  </span>
-                </p>
-
-                <p className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
-                  Qty :
-                  <span className="ml-1  font-semibold">
-                    {firstVariant?.quantityValue}
-                    {firstVariant?.quantityUnit}
-                  </span>
-                </p>
-
-              </div>
-
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs font-medium">
-                  {product.status ? "active" : "inactive"}
+                >
+                  <Plus size={14} className="text-white" />
                 </span>
 
-                <button
-                  onClick={() => handleToggleStatus(product)}
-                  className={`w-10 h-5 flex items-center rounded-full p-1 transition-all duration-300 ${product.status === "active" ? "bg-green-500" : "bg-gray-300"
-                    }`}
-                >
-                  <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all duration-300 ${product.status === "active"
-                      ? "translate-x-5"
-                      : "translate-x-0"
-                      }`}
+                {/* Image */}
+                <div className="flex justify-center mb-3 bg-brand-blue/50">
+                  <img
+                    src={product.primaryImages?.[0]}
+                    alt={product.productName}
+                    className="h-24 object-contain"
                   />
-                </button>
+                </div>
 
-              </div>
+                {/* Product Name */}
+                <h3 className="text-sm font-semibold text-gray-800 leading-tight">
+                  {product.productName}
+                </h3>
 
-              {/* Buttons */}
-              <div className="flex items-center gap-2 mt-3">
-                <button
-                  className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-md bg-indigo-50 text-indigo-600 text-xs font-medium"
-                  onClick={() => {
-                    setSelectedProduct(product);
-                    setIsModalOpen(true);
-                  }}
-                >
-                  <FaEdit size={12} />
-                  Edit
-                </button>
+                {/* Price */}
+                <div className="flex gap-2 mt-1">
+                  <p className="text-sm font-semibold text-gray-800">
+                    ₹{firstVariant?.OutRate}
+                  </p>
 
-                <button
-                  className="flex items-center justify-center p-1.5 rounded-md bg-red-50 text-red-600"
-                  onClick={() => handleDelete(product._id)}
-                >
-                  <FaTrash size={12} />
-                </button>
+
+                  <p className="text-sm text-gray-400 line-through">
+                    ₹{firstVariant?.MrpPrice}
+                  </p>
+                </div>
+
+                {/* Stock */}
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-gray-600">
+                    In Stock :
+                    <span className="ml-1 text-green-600 font-semibold">
+                      {firstVariant?.stock || 0}
+                    </span>
+                  </p>
+
+                  <p className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
+                    Qty :
+                    <span className="ml-1  font-semibold">
+                      {firstVariant?.quantityValue}
+                      {firstVariant?.quantityUnit}
+                    </span>
+                  </p>
+
+                </div>
+
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs font-medium">
+                    {product.status ? "active" : "inactive"}
+                  </span>
+
+                  <button
+                    onClick={() => handleToggleStatus(product)}
+                    className={`w-10 h-5 flex items-center rounded-full p-1 transition-all duration-300 ${product.status === "active" ? "bg-green-500" : "bg-gray-300"
+                      }`}
+                  >
+                    <div
+                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-all duration-300 ${product.status === "active"
+                        ? "translate-x-5"
+                        : "translate-x-0"
+                        }`}
+                    />
+                  </button>
+
+                </div>
+
+                {/* Buttons */}
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-md bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white text-xs font-medium"
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <FaEdit size={12} />
+                    Edit
+                  </button>
+
+                  <button
+                    className="flex items-center justify-center p-1.5 rounded-md bg-red-50 text-red-600"
+                    onClick={() => handleDelete(product._id)}
+                  >
+                    <FaTrash size={12} />
+                  </button>
+                </div>
               </div>
             </div>
           );

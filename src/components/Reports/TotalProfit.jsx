@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useGetTotalProfitQuery } from "../../Redux/apis/reportApi";
 import ReportTab from "./ReportTab";
 import StatCard from "../StatCard";
@@ -25,6 +25,9 @@ const ProfitReport = ({ }) => {
 
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
+
+    const [selectedIds, setSelectedIds] = useState([]);
+    const selectAllRef = useRef(null);
 
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
@@ -56,6 +59,36 @@ const ProfitReport = ({ }) => {
             </table>
         </div>
     );
+
+    const isAllSelected =
+        paginatedReports.length > 0 &&
+        paginatedReports.every((item) => selectedIds.includes(item.orderId));
+
+    const toggleSelectAll = (checked) => {
+        const currentPageIds = paginatedReports.map((item) => item.orderId);
+        if (checked) {
+            setSelectedIds((prev) => [...new Set([...prev, ...currentPageIds])]);
+        } else {
+            setSelectedIds((prev) => prev.filter((id) => !currentPageIds.includes(id)));
+        }
+    };
+
+    const toggleRowSelection = (id) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+        );
+    };
+
+    // Update indeterminate state
+    useEffect(() => {
+        if (selectAllRef.current) {
+            const someSelected = paginatedReports.some((item) =>
+                selectedIds.includes(item.orderId)
+            );
+            selectAllRef.current.indeterminate = someSelected && !isAllSelected;
+        }
+    }, [selectedIds, paginatedReports, isAllSelected]);
+
 
     if (isLoading) {
         return (
@@ -97,14 +130,20 @@ const ProfitReport = ({ }) => {
 
     // Export data formatter for Profit Report
     const getRowsForExport = () => {
-        const orderWiseProfit = report?.orderWiseProfit || [];
+        let filteredReports = reports;
 
-        if (!orderWiseProfit.length) {
+        if (selectedIds.length > 0) {
+            filteredReports = reports.filter((item) =>
+                selectedIds.includes(item.orderId)
+            );
+        }
+
+        if (!filteredReports.length) {
             toast.info("No profit report data available to export");
             return [];
         }
 
-        return [...orderWiseProfit].reverse().map((item, index) => ({
+        return [...filteredReports].reverse().map((item, index) => ({
             "S.No": index + 1,
             "Order ID": item.orderId?.slice(-6) || "-",
             Date: item.date
@@ -380,40 +419,58 @@ const ProfitReport = ({ }) => {
                     Order Wise Profit
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                        <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+                <div className="bg-white rounded-xl border overflow-x-auto">
+                    <table className="min-w-[600px] w-full text-sm">
+                        <thead className="bg-[#F1F5F9] text-gray-600 uppercase text-xs">
                             <tr>
-                                <th className="px-4 py-3 border-r">#</th>
-                                <th className="px-4 py-3 border-r">Order ID</th>
-                                <th className="px-4 py-3 border-r">Date</th>
-                                <th className="px-4 py-3 text-right">Profit</th>
+                                <th className="p-3">
+                                    <input
+                                        ref={selectAllRef}
+                                        type="checkbox"
+                                        checked={isAllSelected}
+                                        onChange={(e) => toggleSelectAll(e.target.checked)}
+                                    />
+                                </th>
+                                <th className="p-3 text-left">#</th>
+                                <th className="p-3 text-left">Order ID</th>
+                                <th className="p-3 text-left">Date</th>
+                                <th className="p-3 text-right">Profit</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             {paginatedReports.map((item, index) => (
-                                <tr key={item.orderId} className="border-b hover:bg-gray-50 text-center">
-                                    <td className="px-4 py-3 border-r">{startIndex + index + 1}</td>
-                                    <td className="px-4 py-3 text-blue-600 font-medium border-r">
-                                        {item.orderId.slice(-6)}
+                                <tr key={item.orderId} className="border-t hover:bg-gray-50">
+                                    <td className="p-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.includes(item.orderId)}
+                                            onChange={() => toggleRowSelection(item.orderId)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
                                     </td>
-                                    <td className="px-4 py-3 text-gray-500 border-r">
+                                    <td className="p-3 text-gray-600">{startIndex + index + 1}</td>
+                                    <td className="p-3 font-medium text-blue-600">
+                                        #{item.orderId.slice(-6)}
+                                    </td>
+                                    <td className="p-3 text-gray-500">
                                         {new Date(item.date).toLocaleDateString("en-IN")}
                                     </td>
-                                    <td className="px-4 py-3 text-right font-semibold">
-                                        <span
-                                            className={
-                                                item.orderProfit > 0
-                                                    ? "text-green-600"
-                                                    : "text-gray-400"
-                                            }
-                                        >
+                                    <td className="p-3 text-right font-semibold">
+                                        <span className={item.orderProfit > 0 ? "text-green-600" : "text-gray-400"}>
                                             ₹{item.orderProfit.toFixed(2)}
                                         </span>
                                     </td>
                                 </tr>
                             ))}
+
+                            {paginatedReports.length === 0 && (
+                                <tr>
+                                    <td colSpan="5" className="text-center py-10 text-gray-500 font-medium">
+                                        No data found.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

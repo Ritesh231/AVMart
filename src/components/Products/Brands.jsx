@@ -310,7 +310,7 @@ export default function BrandsSection() {
           : currentOrders.map((brand) => (
             <div
               key={brand._id}
-              className="relative w-40 h-36 bg-brand-blue/50 rounded-xl p-4 flex flex-col items-center gap-3 border border-teal-100"
+              className="relative w-40 h-32 bg-brand-blue/50 rounded-xl p-4 flex flex-col items-center gap-3 border border-teal-100"
             >
               <input
                 type="checkbox"
