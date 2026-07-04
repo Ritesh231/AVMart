@@ -6,7 +6,7 @@ import {
   useAddCategoryBannerMutation,
   useAddSubcategoryBannerMutation,
 } from "../../Redux/apis/bannerApi";
-import { useGetallcategoriesQuery } from "../../Redux/apis/productsApi";
+import { useGetallcategoriesQuery, useGetallSubcategoriesQuery } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
 
 const AddBanner = ({ closeModal, activeTab }) => {
@@ -27,12 +27,20 @@ const AddBanner = ({ closeModal, activeTab }) => {
     isLoading: categoryFetchLoading,
   } = useGetallcategoriesQuery();
 
+  const {
+    data: subcategoryData,
+    isLoading: subcategoryFetchLoading,
+  } = useGetallSubcategoriesQuery(undefined, {
+    skip: activeTab !== "subcategory",
+  });
+
   const [formData, setFormData] = useState({
     title: "",
     subtitle: "",
     isActive: true,
     displayOrder: 0,
     category: "",
+    subcategory: "",
   });
 
   const [image, setImage] = useState(null);
@@ -40,10 +48,12 @@ const AddBanner = ({ closeModal, activeTab }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? checked : value,
-    });
+      ...(name === "category" ? { subcategory: "" } : {}),
+    }));
   };
 
   const handleImageChange = (e) => {
@@ -83,6 +93,7 @@ const AddBanner = ({ closeModal, activeTab }) => {
         await addTopSelling(data).unwrap();
       }
       else if (activeTab === "subcategory") {
+        data.append("subcategory", formData.subcategory);
         await addSubcategory(data).unwrap();
       }
 
@@ -155,6 +166,30 @@ const AddBanner = ({ closeModal, activeTab }) => {
               ))}
             </select>
           </div>
+
+          {activeTab === "subcategory" && (
+            <div className="mt-4">
+              <label className="text-sm font-medium text-gray-700">
+                Select Subcategory
+              </label>
+
+              <select
+                name="subcategory"
+                value={formData.subcategory}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
+                required
+              >
+                <option value="">Select Subcategory</option>
+
+                {subcategoryData?.data?.map((sub) => (
+                  <option key={sub._id} value={sub._id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
 
           {/* IMAGE UPLOAD + PREVIEW */}

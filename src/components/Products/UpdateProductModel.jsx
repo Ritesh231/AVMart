@@ -649,7 +649,7 @@ export default function EditProductModal({
                     )}
                   </div>
                 </div>
-
+                
                 {/* CGST */}
                 <div className="relative">
                   <div className="relative">

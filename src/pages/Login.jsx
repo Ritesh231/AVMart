@@ -36,15 +36,16 @@ const Login = () => {
     try {
       const res = await login({ email, password }).unwrap();
 
-      // Store token
-      localStorage.setItem("Admin_token", res.token);
+      if (!res?.token) {
+        toast.error(res?.error || res?.message || "Login failed");
+        return;
+      }
 
-      // Store admin details
+      localStorage.setItem("Admin_token", res.token);
       localStorage.setItem("admin", JSON.stringify(res.admin));
 
-      navigate("/dashboard");
-
       toast.success(res.message || "Login Successfully");
+      navigate("/dashboard");
 
     } catch (err) {
       console.error("Login failed", err);
