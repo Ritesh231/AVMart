@@ -13,6 +13,7 @@ export default function UsersTable() {
     const [selectedTransactionIds, setSelectedTransactionIds] = useState([]);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const selectAllRef = useRef(null);
+    const exportMenuRef = useRef(null);
 
     const dateFilteredUsers = users.filter((u) => {
         if (!u.date) return false;
@@ -55,6 +56,23 @@ export default function UsersTable() {
     const filteredUsers = dateFilteredUsers.filter((u) =>
         JSON.stringify(u || {}).toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target)
+            ) {
+                setIsExportMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     useEffect(() => {
         setSelectedTransactionIds([]);
@@ -280,7 +298,7 @@ export default function UsersTable() {
                             </>
                         )}
                     </div>
-                    <div className="relative">
+                    <div ref={exportMenuRef} className="relative">
                         <button
                             className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
                             onClick={() => setIsExportMenuOpen((prev) => !prev)}

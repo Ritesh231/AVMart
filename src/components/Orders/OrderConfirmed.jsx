@@ -6,13 +6,12 @@ import { useGetOrdersByStatusAssignQuery } from "../../Redux/apis/ordersApi";
 import {
   useGetAllDeliveryBoysQuery,
   useGetAssignDeliveryBoysMutation,
-
-
 } from "../../Redux/apis/deliveryApi";
 import { useState, useEffect, useRef } from "react";
 import { useGetOrdersByIdMutation, useGetOrdersByStatusQuery } from "../../Redux/apis/ordersApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { toast } from "react-toastify";
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, WidthType } from "docx";
 
 export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +43,7 @@ export default function UsersTable() {
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const exportMenuRef = useRef(null);
 
   // ✅ Filter and search on current page data (API already paginated)
   const filteredUsers = users.filter((order) => {
@@ -76,6 +76,23 @@ export default function UsersTable() {
   useEffect(() => {
     setSelectedOrderIds([]);
   }, [users.length]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -176,32 +193,74 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
-  const exportToDoc = () => {
+  const exportToDoc = async () => {
     const rows = getRowsForExport();
     if (!rows.length) return;
 
-    const headers = Object.keys(rows[0]);
-    const tableHead = headers.map((header) => `<th>${header}</th>`).join("");
-    const tableRows = rows
-      .map(
+    try {
+      const headers = Object.keys(rows[0]);
+
+      const headerRow = new TableRow({
+        children: headers.map(
+          (h) =>
+            new TableCell({
+              children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
+              shading: { fill: "F1F5F9" },
+            })
+        ),
+      });
+
+      const dataRows = rows.map(
         (row) =>
-          `<tr>${headers.map((header) => `<td>${row[header]}</td>`).join("")}</tr>`
-      )
-      .join("");
+          new TableRow({
+            children: headers.map(
+              (h) =>
+                new TableCell({
+                  children: [new Paragraph(String(row[h] ?? "-"))],
+                })
+            ),
+          })
+      );
 
-    const html = `
-      <html>
-        <head><meta charset="utf-8" /></head>
-        <body>
-          <h2>Confirmed Orders Export</h2>
-          <table border="1" cellspacing="0" cellpadding="6">
-            <thead><tr>${tableHead}</tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </body>
-      </html>`;
+      const table = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [headerRow, ...dataRows],
+      });
 
-    downloadBlob(html, "confirmed_orders_export.doc", "application/msword");
+      const doc = new Document({
+        sections: [
+          {
+            children: [
+              new Paragraph({
+                text: "Assigned Orders Export",
+                heading: HeadingLevel.HEADING_1,
+              }),
+              table,
+            ],
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+
+      if (!blob || blob.size === 0) {
+        toast.error("Export failed — please try again");
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "pending_orders_export.docx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("DOC export failed:", err);
+      toast.error("Failed to export DOC");
+    }
+
     setIsExportMenuOpen(false);
   };
 
@@ -287,7 +346,7 @@ export default function UsersTable() {
             <option value="Partial">Partial</option>
           </select>
 
-          <div className="relative">
+          <div ref={exportMenuRef} className="relative">
             <button
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
               className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
@@ -340,6 +399,7 @@ export default function UsersTable() {
               <th className="p-3 text-left">Price</th>
               <th className="p-3 text-left">Placed On</th>
               <th className="p-3 text-left">Items</th>
+              <th className="p-3 text-left">Delivery Boy</th>
               <th className="p-3 text-left">Payment Method</th>
               <th className="p-3 text-left">Action</th>
             </tr>
@@ -403,7 +463,7 @@ export default function UsersTable() {
               !isError &&
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">
+                  <td className="w-12 p-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedOrderIds.includes(u._id)}
@@ -432,6 +492,7 @@ export default function UsersTable() {
                       ))}
                     </div>
                   </td>
+                  <td className="p-3 font-medium">{u.deliveryBoy?.name || "Not Assigned"}</td>
                   <td className="p-3">
                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl
                       bg-[#57FB6830] border border-[#03C616] text-[#03C616] text-sm font-semibold">

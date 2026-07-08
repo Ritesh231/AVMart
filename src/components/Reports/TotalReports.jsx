@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useGetReportsQuery } from "../../Redux/apis/reportApi";
 import ReportStats from "./ReportStats";
@@ -57,7 +57,7 @@ const TotalReports = () => {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedReports = [...reports].reverse().slice(startIndex, endIndex);
-
+    const exportMenuRef = useRef(null);
     const isAllSelected =
         paginatedReports.length > 0 &&
         paginatedReports.every((item) => selectedIds.includes(item.paymentInvoice));
@@ -66,6 +66,23 @@ const TotalReports = () => {
         setFilterType(e.target.value);
         setPage(1);
     };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target)
+            ) {
+                setIsExportMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const toggleSelectAll = (checked) => {
         const currentPageIds = paginatedReports.map((item) => item.paymentInvoice);
@@ -100,7 +117,7 @@ const TotalReports = () => {
             return [];
         }
 
-        return [...filteredReports].reverse().map((item) => {
+        return [...filteredReports].reverse().map((item, index) => {
             const totalAmount =
                 item.products?.reduce(
                     (sum, product) => sum + product.price * product.quantity,
@@ -114,6 +131,7 @@ const TotalReports = () => {
                 ) || 0;
 
             return {
+                "Sr.No": index + 1,
                 Invoice: item.paymentInvoice || "-",
                 "HSN Code": item.HSNCODE || "-",
                 "Total Items": totalItems,
@@ -316,7 +334,7 @@ const TotalReports = () => {
                         </div>
 
                         {/* Export Dropdown */}
-                        <div className="relative">
+                        <div ref={exportMenuRef} className="relative">
                             <button
                                 onClick={() => setIsExportMenuOpen((prev) => !prev)}
                                 className="bg-brand-navy px-5 py-3 rounded-xl flex items-center gap-2 text-white font-semibold hover:bg-opacity-90 transition-all whitespace-nowrap"
@@ -369,7 +387,7 @@ const TotalReports = () => {
                         <thead className="bg-[#F1F5F9] text-gray-600">
                             <tr>
                                 {/* ✅ Select All */}
-                                <th className="px-4 py-3">
+                                <th className="text-center w-12 px-4 py-3">
                                     <input
                                         type="checkbox"
                                         ref={(el) => {
@@ -383,7 +401,7 @@ const TotalReports = () => {
                                         onChange={(e) => toggleSelectAll(e.target.checked)}
                                     />
                                 </th>
-                                <th className="px-4 py-3 text-left">#</th>
+                                <th className="px-4 py-3 text-left">Sr No.</th>
                                 <th className="px-4 py-3 text-left">Invoice</th>
                                 <th className="px-4 py-3 text-left">HSN Code</th>
                                 <th className="px-4 py-3 text-left">Products</th>

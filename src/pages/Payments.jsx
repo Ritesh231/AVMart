@@ -5,6 +5,8 @@ import OnlinePaymentCard from '../components/payment/OnlinePaymentCard';
 import CashOnDeliveryCard from '../components/payment/CashOnDeliveryCard';
 import PartialPaymentCard from '../components/payment/PartialPaymentCard';
 import { useGetTransactionsOverviewQuery } from "../Redux/apis/paymentApi";
+import { asBlob } from "html-docx-js-typescript";
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, WidthType } from "docx";
 
 const Payments = () => {
     const [activeTab, setActiveTab] = useState('Online');
@@ -17,6 +19,7 @@ const Payments = () => {
     const selectAllRef = useRef(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(20);
+    const exportMenuRef = useRef(null);
 
     const tabMapping = {
         Online: "online",
@@ -93,6 +96,23 @@ const Payments = () => {
 
     const totalItems = pagination.total;
     const totalPages = pagination.total_pages;
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target)
+            ) {
+                setIsExportMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // Reset to page 1 when filters change
     useEffect(() => {
@@ -196,40 +216,164 @@ const Payments = () => {
 
     const getExportHtml = (title) => {
         const rows = getRowsForExport();
-        if (!rows.length) {
-            return "";
-        }
+        if (!rows.length) return "";
+
         const headers = Object.keys(rows[0]);
-        const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
+
+        const tableHead = headers
+            .map((header) => `<th>${toSafeHtml(header)}</th>`)
+            .join("");
+
         const tableRows = rows
             .map(
-                (row) =>
-                    `<tr>${headers
-                        .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
-                        .join("")}</tr>`
+                (row) => `
+            <tr>
+                ${headers
+                        .map((header) => `<td>${toSafeHtml(row[header] ?? "-")}</td>`)
+                        .join("")}
+            </tr>`
             )
             .join("");
 
         return `
-      <html>
-        <head><meta charset="utf-8" /></head>
-        <body>
-          <h2>${toSafeHtml(title)}</h2>
-          <table border="1" cellspacing="0" cellpadding="6">
-            <thead><tr>${tableHead}</tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </body>
-      </html>`;
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word">
+
+<head>
+<meta charset="utf-8">
+
+<style>
+body{
+    font-family:Arial;
+    padding:20px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:auto;
+}
+
+th,td{
+    border:1px solid #999;
+    padding:8px;
+    white-space:nowrap;
+    font-size:12px;
+}
+
+th{
+    background:#f3f3f3;
+}
+
+@page{
+    size:A3 landscape;
+    margin:12mm;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>${toSafeHtml(title)}</h2>
+
+<table>
+<thead>
+<tr>
+${tableHead}
+</tr>
+</thead>
+
+<tbody>
+${tableRows}
+</tbody>
+
+</table>
+
+</body>
+</html>
+`;
     };
 
-    const exportToDoc = () => {
-        const html = getExportHtml(`${activeTab} Payments Export`);
-        if (!html) {
+    const exportToDoc = async () => {
+        const rows = getRowsForExport();
+        if (!rows.length) {
             setIsExportMenuOpen(false);
             return;
         }
-        downloadBlob(html, `${activeTab.toLowerCase()}_payments_export.doc`, "application/msword");
+
+        try {
+            const headers = Object.keys(rows[0]);
+
+            const headerRow = new TableRow({
+                children: headers.map(
+                    (h) =>
+                        new TableCell({
+                            children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
+                            shading: { fill: "F3F3F3" },
+                        })
+                ),
+            });
+
+            const dataRows = rows.map(
+                (row) =>
+                    new TableRow({
+                        children: headers.map(
+                            (h) =>
+                                new TableCell({
+                                    children: [new Paragraph(String(row[h] ?? "-"))],
+                                })
+                        ),
+                    })
+            );
+
+            const table = new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [headerRow, ...dataRows],
+            });
+
+            const doc = new Document({
+                sections: [
+                    {
+                        properties: {
+                            page: {
+                                size: { orientation: "landscape" },
+                            },
+                        },
+                        children: [
+                            new Paragraph({
+                                text: `${activeTab} Payments Export`,
+                                heading: HeadingLevel.HEADING_1,
+                            }),
+                            table,
+                        ],
+                    },
+                ],
+            });
+
+            const blob = await Packer.toBlob(doc);
+
+            if (!blob || blob.size === 0) {
+                console.error("Packer produced an empty blob");
+                toast?.error?.("Export failed — please try again");
+                setIsExportMenuOpen(false);
+                return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${activeTab.toLowerCase()}_payments_export.docx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("DOC export failed:", err);
+            toast?.error?.("Failed to export DOC");
+        }
+
         setIsExportMenuOpen(false);
     };
 
@@ -541,7 +685,7 @@ const Payments = () => {
                         </div>
 
                         {/* 📤 Export Button */}
-                        <div className="relative w-full sm:w-auto">
+                        <div ref={exportMenuRef} className="relative w-full sm:w-auto">
                             <button
                                 className="w-full sm:w-auto bg-brand-navy px-4 py-3 rounded-2xl 
         flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all"
@@ -656,6 +800,7 @@ const Payments = () => {
                                     orderId: txn.shortOrderId,
                                     deliveryBoy: txn.deliveryBoy,
                                     totalAmount: txn.amount,
+                                    actualCollected: txn.actualCollected,
                                     currency: "₹",
                                     status: txn.status?.replaceAll("_", " "),
                                     breakdown: {

@@ -31,10 +31,13 @@ export const deliveryapi = baseApi.injectEndpoints({
     }),
 
     updateDeliveryStatus: builder.mutation({
-      query: ({ id, body, status }) => ({
+      query: ({ id, status, rejectReason }) => ({
         url: `api/v1/adminauth/status/${id}`,
         method: "PUT",
-        body: { status },
+        body: {
+          status,
+          ...(status === "rejected" && { rejectReason }),
+        },
       }),
       invalidatesTags: ["DeliveryBoys"],
     }),

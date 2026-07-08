@@ -398,6 +398,35 @@ export default function DeliveryBoyDetails() {
   const startItem = (paginationMeta.page - 1) * paginationMeta.per_page + 1;
   const endItem = Math.min(paginationMeta.page * paginationMeta.per_page, paginationMeta.total);
 
+  const InfoItem = ({ label, value }) => (
+    <div className="bg-gray-50 rounded-lg p-3 border">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="font-semibold text-gray-800 break-words">
+        {value || "-"}
+      </p>
+    </div>
+  );
+
+  const DocumentCard = ({ title, image }) => (
+    <div className="border rounded-xl p-3 bg-white shadow-sm">
+      <p className="text-sm font-semibold mb-2">{title}</p>
+
+      {image ? (
+        <a href={image} target="_blank" rel="noreferrer">
+          <img
+            src={image}
+            alt={title}
+            className="h-40 w-full object-cover rounded-lg border hover:opacity-90"
+          />
+        </a>
+      ) : (
+        <div className="h-40 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400">
+          No Document
+        </div>
+      )}
+    </div>
+  );
+
   // Render pagination buttons
   const renderPaginationButtons = () => {
     const totalPages = paginationMeta.total_pages;
@@ -494,6 +523,102 @@ export default function DeliveryBoyDetails() {
             </div>
           </div>
         </div>
+
+        {/* Vehicle Details */}
+
+        <div className="mt-8">
+          <h3 className="font-bold text-lg mb-4 border-b pb-2">
+            Vehicle Details
+          </h3>
+
+          <div className="grid md:grid-cols-3 gap-4">
+
+            <InfoItem label="Vehicle Type" value={profile?.vehicleType} />
+            <InfoItem label="Vehicle Name" value={profile?.vehicleName} />
+            <InfoItem label="Vehicle Number" value={profile?.vehicleNumber} />
+            <InfoItem label="RC Book Number" value={profile?.RCbookNumber} />
+            <InfoItem
+              label="Driving Licence Number"
+              value={profile?.DrivingLicenceNo}
+            />
+            <InfoItem
+              label="Licence Expiry"
+              value={profile?.LicenceExpire}
+            />
+
+          </div>
+        </div>
+
+        {/* Bank Details */}
+
+        <div className="mt-8">
+          <h3 className="font-bold text-lg mb-4 border-b pb-2">
+            Bank Details
+          </h3>
+
+          <div className="grid md:grid-cols-3 gap-4">
+
+            <InfoItem label="Bank Name" value={profile?.bankName} />
+            <InfoItem label="Account Number" value={profile?.bankAccount} />
+            <InfoItem label="IFSC Code" value={profile?.ifce_code} />
+            <InfoItem label="UPI ID" value={profile?.upiId} />
+
+          </div>
+        </div>
+
+        {/* Documents */}
+
+        <div className="mt-8">
+          <h3 className="font-bold text-lg mb-5 border-b pb-2">
+            Uploaded Documents
+          </h3>
+
+          <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-5">
+
+            <DocumentCard
+              title="RC Book"
+              image={profile?.RCbookImage}
+            />
+
+            <DocumentCard
+              title="PUC"
+              image={profile?.IDPucImage}
+            />
+
+            <DocumentCard
+              title="Driving Licence Front"
+              image={profile?.DrivingLicenceImage}
+            />
+
+            <DocumentCard
+              title="Driving Licence Back"
+              image={profile?.DrivingLicenceImage2}
+            />
+
+            <DocumentCard
+              title="Cancelled Cheque"
+              image={profile?.cancelledCheckImage}
+            />
+
+            <DocumentCard
+              title="Bank Statement"
+              image={profile?.bankStatementImage}
+            />
+
+            <DocumentCard
+              title="Passbook"
+              image={profile?.passbookImage}
+            />
+
+            <DocumentCard
+              title="UPI ID Proof"
+              image={profile?.upiIdImage}
+            />
+
+          </div>
+        </div>
+
+
       </div>
 
       {/* Tabs */}

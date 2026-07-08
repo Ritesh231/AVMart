@@ -5,6 +5,7 @@ import { useGetOrdersByStatusQuery, useAssignOrderStatusMutation } from "../../R
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import { useEffect, useRef, useState } from "react";
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, WidthType } from "docx";
 
 export default function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,6 +101,7 @@ export default function UsersTable() {
     setSelectedOrderIds([]);
   };
 
+  // Fixed: trim Order ID to last 5 chars, matching the table UI
   const getRowsForExport = () => {
     const selectedRows = searchedUsers.filter((order) =>
       selectedOrderIds.includes(order._id)
@@ -111,7 +113,7 @@ export default function UsersTable() {
     }
 
     return sourceRows.map((order) => ({
-      "Order ID": order._id || "-",
+      "Order ID": order._id ? order._id.slice(-5) : "-",
       "Shop Name": order.shopInfo?.name || "-",
       Price: order.price ?? "-",
       "Placed On": order.placedOn || "-",
@@ -188,13 +190,76 @@ export default function UsersTable() {
       </html>`;
   };
 
-  const exportToDoc = () => {
-    const html = getExportHtml("Rejected Orders Export");
-    if (!html) {
+  const exportToDoc = async () => {
+    const rows = getRowsForExport();
+    if (!rows.length) {
       setIsExportMenuOpen(false);
       return;
     }
-    downloadBlob(html, "rejected_orders_export.doc", "application/msword");
+
+    try {
+      const headers = Object.keys(rows[0]);
+
+      const headerRow = new TableRow({
+        children: headers.map(
+          (h) =>
+            new TableCell({
+              children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
+              shading: { fill: "F1F5F9" },
+            })
+        ),
+      });
+
+      const dataRows = rows.map(
+        (row) =>
+          new TableRow({
+            children: headers.map(
+              (h) =>
+                new TableCell({
+                  children: [new Paragraph(String(row[h] ?? "-"))],
+                })
+            ),
+          })
+      );
+
+      const table = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [headerRow, ...dataRows],
+      });
+
+      const doc = new Document({
+        sections: [
+          {
+            children: [
+              new Paragraph({
+                text: "Rejected Orders Export",
+                heading: HeadingLevel.HEADING_1,
+              }),
+              table,
+            ],
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+
+      if (!blob || blob.size === 0) {
+        setIsExportMenuOpen(false);
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "rejected_orders_export.docx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("DOC export failed:", err);
+    }
+
     setIsExportMenuOpen(false);
   };
 
@@ -403,7 +468,7 @@ export default function UsersTable() {
               !isError &&
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">
+                  <td className="w-12 p-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedOrderIds.includes(u._id)}

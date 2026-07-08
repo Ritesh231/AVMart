@@ -1,5 +1,6 @@
 import React from "react";
 import { CreditCard, CheckCircle2 } from "lucide-react";
+import { FaWallet } from "react-icons/fa6";
 
 const CashOnDeliveryCard = ({ transaction }) => {
 
@@ -20,7 +21,7 @@ const CashOnDeliveryCard = ({ transaction }) => {
       <div className="flex justify-between items-start mb-4">
         <div className="flex gap-3">
           <div className="bg-brand-navy h-12 p-3 rounded-xl text-white">
-            <CreditCard size={24} />
+            <FaWallet size={24} />
           </div>
           <div>
             <h3 className="text-brand-navy font-semibold text-lg">
@@ -49,12 +50,15 @@ const CashOnDeliveryCard = ({ transaction }) => {
 
       {/* Details */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-brand-blue p-2 rounded-lg">
-          <p className="text-[10px] font-bold uppercase">
-            Delivery Boy
-          </p>
-          <p className="font-extrabold">{deliveryBoy}</p>
-        </div>
+        {deliveryBoy &&
+          deliveryBoy.trim().toLowerCase() !== "not assigned" && (
+            <div className="bg-brand-blue p-2 rounded-lg">
+              <p className="text-[10px] font-bold uppercase">
+                Delivery Boy
+              </p>
+              <p className="font-extrabold">{deliveryBoy}</p>
+            </div>
+          )}
 
         <div className="bg-brand-blue p-2 rounded-lg">
           <p className="text-[10px] font-bold uppercase">

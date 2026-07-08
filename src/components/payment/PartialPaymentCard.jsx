@@ -70,7 +70,7 @@ const PartialPaymentCard = ({ transaction }) => {
                             <div>
                                 <p className="text-brand-gray text-[10px] font-bold uppercase">Total Collected</p>
                                 <p className="text-brand-navy font-extrabold text-2xl mt-1">
-                                    {transaction.currency}{advance.amount + remaining.amount} / {transaction.currency}{transaction.totalAmount}
+                                    ₹{transaction.actualCollected} / ₹{transaction.totalAmount}
                                 </p>
                             </div>
                             <div className="mt-4 w-full bg-[#E6FCEE] text-green-600 text-[10px] font-bold py-2 rounded-xl text-center uppercase">

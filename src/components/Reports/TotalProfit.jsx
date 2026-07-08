@@ -28,6 +28,7 @@ const ProfitReport = ({ }) => {
 
     const [selectedIds, setSelectedIds] = useState([]);
     const selectAllRef = useRef(null);
+    const exportMenuRef = useRef(null);
 
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
@@ -78,6 +79,23 @@ const ProfitReport = ({ }) => {
             prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
         );
     };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target)
+            ) {
+                setIsExportMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // Update indeterminate state
     useEffect(() => {
@@ -375,7 +393,7 @@ const ProfitReport = ({ }) => {
                     </div>
 
                     {/* Export Dropdown */}
-                    <div className="relative">
+                    <div ref={exportMenuRef} className="relative">
                         <button
                             onClick={() => setIsExportMenuOpen((prev) => !prev)}
                             className="bg-brand-navy px-5 py-3 rounded-xl flex items-center gap-2 text-white font-semibold hover:bg-opacity-90 transition-all whitespace-nowrap"
@@ -421,7 +439,7 @@ const ProfitReport = ({ }) => {
 
                 <div className="bg-white rounded-xl border overflow-x-auto">
                     <table className="min-w-[600px] w-full text-sm">
-                        <thead className="bg-[#F1F5F9] text-gray-600 uppercase text-xs">
+                        <thead className="bg-[#F1F5F9] text-gray-600  text-xs">
                             <tr>
                                 <th className="p-3">
                                     <input
@@ -431,7 +449,7 @@ const ProfitReport = ({ }) => {
                                         onChange={(e) => toggleSelectAll(e.target.checked)}
                                     />
                                 </th>
-                                <th className="p-3 text-left">#</th>
+                                <th className="p-3 text-left">Sr No.</th>
                                 <th className="p-3 text-left">Order ID</th>
                                 <th className="p-3 text-left">Date</th>
                                 <th className="p-3 text-right">Profit</th>
@@ -441,7 +459,7 @@ const ProfitReport = ({ }) => {
                         <tbody>
                             {paginatedReports.map((item, index) => (
                                 <tr key={item.orderId} className="border-t hover:bg-gray-50">
-                                    <td className="p-3">
+                                    <td className="w-12 text-center p-3">
                                         <input
                                             type="checkbox"
                                             checked={selectedIds.includes(item.orderId)}

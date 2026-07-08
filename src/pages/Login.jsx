@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../Redux/apis/authApi"
 import { useEffect } from "react";
 import { toast } from "react-toastify";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const Login = () => {
   const [email, setEmail] = useState("onkarmadane79@gmail.com");
   const [password, setPassword] = useState("Onkar123");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const [login, { isLoading, isError }] = useLoginMutation();
@@ -74,14 +76,27 @@ const Login = () => {
             className="w-full mt-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#07d8ab]"
           />
 
-          <label className="text-sm font-medium">Password</label>
-          <input
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full mt-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#07d8ab]"
-          />
+          <div className="mb-4">
+            <label className="text-sm font-medium">Password</label>
+
+            <div className="relative mt-1">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#07d8ab]"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </button>
+            </div>
+          </div>
         </div>
 
         <button

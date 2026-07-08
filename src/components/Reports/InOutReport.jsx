@@ -15,6 +15,7 @@ function InrateOutrateReport() {
     // ✅ Selection state
     const [selectedIds, setSelectedIds] = useState([]);
     const selectAllRef = useRef(null);
+    const exportMenuRef = useRef(null);
 
     const ITEMS_PER_PAGE = 10;
 
@@ -45,6 +46,23 @@ function InrateOutrateReport() {
             prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
         );
     };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target)
+            ) {
+                setIsExportMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // ✅ Indeterminate state
     useEffect(() => {
@@ -239,7 +257,7 @@ function InrateOutrateReport() {
                             </div>
                         )}
                     </div>
-                    <div className="relative">
+                    <div ref={exportMenuRef} className="relative">
                         <button onClick={() => setIsExportMenuOpen((prev) => !prev)}
                             className="bg-brand-navy px-5 py-3 rounded-xl flex items-center gap-2 text-white font-semibold hover:bg-opacity-90 transition-all whitespace-nowrap">
                             <Download size={18} /> Export <ChevronDown size={16} />
@@ -259,14 +277,14 @@ function InrateOutrateReport() {
             <div className="bg-white shadow rounded-2xl p-4">
                 <div className="bg-white rounded-xl border overflow-x-auto">
                     <table className="min-w-[900px] w-full text-sm">
-                        <thead className="bg-[#F1F5F9] text-gray-600 uppercase text-xs">
+                        <thead className="bg-[#F1F5F9] text-gray-600 text-xs">
                             <tr>
                                 <th className="p-3">
                                     <input ref={selectAllRef} type="checkbox"
                                         checked={isAllSelected}
                                         onChange={(e) => toggleSelectAll(e.target.checked)} />
                                 </th>
-                                <th className="p-3 text-left">#</th>
+                                <th className="p-3 text-left">Sr No.</th>
                                 <th className="p-3 text-left">Product</th>
                                 <th className="p-3 text-center">Qty</th>
                                 <th className="p-3 text-center">InRate</th>
@@ -280,7 +298,7 @@ function InrateOutrateReport() {
                             {paginatedRecords.length ? (
                                 paginatedRecords.map((item, index) => (
                                     <tr key={item.variantId} className="border-t hover:bg-gray-50">
-                                        <td className="p-3">
+                                        <td className="w-12 text-center p-3">
                                             <input type="checkbox"
                                                 checked={selectedIds.includes(item.variantId)}
                                                 onChange={() => toggleRowSelection(item.variantId)}

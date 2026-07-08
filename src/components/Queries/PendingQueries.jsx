@@ -16,6 +16,7 @@ export default function UsersTable() {
   const [selectedQueryIds, setSelectedQueryIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const exportMenuRef = useRef(null);
 
   const location = useLocation();
   let statusFilter = "Contacted";
@@ -106,6 +107,21 @@ export default function UsersTable() {
     indexOfFirstQuery,
     indexOfLastQuery
   );
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -344,7 +360,8 @@ export default function UsersTable() {
               </>
             )}
           </div>
-          <div className="relative">
+
+          <div ref={exportMenuRef} className="relative">
             <button
               className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
@@ -451,7 +468,7 @@ export default function UsersTable() {
             ) : (
               currentQueries.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">
+                  <td className="w-12 text-center p-3">
                     <input
                       type="checkbox"
                       checked={selectedQueryIds.includes(u._id)}

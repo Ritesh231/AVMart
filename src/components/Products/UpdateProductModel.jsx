@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import {
   useUpdateProductMutation, useGetallSubcategoriesQuery, useGetallBrandsQuery,
   useGetallcategoriesQuery,
@@ -123,14 +123,12 @@ export default function EditProductModal({
       // ✅ UPDATE VARIANT IMAGE PROPERLY
       if (type === "variant") {
         const updated = [...formData.variants];
-
         updated[index].imageFiles = [newFile];
         updated[index].imageUrls = [];
-
-        setFormData({
-          ...formData,
-          variants: updated,
-        });
+        setFormData(prev => ({ ...prev, variants: updated }));
+      } else if (type === "primary") {
+        setFormData(prev => ({ ...prev, primaryImage: newFile }));
+        setPreviewImage(URL.createObjectURL(newFile)); // ✅ missing update
       }
 
       toast.success("Background Removed ✅");
@@ -199,71 +197,121 @@ export default function EditProductModal({
   const GST_RATES = [0, 3, 5, 12, 18, 28];
 
   // Handle normal input
+  // const handleChange = (e) => {
+  //   const { name, value, files } = e.target;
+
+  //   if (name === "primaryImage") {
+  //     const file = files[0];
+  //     setFormData({ ...formData, primaryImage: file });
+  //     setPreviewImage(URL.createObjectURL(file));
+  //   } else {
+  //     setFormData({ ...formData, [name]: value });
+  //   }
+  // };
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
+    // Image upload
     if (name === "primaryImage") {
-      const file = files[0];
-      setFormData({ ...formData, primaryImage: file });
-      setPreviewImage(URL.createObjectURL(file));
-    } else {
-      setFormData({ ...formData, [name]: value });
+      const file = files?.[0];
+      if (!file) return;
+
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        if (img.width !== 800 || img.height !== 800) {
+          toast.error("Product Image must be exactly 800 × 800 px ❌");
+          setFormData(prev => ({ ...prev, primaryImage: null }));
+          setPreviewImage(null);
+        } else {
+          setFormData(prev => ({ ...prev, primaryImage: file }));
+          setPreviewImage(objectUrl);
+        }
+        e.target.value = ""; // ✅ move outside the if, always reset
+      };
+
+      img.onerror = () => {
+        toast.error("Invalid image file");
+        URL.revokeObjectURL(objectUrl);
+      };
+
+      img.src = objectUrl;
+
+      return;
     }
+
+    // Normal inputs
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // Variant change
+
   const handleVariantChange = (index, field, value) => {
-    const updatedVariants = [...formData.variants];
-    updatedVariants[index][field] = value;
+    setFormData((prev) => {
+      const updatedVariants = prev.variants.map((v, i) =>
+        i === index ? { ...v, [field]: value } : v
+      );
 
-    // Recalculate whenever originalPrice, gstRate, or marginPercentage changes
-    const originalPrice = parseFloat(field === "originalPrice" ? value : updatedVariants[index].originalPrice) || 0;
-    const gstRate = parseFloat(field === "gstRate" ? value : updatedVariants[index].gstRate) || 0;
-    const marginPercentage = parseFloat(field === "marginPercentage" ? value : updatedVariants[index].marginPercentage) || 0;
+      const target = updatedVariants[index];
+      const originalPrice = parseFloat(field === "originalPrice" ? value : target.originalPrice) || 0;
+      const gstRate = parseFloat(field === "gstRate" ? value : target.gstRate) || 0;
+      const marginPercentage = parseFloat(field === "marginPercentage" ? value : target.marginPercentage) || 0;
 
-    const gstAmount = Math.round(((originalPrice * gstRate) / 100));
-    const sgstAmount = Math.round((gstAmount / 2));
-    const cgstAmount = Math.round((gstAmount / 2));
-    const inRate = Math.round((originalPrice + gstAmount));
-    const outRate = Math.round(inRate + (inRate * marginPercentage) / 100);
+      const gstAmount = Math.round((originalPrice * gstRate) / 100);
+      const inRate = Math.round(originalPrice + gstAmount);
+      const outRate = Math.round(inRate + (inRate * marginPercentage) / 100);
 
-    updatedVariants[index].gstAmount = gstAmount || "";
-    updatedVariants[index].SGST = sgstAmount || "";
-    updatedVariants[index].CGST = cgstAmount || "";
-    updatedVariants[index].InRate = inRate || "";
-    updatedVariants[index].OutRate = outRate || "";
+      target.gstAmount = gstAmount || "";
+      target.SGST = Math.round(gstAmount / 2) || "";
+      target.CGST = Math.round(gstAmount / 2) || "";
+      target.InRate = inRate || "";
+      target.OutRate = outRate || "";
 
-    if (field === "MrpPrice") {
-      const mrp = parseFloat(value) || 0;
-      if (outRate > 0 && mrp < outRate) {
-        updatedVariants[index].mrpError = `MRP must be greater than Out Rate (₹${outRate})`;
-      } else {
-        updatedVariants[index].mrpError = "";
+      if (field === "MrpPrice" || field === "originalPrice" || field === "gstRate" || field === "marginPercentage") {
+        const mrp = parseFloat(field === "MrpPrice" ? value : target.MrpPrice) || 0;
+        target.mrpError = mrp && mrp < outRate ? `MRP must be greater than Out Rate (₹${outRate})` : "";
       }
-    }
 
-    if (field === "originalPrice" || field === "gstRate" || field === "marginPercentage") {
-      const mrp = parseFloat(updatedVariants[index].MrpPrice) || 0;
-      if (mrp && mrp < outRate) {
-        updatedVariants[index].mrpError = `MRP must be greater than Out Rate (₹${outRate})`;
-      } else {
-        updatedVariants[index].mrpError = "";
-      }
-    }
-
-    setFormData({ ...formData, variants: updatedVariants });
+      return { ...prev, variants: updatedVariants };
+    });
   };
 
   // Variant image upload
   const handleVariantImageChange = (index, files) => {
-    const updatedVariants = [...formData.variants];
+    const selectedFiles = Array.from(files);
 
-    updatedVariants[index].imageFiles = [
-      ...(updatedVariants[index].imageFiles || []),
-      ...Array.from(files),
-    ];
+    selectedFiles.forEach((file) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
 
-    setFormData({ ...formData, variants: updatedVariants });
+      img.onload = () => {
+        if (img.width !== 800 || img.height !== 800) {
+          toast.error("Variant Image must be exactly 800 × 800 px ❌");
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          variants: prev.variants.map((v, i) =>
+            i === index
+              ? { ...v, imageFiles: [...(v.imageFiles || []), file] } // ✅ new variant object
+              : v
+          ),
+        }));
+      };
+
+      img.onerror = () => {
+        toast.error("Invalid image");
+        URL.revokeObjectURL(objectUrl);
+      };
+
+      img.src = objectUrl;
+    });
   };
 
   const addVariant = () => {
@@ -283,6 +331,20 @@ export default function EditProductModal({
 
 
   const handleSubmit = async () => {
+    if (!formData.primaryImage && !previewImage) {
+      toast.error("Product Image is required ❌");
+      return;
+    }
+
+
+    const missingVariantImage = formData.variants.some(
+      v => (!v.imageUrls || v.imageUrls.length === 0) && (!v.imageFiles || v.imageFiles.length === 0)
+    );
+    if (missingVariantImage) {
+      toast.error("Variant Image is required ❌");
+      return;
+    }
+
     try {
       const submitData = new FormData();
 
@@ -649,7 +711,7 @@ export default function EditProductModal({
                     )}
                   </div>
                 </div>
-                
+
                 {/* CGST */}
                 <div className="relative">
                   <div className="relative">
@@ -756,9 +818,29 @@ export default function EditProductModal({
                   )}
                 </div>
 
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={variant.stock || ""}
+                    onChange={(e) => handleVariantChange(index, "stock", e.target.value)}
+                    placeholder=" "
+                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
+                  />
+                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all
+    peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
+                    Stock
+                  </label>
+                </div>
+
+
                 {/* Images */}
                 <div className="mt-3">
-                  <label className="text-sm font-medium">Variant Images</label>
+                  <label className="text-xs font-medium text-gray-600">
+                    Variant Image
+                  </label>
+
+
 
                   <div className="flex gap-2 mt-2 flex-wrap">
                     {variant.imageUrls?.map((img, i) => (
@@ -794,9 +876,10 @@ export default function EditProductModal({
                       type="file"
                       multiple
                       className="hidden"
-                      onChange={(e) =>
-                        handleVariantImageChange(index, e.target.files)
-                      }
+                      onChange={(e) => {
+                        handleVariantImageChange(index, e.target.files);
+                        e.target.value = "";
+                      }}
                     />
                   </label>
 
@@ -810,22 +893,6 @@ export default function EditProductModal({
                       {isRemovingBg ? "Processing..." : "Remove Background"}
                     </button>
                   </div>
-                </div>
-
-
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={variant.stock || ""}
-                    onChange={(e) => handleVariantChange(index, "stock", e.target.value)}
-                    placeholder=" "
-                    className="peer w-full border rounded-lg px-3 pt-2 pb-2 text-sm focus:outline-none focus:border-indigo-500"
-                  />
-                  <label className="absolute left-3 -top-2.5 bg-white px-1 text-xs text-gray-600 transition-all
-    peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
-    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-indigo-600">
-                    Stock
-                  </label>
                 </div>
               </div>
             </div>

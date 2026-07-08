@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
 import { useEditSubcategoryMutation } from "../../Redux/apis/productsApi";
 
@@ -34,43 +34,66 @@ export default function EditSubcategoryModal({
     const { name, value, files } = e.target;
 
     if (name === "image") {
-      const file = files[0];
-      setFormData({ ...formData, image: file });
+      const file = files?.[0];
+      if (!file) return;
 
-      // ✅ Update preview immediately
-      if (file) {
-        setPreview(URL.createObjectURL(file));
-      }
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        if (img.width !== 400 || img.height !== 500) {
+          toast.error("Subcategory Image must be exactly 400 × 500 px ❌");
+
+          setFormData((prev) => ({
+            ...prev,
+            image: null,
+          }));
+
+          setPreview(subcategoryData?.image || null);
+          e.target.value = "";
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          image: file,
+        }));
+
+        setPreview(objectUrl);
+      };
+
+      img.onerror = () => {
+        toast.error("Invalid image file ❌");
+        URL.revokeObjectURL(objectUrl);
+      };
+
+      img.src = objectUrl;
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
   const [preview, setPreview] = useState(null);
 
   const handleSubmit = async () => {
+
+    if (!formData.image && !preview) {
+      toast.error("Subcategory Image is required ❌");
+      return;
+    }
+
     try {
       const data = new FormData();
+
       data.append("name", formData.name);
       data.append("categoryId", formData.categoryId);
 
       if (formData.image) {
         data.append("image", formData.image);
-      }
-
-      // ✅ LOG FORM DATA CONTENTS
-      console.log("---- FormData Payload ----");
-      for (let pair of data.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
-      if (formData.image) {
-        console.log("Image Name:", formData.image.name);
-        console.log("Image Type:", formData.image.type);
-        console.log("Image Size (bytes):", formData.image.size);
-      } else {
-        console.log("No image selected");
-
       }
 
       await editSubcategory({
@@ -80,6 +103,7 @@ export default function EditSubcategoryModal({
 
       toast.success("Subcategory Updated Successfully");
       onClose();
+
     } catch (err) {
       toast.error("Update Failed");
     }

@@ -7,6 +7,7 @@ import { IoCartOutline, IoCashOutline, IoPieChartOutline } from "react-icons/io5
 import { Download, ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
 
+
 const ITEMS_PER_PAGE = 10;
 
 const TableSkeleton = ({ rows = 5, columns = 5 }) => (
@@ -91,6 +92,7 @@ function SalesReport() {
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const selectAllOrdersRef = useRef(null);
     const selectAllProductsRef = useRef(null);
+    const exportMenuRef = useRef(null);
 
     const { data, isLoading } = useGetTotalSalesQuery(filters, { refetchOnMountOrArgChange: true });
 
@@ -148,6 +150,23 @@ function SalesReport() {
             prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
         );
     };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target)
+            ) {
+                setIsExportMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // ✅ Indeterminate state for Orders
     useEffect(() => {
@@ -394,7 +413,7 @@ function SalesReport() {
                             </div>
                         )}
                     </div>
-                    <div className="relative">
+                    <div ref={exportMenuRef} className="relative">
                         <button onClick={() => setIsExportMenuOpen((prev) => !prev)}
                             className="bg-brand-navy px-5 py-3 rounded-xl flex items-center gap-2 text-white font-semibold hover:bg-opacity-90 transition-all whitespace-nowrap">
                             <Download size={18} /> Export <ChevronDown size={16} />
@@ -415,14 +434,14 @@ function SalesReport() {
                 <h2 className="text-xl font-semibold mb-4">Product Wise Sales</h2>
                 <div className="bg-white rounded-xl border overflow-x-auto">
                     <table className="min-w-[600px] w-full text-sm">
-                        <thead className="bg-[#F1F5F9] text-gray-600 uppercase text-xs">
+                        <thead className="bg-[#F1F5F9] text-gray-600  text-xs">
                             <tr>
-                                <th className="p-3">
+                                <th className="w-12 p-3 text-center align-middle">
                                     <input ref={selectAllProductsRef} type="checkbox"
                                         checked={isAllProductsSelected}
                                         onChange={(e) => toggleSelectAllProducts(e.target.checked)} />
                                 </th>
-                                <th className="p-3 text-left">#</th>
+                                <th className="p-3 text-left">Sr No.</th>
                                 <th className="p-3">
                                     <div className="flex justify-center">
                                         <div className="w-[180px] text-left">
@@ -434,11 +453,12 @@ function SalesReport() {
                                 <th className="p-3 text-right">Sales</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             {paginatedProducts.length ? (
                                 paginatedProducts.map((item, index) => (
                                     <tr key={item.productId} className="border-t hover:bg-gray-50">
-                                        <td className="p-3">
+                                        <td className="w-12 p-3 text-center align-middle">
                                             <input type="checkbox"
                                                 checked={selectedProductIds.includes(item.productId)}
                                                 onChange={() => toggleProductSelection(item.productId)}
@@ -476,12 +496,12 @@ function SalesReport() {
                     <table className="min-w-[900px] w-full text-sm">
                         <thead className="bg-[#F1F5F9] text-gray-600 uppercase text-xs">
                             <tr>
-                                <th className="p-3">
+                                <th className="w-12 p-3 text-center align-middle">
                                     <input ref={selectAllOrdersRef} type="checkbox"
                                         checked={isAllOrdersSelected}
                                         onChange={(e) => toggleSelectAllOrders(e.target.checked)} />
                                 </th>
-                                <th className="p-3 text-left">#</th>
+                                <th className="p-3 text-left">Sr No.</th>
                                 <th className="p-3 text-center">Order ID</th>
                                 <th className="p-3 text-center">Items</th>
                                 <th className="p-3 text-right">Amount</th>
@@ -493,14 +513,16 @@ function SalesReport() {
                             {paginatedOrders.length ? (
                                 paginatedOrders.map((order, index) => (
                                     <tr key={order.orderId} className="border-t hover:bg-gray-50">
-                                        <td className="p-3">
+                                        <td className="w-12 p-3 text-center align-middle">
                                             <input type="checkbox"
                                                 checked={selectedOrderIds.includes(order.orderId)}
                                                 onChange={() => toggleOrderSelection(order.orderId)}
                                                 onClick={(e) => e.stopPropagation()} />
                                         </td>
                                         <td className="p-3 text-gray-600">{(ordersPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                                        <td className="p-3 font-medium text-blue-600 text-center">{order.orderId}</td>
+                                        <td className="p-3 font-medium text-blue-600 text-center">
+                                            {order.orderId?.slice(-5)}
+                                        </td>
                                         <td className="p-3 text-center text-gray-700">{order.totalItems}</td>
                                         <td className="p-3 text-right font-semibold text-green-600">
                                             ₹{Number(order.totalAmount).toFixed(2)}

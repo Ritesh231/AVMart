@@ -19,6 +19,10 @@ export default function UsersTable() {
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [selectedDeliveryBoyId, setSelectedDeliveryBoyId] = useState(null);
+  const exportMenuRef = useRef(null);
 
   // Pagination state for server-side pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,17 +44,25 @@ export default function UsersTable() {
   const [updateDeliveryStatus, { isLoading: statusLoading }] =
     useUpdateDeliveryStatusMutation();
 
-  const handleStatusUpdate = async (id, newStatus) => {
+  const handleStatusUpdate = async (
+    id,
+    newStatus,
+    reason = ""
+  ) => {
     try {
       await updateDeliveryStatus({
         id,
         status: newStatus,
+        rejectReason: reason,
       }).unwrap();
 
-      console.log("Status updated successfully");
-      refetch(); // Refresh the current page data
+      refetch();
+
+      setShowRejectModal(false);
+      setRejectReason("");
+      setSelectedDeliveryBoyId(null);
     } catch (error) {
-      console.error("Failed to update status", error);
+      console.error(error);
     }
   };
 
@@ -79,6 +91,23 @@ export default function UsersTable() {
   const totalPages = vehicleFilter === "All"
     ? pagination.total_pages
     : Math.ceil(filteredUsers.length / itemsPerPage);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -290,7 +319,7 @@ export default function UsersTable() {
             ))}
           </select>
 
-          <div className="relative">
+          <div ref={exportMenuRef} className="relative">
             <button
               className="bg-brand-navy px-6 py-3 rounded-2xl text-white flex items-center gap-2"
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
@@ -429,7 +458,10 @@ export default function UsersTable() {
                           <button
                             className="text-red-600"
                             disabled={statusLoading}
-                            onClick={() => handleStatusUpdate(u._id, "rejected")}
+                            onClick={() => {
+                              setSelectedDeliveryBoyId(u._id);
+                              setShowRejectModal(true);
+                            }}
                           >
                             <RxCrossCircled size={18} />
                           </button>
@@ -522,6 +554,60 @@ export default function UsersTable() {
               Next
             </button>
           </div>
+
+          {showRejectModal && (
+            <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+
+              <div className="bg-white rounded-xl w-[450px] p-6">
+
+                <h2 className="text-xl font-semibold mb-4">
+                  Reject Delivery Boy
+                </h2>
+
+                <p className="text-gray-500 text-sm mb-3">
+                  Please provide the reason for rejection.
+                </p>
+
+                <textarea
+                  rows={5}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  className="w-full border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  placeholder="Enter rejection reason..."
+                />
+
+                <div className="flex justify-end gap-3 mt-6">
+
+                  <button
+                    onClick={() => {
+                      setShowRejectModal(false);
+                      setRejectReason("");
+                    }}
+                    className="px-5 py-2 rounded-lg border"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    disabled={!rejectReason.trim() || statusLoading}
+                    onClick={() =>
+                      handleStatusUpdate(
+                        selectedDeliveryBoyId,
+                        "rejected",
+                        rejectReason
+                      )
+                    }
+                    className="bg-red-600 text-white px-5 py-2 rounded-lg disabled:bg-gray-300"
+                  >
+                    {statusLoading ? "Submitting..." : "Reject"}
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+          )}
         </div>
       )}
     </>

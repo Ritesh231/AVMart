@@ -69,6 +69,7 @@ export const Orderapi = baseApi.injectEndpoints({
         }
       })
     }),
+
     sendCashVerificationOtp: builder.mutation({
       query: (body) => ({
         url: "/api/v1/adminauth/send-cash-verification-otp",

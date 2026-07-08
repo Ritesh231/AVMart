@@ -14,6 +14,17 @@ export default function AddCategory() {
     image: null,
   });
 
+  const MAX_FILE_SIZE = 2 * 1024 * 1024;
+
+  const ALLOWED_TYPES = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+  ];
+
+  const REQUIRED_WIDTH = 512;
+  const REQUIRED_HEIGHT = 512;
+
   const [preview, setPreview] = useState(null);
 
   /* -------------------- Handlers -------------------- */
@@ -26,14 +37,56 @@ export default function AddCategory() {
     const file = e.target.files[0];
     if (!file) return;
 
-    setFormData({ ...formData, image: file });
-    setPreview(URL.createObjectURL(file));
+    // File Type Validation
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Only JPG, JPEG and PNG images are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    // File Size Validation
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Image size must not exceed 2 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    // Image Dimension Validation
+    const img = new Image();
+
+    img.onload = () => {
+      if (
+        img.width !== REQUIRED_WIDTH ||
+        img.height !== REQUIRED_HEIGHT
+      ) {
+        toast.error(
+          `Image dimensions must be ${REQUIRED_WIDTH} × ${REQUIRED_HEIGHT}px.`
+        );
+        e.target.value = "";
+        return;
+      }
+
+      // Success
+      setFormData((prev) => ({
+        ...prev,
+        image: file,
+      }));
+
+      setPreview(URL.createObjectURL(file));
+    };
+
+    img.src = URL.createObjectURL(file);
   };
 
   /* -------------------- Submit -------------------- */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.image) {
+      toast.error("Category Image is required.");
+      return;
+    }
 
     try {
       const data = new FormData();
@@ -121,10 +174,9 @@ export default function AddCategory() {
 
           </div>
 
-          {/* Image Upload */}
           <div>
             <label className="text-xs font-medium text-gray-600">
-              Category Image
+              Category Image <span className="text-red-500">*</span>
             </label>
 
             <label
@@ -147,10 +199,16 @@ export default function AddCategory() {
             <input
               type="file"
               id="categoryImage"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png"
               className="hidden"
               onChange={handleImageChange}
             />
+
+            <div className="mt-2 text-xs text-gray-500 space-y-1">
+              <p><strong>Supported Formats:</strong> JPG, JPEG, PNG</p>
+              <p><strong>Required Size:</strong> 512 × 512 px</p>
+              <p><strong>Maximum File Size:</strong> 2 MB</p>
+            </div>
           </div>
 
           {/* Submit */}

@@ -55,29 +55,55 @@ function WithdrawalTable() {
         total_pages: 0
     };
 
+
+
     const totalPages = pagination.total_pages;
 
-    const handleAction = async (id, status) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState("");
+    const [paymentReference, setPaymentReference] = useState("");
+    const [adminNote, setAdminNote] = useState("");
+
+    const handleAction = async () => {
         try {
+
+            if (!adminNote.trim()) {
+                toast.error("Please enter admin note");
+                return;
+            }
+
+            if (
+                selectedStatus === "approved" &&
+                !paymentReference.trim()
+            ) {
+                toast.error("Please enter payment reference");
+                return;
+            }
+
             const res = await verifyWithdrawal({
-                requestId: id,
-                status,
-                adminNote:
-                    status === "approved"
-                        ? "Approved by admin"
-                        : "Rejected by admin",
+                requestId: selectedRequest._id,
+                status: selectedStatus,
+                paymentReference:
+                    selectedStatus === "approved"
+                        ? paymentReference
+                        : "",
+                adminNote,
             }).unwrap();
 
-            console.log("API Response:", res);
-            toast.success(res?.message || `Request ${status} successfully`);
-            refetch(); // Refresh the data after action
+            toast.success(res.message);
 
-        } catch (error) {
-            console.log("Error:", error);
-            toast.error(error?.data?.error || "Action failed");
+            setIsModalOpen(false);
+            setSelectedRequest(null);
+            setPaymentReference("");
+            setAdminNote("");
+
+            refetch();
+
+        } catch (err) {
+            toast.error(err?.data?.error || "Something went wrong");
         }
     };
-
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
@@ -99,6 +125,7 @@ function WithdrawalTable() {
                                 <th className="p-3 text-left">Description</th>
                                 <th className="p-3 text-left">Date</th>
                                 <th className="p-3 text-left">Status</th>
+                                <th className="p-3 text-left">Admin Note</th>
                                 <th className="p-3 text-center">Action</th>
                             </tr>
                         </thead>
@@ -150,6 +177,7 @@ function WithdrawalTable() {
                             <th className="p-3 text-left">Description</th>
                             <th className="p-3 text-left">Date</th>
                             <th className="p-3 text-left">Status</th>
+                            <th className="p-3 text-left">Admin Note</th>
                             <th className="p-3 text-center">Action</th>
                         </tr>
                     </thead>
@@ -203,19 +231,36 @@ function WithdrawalTable() {
                                         </span>
                                     </td>
 
+                                    {/* Admin Note */}
+                                    <td className="p-3 max-w-[250px] break-words">
+                                        {item.adminNote || "N/A"}
+                                    </td>
+
                                     {/* Actions */}
                                     <td className="p-3 text-center">
                                         {item.status === "pending" ? (
                                             <div className="flex justify-center gap-2">
                                                 <button
-                                                    onClick={() => handleAction(item._id, "approved")}
+                                                    onClick={() => {
+                                                        setSelectedRequest(item);
+                                                        setSelectedStatus("approved");
+                                                        setPaymentReference("");
+                                                        setAdminNote("");
+                                                        setIsModalOpen(true);
+                                                    }}
                                                     disabled={actionLoading}
                                                     className="bg-green-500 hover:bg-green-600 text-white p-1 w-6 h-6 rounded-full transition-colors"
                                                 >
                                                     <Check size={16} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleAction(item._id, "rejected")}
+                                                    onClick={() => {
+                                                        setSelectedRequest(item);
+                                                        setSelectedStatus("rejected");
+                                                        setPaymentReference("");
+                                                        setAdminNote("");
+                                                        setIsModalOpen(true);
+                                                    }}
                                                     disabled={actionLoading}
                                                     className="bg-red-500 hover:bg-red-600 text-white p-1 w-6 h-6 rounded-full transition-colors"
                                                 >
@@ -342,8 +387,84 @@ function WithdrawalTable() {
                 </div>
             )}
 
-            <ToastContainer />
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl w-[420px] p-6 shadow-xl">
 
+                        <h2 className="text-xl font-semibold mb-5">
+                            {selectedStatus === "approved"
+                                ? "Approve Withdrawal"
+                                : "Reject Withdrawal"}
+                        </h2>
+
+                        {selectedStatus === "approved" && (
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-2">
+                                    Payment Reference
+                                </label>
+
+                                <input
+                                    type="text"
+                                    value={paymentReference}
+                                    onChange={(e) =>
+                                        setPaymentReference(e.target.value)
+                                    }
+                                    placeholder="Enter Transaction ID"
+                                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                                />
+                            </div>
+                        )}
+
+                        <div className="mb-5">
+                            <label className="block text-sm font-medium mb-2">
+                                {selectedStatus === "approved"
+                                    ? "Admin Note"
+                                    : "Reason"}
+                            </label>
+
+                            <textarea
+                                rows={4}
+                                value={adminNote}
+                                onChange={(e) => setAdminNote(e.target.value)}
+                                placeholder={
+                                    selectedStatus === "approved"
+                                        ? "Paid via bank transfer..."
+                                        : "Reason for rejection..."
+                                }
+                                className="w-full border rounded-lg px-3 py-2 outline-none resize-none"
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-5 py-2 rounded-lg border"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={handleAction}
+                                disabled={actionLoading}
+                                className={`px-5 py-2 rounded-lg text-white ${selectedStatus === "approved"
+                                    ? "bg-green-600"
+                                    : "bg-red-600"
+                                    }`}
+                            >
+                                {actionLoading
+                                    ? "Submitting..."
+                                    : selectedStatus === "approved"
+                                        ? "Approve"
+                                        : "Reject"}
+                            </button>
+
+                        </div>
+
+                    </div>
+                </div>
+            )}
+            <ToastContainer />
         </div>
     );
 }

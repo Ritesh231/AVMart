@@ -347,7 +347,7 @@ const Dashboard = () => {
                                     number={stat.number}
                                     statement={stat.statement}
                                     icon={stat.icon}
-                                    variant={stat.special ? "special" : "normal"}
+                                    variant={"normal"}
                                 />
                             ))}
                     </div>

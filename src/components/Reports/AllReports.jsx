@@ -16,6 +16,7 @@ function AllReports() {
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const [selectedOrderIds, setSelectedOrderIds] = useState([]);
     const selectAllRef = useRef(null);
+    const exportMenuRef = useRef(null);
 
     const ITEMS_PER_PAGE = 10;
 
@@ -78,6 +79,23 @@ function AllReports() {
         );
     };
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                exportMenuRef.current &&
+                !exportMenuRef.current.contains(event.target)
+            ) {
+                setIsExportMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
     // ✅ Indeterminate state
     useEffect(() => {
         if (selectAllRef.current) {
@@ -104,9 +122,10 @@ function AllReports() {
         }
 
         if (activeTab === "product") {
-            return [...filtered].reverse().map((item) => {
+            return [...filtered].reverse().map((item, index) => {
                 const variant = item.variants?.[0] || {};
                 return {
+                    "Sr.No": index + 1,
                     Product: item.productName || "-",
                     Category: item.category || "-",
                     Brand: item.brand || "-",
@@ -120,10 +139,11 @@ function AllReports() {
             });
         }
 
-        return [...filtered].reverse().map((order) => {
+        return [...filtered].reverse().map((order, index) => {
             const totalAmount = order.products?.reduce((sum, p) => sum + p.price * p.quantity, 0) || 0;
             const totalItems = order.products?.reduce((sum, p) => sum + p.quantity, 0) || 0;
             return {
+                "Sr.No": index + 1,
                 Invoice: order.paymentInvoice || "-",
                 "Total Items": totalItems,
                 "Total Amount": totalAmount,
@@ -306,7 +326,7 @@ function AllReports() {
                                 </div>
                             )}
                         </div>
-                        <div className="relative">
+                        <div ref={exportMenuRef} className="relative">
                             <button onClick={() => setIsExportMenuOpen((prev) => !prev)}
                                 className="bg-brand-navy px-5 py-3 rounded-xl flex items-center gap-2 text-white font-semibold hover:bg-opacity-90 transition-all whitespace-nowrap">
                                 <Download size={18} /> Export <ChevronDown size={16} />
@@ -335,7 +355,7 @@ function AllReports() {
                                             checked={isAllSelected}
                                             onChange={(e) => toggleSelectAll(e.target.checked)} />
                                     </th>
-                                    <th className="p-3 text-left">#</th>
+                                    <th className="p-3 text-left">Sr No.</th>
                                     <th className="p-3 text-left">Product</th>
                                     <th className="p-3 text-center">Category</th>
                                     <th className="p-3 text-center">Brand</th>
@@ -385,14 +405,14 @@ function AllReports() {
                         </table>
                     ) : (
                         <table className="min-w-[700px] w-full text-sm">
-                            <thead className="bg-[#F1F5F9] text-gray-600 uppercase text-xs">
+                            <thead className="bg-[#F1F5F9] text-gray-600  text-xs">
                                 <tr>
-                                    <th className="p-3">
+                                    <th className="w-12 text-center p-3">
                                         <input ref={selectAllRef} type="checkbox"
                                             checked={isAllSelected}
                                             onChange={(e) => toggleSelectAll(e.target.checked)} />
                                     </th>
-                                    <th className="p-3 text-left">#</th>
+                                    <th className="p-3 text-left">Sr.No</th>
                                     <th className="p-3 text-left">Invoice</th>
                                     <th className="p-3 text-center">Total Items</th>
                                     <th className="p-3 text-center">Total Amount</th>
@@ -407,7 +427,7 @@ function AllReports() {
                                         const totalItems = order.products?.reduce((sum, p) => sum + p.quantity, 0) || 0;
                                         return (
                                             <tr key={order.paymentInvoice || index} className="border-t hover:bg-gray-50">
-                                                <td className="p-3">
+                                                <td className="w-12 text-center p-3">
                                                     <input type="checkbox"
                                                         checked={selectedOrderIds.includes(order.paymentInvoice)}
                                                         onChange={() => toggleRowSelection(order.paymentInvoice)}

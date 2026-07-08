@@ -51,6 +51,7 @@ export default function UsersTable() {
   const [selectedDeliveryBoyId, setSelectedDeliveryBoyId] = useState(null);
   const [otp, setOtp] = useState("");
   const [amount, setAmount] = useState("");
+  const exportMenuRef = useRef(null);
 
   // ✅ Filter and search on current page data (API already paginated)
   const filteredUsers =
@@ -72,6 +73,23 @@ export default function UsersTable() {
 
   // ✅ Use searched users directly (already from current API page)
   const currentOrders = searchedUsers;
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Reset to page 1 when filters change and refetch
   useEffect(() => {
@@ -329,7 +347,7 @@ export default function UsersTable() {
             />
           </div>
 
-          <div className="relative">
+          <div ref={exportMenuRef} className="relative">
             <button
               className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
@@ -449,7 +467,7 @@ export default function UsersTable() {
               !isError &&
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">
+                  <td className="w-12 p-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedOrderIds.includes(u._id)}

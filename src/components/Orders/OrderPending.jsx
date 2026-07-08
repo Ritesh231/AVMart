@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import useSocket from "../../hooks/useSocket";
 import { getAddressFromCoords } from "../../utils/geocoding";
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, WidthType } from "docx";
 
 export default function UsersTable() {
   const navigate = useNavigate();
@@ -66,6 +67,8 @@ export default function UsersTable() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [assigningBoyId, setAssigningBoyId] = useState(null);
+  const exportMenuRef = useRef(null);
 
   const [getOrderById, { data: orderData, isLoading: Loader }] =
     useGetOrdersByIdMutation();
@@ -102,6 +105,23 @@ export default function UsersTable() {
   useEffect(() => {
     setSelectedOrderIds([]);
   }, [orders.length]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const [
     assignOrderStatus,
@@ -188,24 +208,32 @@ export default function UsersTable() {
     }
   }, [deliveryData]);
 
-  const handleAssignDelivery = async (boyId) => {
+
+  const handleAssignDelivery = async () => {
+    if (!selectedBoyId) {
+      toast.error("Please select a Delivery Boy");
+      return;
+    }
+
     try {
-      setSelectedBoyId(boyId);
+      setAssigningBoyId(selectedBoyId);
+
       await assignDeliveryBoy({
         orderId: selectedOrderForDelivery,
-        deliveryBoyId: boyId,
+        deliveryBoyId: selectedBoyId,
       }).unwrap();
-      toast.success("Delivery boy assigned successfully");
+
+      toast.success("Delivery Boy assigned successfully");
+
       setIsDeliveryModalOpen(false);
       setSelectedOrderForDelivery(null);
-      refetch(); // Refresh the orders list
-    } catch (error) {
-      const message =
-        error?.data?.error || "Failed to assign delivery boy ❌";
-
-      toast.error(message);
-    } finally {
       setSelectedBoyId(null);
+
+      refetch();
+    } catch (error) {
+      toast.error(error?.data?.error || "Failed to assign Delivery Boy");
+    } finally {
+      setAssigningBoyId(null);
     }
   };
 
@@ -286,32 +314,74 @@ export default function UsersTable() {
     setIsExportMenuOpen(false);
   };
 
-  const exportToDoc = () => {
+  const exportToDoc = async () => {
     const rows = getRowsForExport();
     if (!rows.length) return;
 
-    const headers = Object.keys(rows[0]);
-    const tableHead = headers.map((header) => `<th>${header}</th>`).join("");
-    const tableRows = rows
-      .map(
+    try {
+      const headers = Object.keys(rows[0]);
+
+      const headerRow = new TableRow({
+        children: headers.map(
+          (h) =>
+            new TableCell({
+              children: [new Paragraph({ children: [new TextRun({ text: h, bold: true })] })],
+              shading: { fill: "F1F5F9" },
+            })
+        ),
+      });
+
+      const dataRows = rows.map(
         (row) =>
-          `<tr>${headers.map((header) => `<td>${row[header]}</td>`).join("")}</tr>`
-      )
-      .join("");
+          new TableRow({
+            children: headers.map(
+              (h) =>
+                new TableCell({
+                  children: [new Paragraph(String(row[h] ?? "-"))],
+                })
+            ),
+          })
+      );
 
-    const html = `
-      <html>
-        <head><meta charset="utf-8" /></head>
-        <body>
-          <h2>Pending Orders Export</h2>
-          <table border="1" cellspacing="0" cellpadding="6">
-            <thead><tr>${tableHead}</table></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </body>
-      </html>`;
+      const table = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [headerRow, ...dataRows],
+      });
 
-    downloadBlob(html, "pending_orders_export.doc", "application/msword");
+      const doc = new Document({
+        sections: [
+          {
+            children: [
+              new Paragraph({
+                text: "Pending Orders Export",
+                heading: HeadingLevel.HEADING_1,
+              }),
+              table,
+            ],
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+
+      if (!blob || blob.size === 0) {
+        toast.error("Export failed — please try again");
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "pending_orders_export.docx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("DOC export failed:", err);
+      toast.error("Failed to export DOC");
+    }
+
     setIsExportMenuOpen(false);
   };
 
@@ -400,7 +470,7 @@ export default function UsersTable() {
               className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
             />
           </div>
-          <div className="relative">
+          <div ref={exportMenuRef} className="relative">
             <button
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
               className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
@@ -439,7 +509,7 @@ export default function UsersTable() {
         <table className="min-w-[900px] w-full text-sm">
           <thead className="bg-[#F1F5F9] text-gray-600">
             <tr>
-              <th className="p-3">
+              <th className="w-12 p-3 text-center">
                 <input
                   ref={selectAllRef}
                   type="checkbox"
@@ -520,7 +590,7 @@ export default function UsersTable() {
               !isError &&
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">
+                  <td className="w-12 p-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedOrderIds.includes(u._id)}
@@ -601,6 +671,7 @@ export default function UsersTable() {
 
         {isDeliveryModalOpen && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
             <div className="bg-white w-[400px] max-h-[500px] overflow-y-auto rounded-xl p-5">
 
               <h2 className="text-lg font-semibold mb-2">
@@ -610,43 +681,88 @@ export default function UsersTable() {
                 Socket: {isConnected ? "Connected" : "Disconnected"}
               </div>
 
-              {deliveryData?.data?.map((boy) => {
-                const isThisLoading =
-                  assigning && selectedBoyId === boy._id;
+              {deliveryData?.data
+                ?.filter(
+                  (boy) =>
+                    boy.status === "approved" &&
+                    boy.deliveryBoyAvailable !== "Notavailable"
+                )
+                .map((boy) => {
+                  const isThisLoading = assigningBoyId === boy._id;
+                  const isSelected = selectedBoyId === boy._id;
 
-                return (
-                  <div
-                    key={boy._id}
-                    onClick={() => !assigning && handleAssignDelivery(boy._id)}
-                    className={`border p-3 rounded mb-2 cursor-pointer transition
-              ${isThisLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"}
+                  return (
+                    <div
+                      key={boy._id}
+                      onClick={() => !assigning && setSelectedBoyId(boy._id)}
+                      className={`
+relative
+border-2
+rounded-xl
+p-4
+mb-3
+cursor-pointer
+transition-all
+duration-200
+
+${isSelected
+                          ? "border-green-500 bg-green-50 shadow-lg"
+                          : "border-gray-200 hover:border-blue-400 hover:bg-gray-50"
+                        }
+
+${isThisLoading
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                        }
+
             `}
-                  >
-                    <p className="font-medium">{boy.Name}</p>
-                    <p className="text-sm text-gray-500">
-                      Orders: {boy.completeOrders}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Status: {boy.deliveryBoyAvailable}
-                    </p>
-                    {deliveryBoyLocations[boy._id] ? (
-                      <p className="text-sm text-blue-500 font-semibold">
-                        Location: {deliveryBoyLocations[boy._id].address || `${deliveryBoyLocations[boy._id].latitude}, ${deliveryBoyLocations[boy._id].longitude}`}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-400 italic">
-                        Waiting for live location...
-                      </p>
-                    )}
 
-                    {isThisLoading && (
-                      <p className="text-xs text-blue-600 mt-1">
-                        Assigning...
+
+                    >
+                      {isSelected && (
+                        <div className="absolute top-3 right-3">
+                          <div className="bg-green-500 rounded-full p-1">
+                            <FaCheck className="text-white text-xs" />
+                          </div>
+                        </div>
+                      )}
+                      <p className="font-medium">{boy.Name}</p>
+                      <p className="text-sm text-gray-500">
+                        Orders: {boy.completeOrders}
                       </p>
-                    )}
-                  </div>
-                );
-              })}
+                      <p className="text-sm text-gray-500">
+                        Status: {boy.deliveryBoyAvailable}
+                      </p>
+                      {deliveryBoyLocations[boy._id] ? (
+                        <p className="text-sm text-blue-500 font-semibold">
+                          Location: {deliveryBoyLocations[boy._id].address || `${deliveryBoyLocations[boy._id].latitude}, ${deliveryBoyLocations[boy._id].longitude}`}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400 italic">
+                          Waiting for live location...
+                        </p>
+                      )}
+
+                      {isThisLoading && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          Assigning...
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+
+              <button
+                onClick={handleAssignDelivery}
+                disabled={!selectedBoyId || assigningBoyId}
+                className={`w-full py-2 rounded-lg mb-3 font-semibold transition
+    ${selectedBoyId
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+              >
+                {assigningBoyId ? "Assigning..." : "Assign Delivery Boy"}
+              </button>
 
               <button
                 onClick={() => setIsDeliveryModalOpen(false)}

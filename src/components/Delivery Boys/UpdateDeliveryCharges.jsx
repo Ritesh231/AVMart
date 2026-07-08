@@ -47,6 +47,7 @@ const UpdateDeliveryCharges = () => {
                         <label className="block text-sm font-medium text-gray-600 mb-1">
                             Delivery Charge (₹)
                         </label>
+
                         <input
                             type="number"
                             placeholder="Enter amount"
@@ -54,6 +55,12 @@ const UpdateDeliveryCharges = () => {
                             onChange={(e) => setAmount(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                         />
+
+                        {/* Note */}
+                        <p className="mt-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                            <span className="font-semibold">Note:</span> Delivery charges will apply to
+                            orders below <span className="font-semibold">₹{amount || 800}</span>.
+                        </p>
                     </div>
 
                     {/* Button */}

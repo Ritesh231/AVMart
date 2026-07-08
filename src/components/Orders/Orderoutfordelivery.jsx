@@ -19,6 +19,7 @@ export default function UsersTable() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
   const ordersPerPage = 20;
+  const exportMenuRef = useRef(null);
 
   // Fetch orders with pagination params
   const {
@@ -62,6 +63,24 @@ export default function UsersTable() {
     );
   }, [filteredUsers, searchTerm]);
 
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -70,6 +89,8 @@ export default function UsersTable() {
 
   useEffect(() => {
     if (!socket) return;
+
+
 
     const handleLocationUpdate = async (data) => {
       // data: { driverId, latitude, longitude, address, ... }
@@ -91,6 +112,7 @@ export default function UsersTable() {
         }));
       }
     };
+
 
     socket.on("adminOrderLocationsUpdate", handleLocationUpdate);
     return () => {
@@ -314,7 +336,7 @@ export default function UsersTable() {
               className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
             />
           </div>
-          <div className="relative">
+          <div ref={exportMenuRef} className="relative">
             <button
               className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
@@ -438,7 +460,7 @@ export default function UsersTable() {
               !isError &&
               searchedUsers.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">
+                  <td className="w-12 p-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedOrderIds.includes(u._id)}

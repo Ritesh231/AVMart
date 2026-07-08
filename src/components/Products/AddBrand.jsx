@@ -3,6 +3,7 @@ import { useAddBrandMutation } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
+
 export default function AddBrand() {
   const [addBrand, { isLoading }] = useAddBrandMutation();
 
@@ -14,6 +15,7 @@ export default function AddBrand() {
   const [preview, setPreview] = useState(null);
   const navigate = useNavigate();
 
+
   /* -------------------- Handlers -------------------- */
 
   const handleChange = (e) => {
@@ -24,8 +26,44 @@ export default function AddBrand() {
     const file = e.target.files[0];
     if (!file) return;
 
-    setFormData({ ...formData, logo: file });
-    setPreview(URL.createObjectURL(file));
+    // Validate file type
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Only JPG, JPEG and PNG images are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Image size must not exceed 2 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    // Validate dimensions
+    const img = new Image();
+
+    img.onload = () => {
+      if (
+        img.width !== REQUIRED_WIDTH ||
+        img.height !== REQUIRED_HEIGHT
+      ) {
+        toast.error(
+          `Brand image dimensions must be ${REQUIRED_WIDTH} × ${REQUIRED_HEIGHT}px.`
+        );
+        e.target.value = "";
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        logo: file,
+      }));
+
+      setPreview(URL.createObjectURL(file));
+    };
+
+    img.src = URL.createObjectURL(file);
   };
 
   /* -------------------- Submit -------------------- */
@@ -48,18 +86,28 @@ export default function AddBrand() {
       toast.success("Brand Added Successfully ✅");
       navigate("/products/brands");
 
-      // Reset
       setFormData({
         name: "",
         logo: null,
       });
-      setPreview(null);
-
+      setPreview(null)
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to Add Brand ❌");
+      toast.error(
+        error?.data?.message || "Failed to Add Brand ❌"
+      );
     }
   };
+
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+
+  const ALLOWED_TYPES = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+  ];
+
+  const REQUIRED_WIDTH = 400;
+  const REQUIRED_HEIGHT = 400;
 
   /* -------------------- UI -------------------- */
 
@@ -89,10 +137,11 @@ export default function AddBrand() {
             />
           </div>
 
-          {/* Logo Upload */}
+
+          {/* Brand Logo */}
           <div>
             <label className="text-xs font-medium text-gray-600">
-              Brand Logo
+              Brand Logo <span className="text-red-500">*</span>
             </label>
 
             <label
@@ -115,10 +164,17 @@ export default function AddBrand() {
             <input
               type="file"
               id="brandLogo"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png"
               className="hidden"
               onChange={handleLogoChange}
             />
+
+            <div className="mt-2 text-xs text-gray-500 space-y-1">
+              <p><strong>Supported Formats:</strong> JPG, JPEG, PNG</p>
+              <p><strong>Required Size:</strong> 400 × 400 px</p>
+              <p><strong>Maximum File Size:</strong> 2 MB</p>
+            </div>
+
           </div>
 
           {/* Submit */}

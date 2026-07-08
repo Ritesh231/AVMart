@@ -11,6 +11,7 @@ export default function BrandsSection() {
   const [selectedBrandIds, setSelectedBrandIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const exportMenuRef = useRef(null);
 
   const filteredBrands = brands.filter((u) => {
     const search = searchTerm.toLowerCase();
@@ -30,6 +31,21 @@ export default function BrandsSection() {
     indexOfFirstOrder,
     indexOfLastOrder
   );
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Reset to page 1 when orders change
   useEffect(() => {
@@ -282,7 +298,7 @@ export default function BrandsSection() {
             </button>
 
             {isExportMenuOpen && (
-              <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-40 
+              <div ref={exportMenuRef} className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-40 
         bg-white rounded-xl shadow-lg border z-20">
                 <button onClick={exportToPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
                   PDF

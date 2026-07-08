@@ -21,6 +21,7 @@ export default function UsersTable() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [selectedSubcategoryIds, setSelectedSubcategoryIds] = useState([]);
   const selectAllRef = useRef(null);
+  const exportMenuRef = useRef(null);
 
   const filteredSubcategories = subcategory.filter((u) => {
     const search = searchTerm.toLowerCase();
@@ -50,6 +51,21 @@ export default function UsersTable() {
     indexOfFirstOrder,
     indexOfLastOrder
   );
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -287,7 +303,7 @@ export default function UsersTable() {
               className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
             />
           </div>
-          <div className="relative">
+          <div ref={exportMenuRef} className="relative">
             <button
               className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
@@ -326,7 +342,7 @@ export default function UsersTable() {
 
           <thead className="bg-[#F1F5F9] text-gray-600">
             <tr>
-              <th className="p-3">
+              <th className="w-12 p-3 text-center align-middle">
                 <input
                   ref={selectAllRef}
                   type="checkbox"
@@ -382,7 +398,7 @@ export default function UsersTable() {
             ) : (
               currentOrders.map((u) => (
                 <tr key={u._id} className="border-t hover:bg-gray-50 ">
-                  <td className="p-3">
+                  <td className="w-12 p-3 text-center align-middle">
                     <input
                       type="checkbox"
                       checked={selectedSubcategoryIds.includes(u._id)}

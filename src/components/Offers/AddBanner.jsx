@@ -46,6 +46,36 @@ const AddBanner = ({ closeModal, activeTab }) => {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
 
+  const BANNER_CONFIG = {
+    main: {
+      width: 1200,
+      height: 675,
+      label: "Main Banner",
+      sample: "/samples/main-banner.jpg",
+    },
+    category: {
+      width: 800,
+      height: 1000,
+      label: "Category Banner",
+      sample: "/samples/category-banner.jpg",
+    },
+    mostselling: {
+      width: 1000,
+      height: 1000,
+      label: "Top Selling Banner",
+      sample: "/samples/top-selling-banner.jpg",
+    },
+    subcategory: {
+      width: 1000,
+      height: 1000,
+      label: "Product Banner",
+      sample: "/samples/product-banner.jpg",
+    },
+  };
+
+  const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+  const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -58,10 +88,49 @@ const AddBanner = ({ closeModal, activeTab }) => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+
     if (!file) return;
 
-    setImage(file);
-    setPreview(URL.createObjectURL(file));
+    // File type validation
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Only JPG, JPEG and PNG images are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    // File size validation
+    if (file.size > MAX_SIZE) {
+      toast.error("Maximum allowed file size is 2 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    const img = new Image();
+
+    img.onload = () => {
+      const config = BANNER_CONFIG[activeTab];
+
+      if (
+        img.width !== config.width ||
+        img.height !== config.height
+      ) {
+        toast.error(
+          `${config.label} must be ${config.width} × ${config.height}px`
+        );
+
+        e.target.value = "";
+        return;
+      }
+
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+    };
+
+    img.onerror = () => {
+      toast.error("Invalid image.");
+    };
+
+    img.src = URL.createObjectURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -222,6 +291,22 @@ const AddBanner = ({ closeModal, activeTab }) => {
                 onChange={handleImageChange}
               />
             </label>
+          </div>
+
+          <div className="mt-2 text-xs text-gray-500 space-y-1">
+            <p>
+              <strong>Supported:</strong> JPG, JPEG, PNG
+            </p>
+
+            <p>
+              <strong>Maximum Size:</strong> 2 MB
+            </p>
+
+            <p>
+              <strong>Required Dimensions:</strong>{" "}
+              {BANNER_CONFIG[activeTab].width} ×{" "}
+              {BANNER_CONFIG[activeTab].height}px
+            </p>
           </div>
 
           {/* DISPLAY ORDER */}

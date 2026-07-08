@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { useUpdateBrandMutation } from "../../Redux/apis/productsApi";
 
 export default function EditBrandModal({ isOpen, onClose, brandData }) {
@@ -17,6 +17,44 @@ export default function EditBrandModal({ isOpen, onClose, brandData }) {
       setLogo(null);
     }
   }, [brandData]);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      if (img.width !== 400 || img.height !== 400) {
+        toast.error("Brand Logo must be exactly 400 × 400 px ❌");
+        URL.revokeObjectURL(objectUrl);
+
+        setLogo(null);
+        setPreview(brandData?.logo || null);
+        e.target.value = "";
+        return;
+      }
+
+      setLogo(file);
+      setPreview(objectUrl);
+      // Don't revoke here because preview uses this URL.
+    };
+
+    img.onerror = () => {
+      toast.error("Invalid image file ❌");
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    img.src = objectUrl;
+  };
+
+  const handleClose = () => {
+    setName("");
+    setLogo(null);
+    setPreview(null);
+    onClose();
+  };
 
   const handleSubmit = async () => {
     try {
@@ -54,17 +92,24 @@ export default function EditBrandModal({ isOpen, onClose, brandData }) {
         <h2 className="text-lg font-bold mb-4">Edit Brand</h2>
 
         <div className="space-y-4">
+
           {/* Brand Name */}
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Brand Name"
-            className="w-full border p-2 rounded-lg"
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Brand Name
+            </label>
+
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
 
           {/* Logo Upload */}
           <div className="border-dashed border-2 rounded-lg p-4 text-center relative">
+
             {preview ? (
               <img
                 src={preview}
@@ -77,11 +122,8 @@ export default function EditBrandModal({ isOpen, onClose, brandData }) {
 
             <input
               type="file"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                setLogo(file);
-                setPreview(URL.createObjectURL(file));
-              }}
+              accept="image/*"
+              onChange={handleImageChange}
               className="absolute inset-0 opacity-0 cursor-pointer"
             />
           </div>
@@ -89,7 +131,7 @@ export default function EditBrandModal({ isOpen, onClose, brandData }) {
 
         <div className="flex justify-end gap-3 mt-6">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 bg-gray-200 rounded-lg"
           >
             Cancel
@@ -102,6 +144,7 @@ export default function EditBrandModal({ isOpen, onClose, brandData }) {
           >
             {isLoading ? "Updating..." : "Update"}
           </button>
+
         </div>
       </div>
     </div>

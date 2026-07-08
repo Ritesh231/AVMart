@@ -87,9 +87,9 @@ export default function AddProduct() {
   useEffect(() => {
     if (selectedParty) {
       setPartyUpdateData({
-        OpeningBalance: selectedParty.OpeningBalance || 0,
-        CreditLimit: selectedParty.CreditLimit || 0,
-        PaymentTerms: selectedParty.PaymentTerms || 0,
+        OpeningBalance: selectedParty.OpeningBalance ?? "",
+        CreditLimit: selectedParty.CreditLimit ?? "",
+        PaymentTerms: String(selectedParty.PaymentTerms ?? ""),
       });
     }
   }, [selectedParty]);
@@ -109,11 +109,24 @@ export default function AddProduct() {
     PaymentTerms: "",
   });
 
+  const [partyErrors, setPartyErrors] = useState({
+    OpeningBalance: "",
+    CreditLimit: "",
+    PaymentTerms: "",
+  });
+
   const handlePartyUpdateChange = (e) => {
     const { name, value } = e.target;
+
     setPartyUpdateData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+
+    // Remove error while typing
+    setPartyErrors((prev) => ({
+      ...prev,
+      [name]: "",
     }));
   };
 
@@ -121,6 +134,37 @@ export default function AddProduct() {
     if (!selectedParty?._id) {
       return toast.error("Please select a party first");
     }
+
+    const errors = {};
+
+    if (
+      partyUpdateData.OpeningBalance === "" ||
+      partyUpdateData.OpeningBalance === null
+    ) {
+      errors.OpeningBalance = "Opening Balance is required";
+    }
+
+    if (
+      partyUpdateData.CreditLimit === "" ||
+      partyUpdateData.CreditLimit === null
+    ) {
+      errors.CreditLimit = "Credit Limit is required";
+    }
+
+    if (!partyUpdateData.PaymentTerms.trim()) {
+      errors.PaymentTerms = "Payment Terms is required";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setPartyErrors(errors);
+      return;
+    }
+
+    setPartyErrors({
+      OpeningBalance: "",
+      CreditLimit: "",
+      PaymentTerms: "",
+    });
 
     try {
       await updateParty({
@@ -320,7 +364,6 @@ export default function AddProduct() {
       updated[index].mrpError = "";
     }
 
-    // Revalidate MRP live when OutRate changes
     // MRP revalidation block
     if (name === "originalPrice" || name === "gstRate" || name === "marginPercentage") {
       const mrp = parseFloat(updated[index].MrpPrice) || 0;
@@ -352,15 +395,40 @@ export default function AddProduct() {
     setVariants(updated);
   };
 
-  const handleVariantImageChange = (index, e) => {
+  const handleVariantImageChange = async (index, e) => {
     const files = Array.from(e.target.files);
+
+    if (!files.length) return;
+
+    const previews = [];
+
+    for (const file of files) {
+      const validation = await validateImage(file);
+
+      if (validation !== true) {
+        toast.error(`Variant ${index + 1}: ${validation}`);
+
+        setVariantImageErrors((prev) => ({
+          ...prev,
+          [index]: validation,
+        }));
+
+        e.target.value = "";
+        return;
+      }
+
+      previews.push(URL.createObjectURL(file));
+    }
+
+    setVariantImageErrors((prev) => ({
+      ...prev,
+      [index]: "",
+    }));
+
     const updated = [...variants];
+
     updated[index].imageFiles = files;
-
-    updated[index].previewImages = files.map((file) =>
-      URL.createObjectURL(file)
-    );
-
+    updated[index].previewImages = previews;
     updated[index].imageUrls = [];
 
     setVariants(updated);
@@ -397,6 +465,60 @@ export default function AddProduct() {
   const removeVariant = (index) => {
     setVariants(variants.filter((_, i) => i !== index));
   };
+
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+  const PRODUCT_IMAGE_CONFIG = {
+    width: 800,
+    height: 800,
+    formats: ["image/jpeg", "image/jpg", "image/png"],
+  };
+
+  const validateImage = (file) => {
+    return new Promise((resolve) => {
+      if (!file) {
+        resolve("Image is required");
+        return;
+      }
+
+      // Format
+      if (!PRODUCT_IMAGE_CONFIG.formats.includes(file.type)) {
+        resolve("Only JPG, JPEG and PNG images are allowed.");
+        return;
+      }
+
+      // Size
+      if (file.size > MAX_FILE_SIZE) {
+        resolve("Image size must be less than 2 MB.");
+        return;
+      }
+
+      const img = new Image();
+
+      img.onload = () => {
+        if (
+          img.width !== PRODUCT_IMAGE_CONFIG.width ||
+          img.height !== PRODUCT_IMAGE_CONFIG.height
+        ) {
+          resolve(
+            `Image must be ${PRODUCT_IMAGE_CONFIG.width} × ${PRODUCT_IMAGE_CONFIG.height}px`
+          );
+        } else {
+          resolve(true);
+        }
+      };
+
+      img.onerror = () => {
+        resolve("Invalid image.");
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const [primaryImageError, setPrimaryImageError] = useState("");
+
+  const [variantImageErrors, setVariantImageErrors] = useState({});
 
   /* -------------------- Submit -------------------- */
   const onSubmit = async (data) => {
@@ -599,6 +721,7 @@ export default function AddProduct() {
                       type="number"
                       value={partyUpdateData.OpeningBalance}
                       onChange={handlePartyUpdateChange}
+                      error={partyErrors.OpeningBalance}
                     />
 
                     <InputField
@@ -607,6 +730,7 @@ export default function AddProduct() {
                       type="number"
                       value={partyUpdateData.CreditLimit}
                       onChange={handlePartyUpdateChange}
+                      error={partyErrors.CreditLimit}
                     />
 
                     <InputField
@@ -615,6 +739,7 @@ export default function AddProduct() {
                       placeholder="e.g. 10 days"
                       value={partyUpdateData.PaymentTerms}
                       onChange={handlePartyUpdateChange}
+                      error={partyErrors.PaymentTerms}
                     />
                   </div>
 
@@ -634,14 +759,77 @@ export default function AddProduct() {
 
           {isNewParty && (
             <div className="grid grid-cols-2 gap-3">
-              <InputField label="Party Name" {...register("newParty.name")} />
-              <InputField label="Contact Person" {...register("newParty.contactPerson")} />
-              <InputField label="Phone" {...register("newParty.phone")} />
-              <InputField label="GST" {...register("newParty.GSTin")} />
-              <InputField label="Address" {...register("newParty.address")} />
-              <InputField label="PAN" {...register("newParty.PAN")} />
-              <InputField label="State + PinCode" {...register("newParty.statePinCode")} />
-              <InputField label="Place of Supply" {...register("newParty.placeOfSupply")} />
+              <InputField
+                label="Party Name"
+                error={errors.newParty?.name?.message}
+                {...register("newParty.name", {
+                  required: "Party Name is required",
+                })}
+              />
+
+              <InputField
+                label="Contact Person"
+                error={errors.newParty?.contactPerson?.message}
+                {...register("newParty.contactPerson", {
+                  required: "Contact Person is required",
+                })}
+              />
+
+              <InputField
+                label="Phone"
+                error={errors.newParty?.phone?.message}
+                {...register("newParty.phone", {
+                  required: "Phone Number is required",
+                  pattern: {
+                    value: /^[6-9]\d{9}$/,
+                    message: "Enter a valid 10-digit phone number",
+                  },
+                })}
+              />
+
+              <InputField
+                label="GST"
+                error={errors.newParty?.GSTin?.message}
+                {...register("newParty.GSTin", {
+                  required: "GST is required",
+                })}
+              />
+
+              <InputField
+                label="Address"
+                error={errors.newParty?.address?.message}
+                {...register("newParty.address", {
+                  required: "Address is required",
+                })}
+              />
+
+              <InputField
+                label="PAN"
+                error={errors.newParty?.PAN?.message}
+                {...register("newParty.PAN", {
+                  required: "PAN is required",
+                  pattern: {
+                    value: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i,
+                    message: "Enter a valid PAN number",
+                  },
+                })}
+              />
+
+              <InputField
+                label="State + PinCode"
+                error={errors.newParty?.statePinCode?.message}
+                {...register("newParty.statePinCode", {
+                  required: "State & Pin Code is required",
+                })}
+              />
+
+              <InputField
+                label="Place of Supply"
+                error={errors.newParty?.placeOfSupply?.message}
+                {...register("newParty.placeOfSupply", {
+                  required: "Place of Supply is required",
+                })}
+              />
             </div>
           )}
 
@@ -751,20 +939,55 @@ export default function AddProduct() {
                       }
                       return true;
                     },
-                    onChange: (e) => {
+                    onChange: async (e) => {
                       const file = e.target.files[0];
-                      if (file) {
-                        setPreview(URL.createObjectURL(file));
+
+                      if (!file) return;
+
+                      const validation = await validateImage(file);
+
+                      if (validation !== true) {
+                        setPrimaryImageError(validation);
+                        setPreview(null);
+                        e.target.value = "";
+
+                        setValue("primaryImages", null);
+
+                        toast.error(validation);
+
+                        return;
                       }
-                    },
+
+                      setPrimaryImageError("");
+
+                      setPreview(URL.createObjectURL(file));
+                    }
                   })}
                 />
 
-                {errors.primaryImages && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Formats: JPG, JPEG, PNG
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  Required Size: 800 × 800 px
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  Maximum File Size: 2 MB
+                </p>
+
+                {primaryImageError && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {primaryImageError}
+                  </p>
+                )}
+
+                {/* {errors.primaryImages && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.primaryImages.message}
                   </p>
-                )}
+                )} */}
 
                 <div className="flex gap-2 mt-2">
                   <button
@@ -1060,6 +1283,24 @@ export default function AddProduct() {
                     </label>
 
                   </div>
+
+                  <p className="text-xs text-gray-500 mt-2">
+                    Formats: JPG, JPEG, PNG
+                  </p>
+
+                  <p className="text-xs text-gray-500">
+                    Required Size: 800 × 800 px
+                  </p>
+
+                  <p className="text-xs text-gray-500">
+                    Maximum File Size: 2 MB
+                  </p>
+
+                  {variantImageErrors[index] && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {variantImageErrors[index]}
+                    </p>
+                  )}
 
                   <div className="flex gap-2 mt-2 w-96">
                     <button

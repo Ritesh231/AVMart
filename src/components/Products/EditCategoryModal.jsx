@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { useEditCategoryMutation } from "../../Redux/apis/productsApi";
 import { Upload } from "lucide-react";
 
@@ -34,17 +34,34 @@ export const EditCategoryModal = ({ isOpen, onClose, productData }) => {
     });
   };
 
-  // ✅ Handle Image Upload
+
+  // ✅ Handle Image Upload with 800x800 validation
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (!file) return;
+
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+
+    img.onload = () => {
+      if (img.width !== 512 || img.height !== 512) {
+        toast.error("Category Image must be exactly 512 × 512 px ❌");
+        e.target.value = "";
+        return;
+      }
+
       setImage(file);
       setPreview(URL.createObjectURL(file));
-    }
+    };
   };
 
   // ✅ Submit with FormData
   const handleSubmit = async () => {
+    if (!image && !preview) {
+      toast.error("Category Image is required ❌");
+      return;
+    }
+
     try {
       const data = new FormData();
 
@@ -79,6 +96,9 @@ export const EditCategoryModal = ({ isOpen, onClose, productData }) => {
 
           {/* Image Upload Box */}
           <label className="w-full h-32 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer relative overflow-hidden">
+            <span className="absolute top-2 left-2 text-xs text-red-500 font-medium bg-white px-2 py-1 rounded shadow">
+              800 × 800 px (Mandatory)
+            </span>
 
             {preview ? (
               <img
