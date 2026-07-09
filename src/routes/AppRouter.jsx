@@ -33,6 +33,7 @@ const ProductCategories = lazy(() =>
 const Subcategories = lazy(() =>
   import("../components/Products/Subcategories")
 );
+const ProductDetails = lazy(() => import("../components/Products/ProductDetails"));
 
 const Brands = lazy(() => import("../components/Products/Brands"));
 const AddProduct = lazy(() => import("../components/Products/AddProduct"));
@@ -82,6 +83,8 @@ const RevenueReport = lazy(() => import("../components/Reports/RevenueReports"))
 const TotalSales = lazy(() => import("../components/Reports/TotalSales"));
 const AllReports = lazy(() => import("../components/Reports/AllReports"));
 
+/*Notifications*/
+const Notification = lazy(() => import("../pages/Notification"));
 
 /*Protected Route*/
 import ProtectedRoute from "../routes/ProtectRoute";
@@ -151,6 +154,7 @@ export default function AppRouter() {
             <Route path="reassign" element={<OrderReassign />} />
           </Route>
           <Route path="/order/details/:id" element={<OrderDetails />} />
+          <Route path="/product-details/:id" element={<ProductDetails />} />
 
           {/* Products */}
           <Route path="/products" element={<Products />}>
@@ -175,7 +179,6 @@ export default function AppRouter() {
             <Route path="Paymentrequest" element={<DeliveryApproved />} />
             <Route path="UpdateDeliveryCharges" element={<UpdateDeliveryCharges />} />
             <Route path="PaymentVerification" element={<PaymentVerification />} />
-
           </Route>
 
           <Route path="/delivery/DeliveryBoyDetail/:id" element={<DeliveryBoyDetail />} />
@@ -209,6 +212,8 @@ export default function AppRouter() {
             <Route path="TotalSales" element={<TotalSales />} />
             <Route path="AllReports" element={<AllReports />} />
           </Route>
+
+          <Route path="/notification" element={<Notification />} />
 
         </Route>
         <Route path="*" element={<div>404 - Page Not Found</div>} />

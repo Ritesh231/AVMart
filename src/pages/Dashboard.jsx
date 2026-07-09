@@ -155,7 +155,7 @@ const Dashboard = () => {
                                 <div className="flex justify-between items-start relative z-10">
                                     <h3 className="text-xl font-medium opacity-90">Total Revenue</h3>
                                     <span className="text-xs font-semibold bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
-                                        ` {product?.revenueChange} from last Month`
+                                        {product?.revenueChange} from last Month
                                     </span>
                                 </div>
                                 <div className="relative z-10">

@@ -1,9 +1,8 @@
 import React from "react";
-import { CreditCard, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Eye } from "lucide-react";
 import { FaWallet } from "react-icons/fa6";
 
-const CashOnDeliveryCard = ({ transaction }) => {
-
+const CashOnDeliveryCard = ({ transaction, onView }) => {
   const {
     customer,
     date,
@@ -16,7 +15,6 @@ const CashOnDeliveryCard = ({ transaction }) => {
 
   return (
     <div className="bg-white border-2 border-brand-soft rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow w-full max-w-md">
-
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex gap-3">
@@ -32,10 +30,9 @@ const CashOnDeliveryCard = ({ transaction }) => {
             </p>
           </div>
         </div>
-
         <div className="flex items-center gap-1 bg-brand-green text-green-600 px-3 py-2 rounded-lg border border-green-200">
           <CheckCircle2 size={18} />
-          <span className="text-xs  capitalize ">
+          <span className="text-xs capitalize">
             {status}
           </span>
         </div>
@@ -60,11 +57,21 @@ const CashOnDeliveryCard = ({ transaction }) => {
             </div>
           )}
 
-        <div className="bg-brand-blue p-2 rounded-lg">
-          <p className="text-[10px] font-bold uppercase">
-            Amount
-          </p>
-          <p className="font-extrabold">₹{amount.toFixed(2)}</p>
+        {/* Amount + View button side by side */}
+        <div className="bg-brand-blue p-2 rounded-lg flex items-center justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-bold uppercase">
+              Amount
+            </p>
+            <p className="font-extrabold">₹{amount?.toFixed(2)}</p>
+          </div>
+
+          <button
+            onClick={onView}
+            className="flex items-center gap-1 bg-[#1E264F] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-opacity-90 transition-all shrink-0"
+          >
+            <Eye size={14} /> View
+          </button>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, DollarSign, WalletMinimal } from 'lucide-react';
+import { ChevronDown, ChevronUp, DollarSign, WalletMinimal, Eye } from 'lucide-react';
 
-const PartialPaymentCard = ({ transaction }) => {
+const PartialPaymentCard = ({ transaction, onView }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     if (!transaction || !transaction.breakdown) {
@@ -10,12 +10,16 @@ const PartialPaymentCard = ({ transaction }) => {
 
     const { advance, remaining } = transaction.breakdown || {};
 
+    const handleView = (e) => {
+        e.stopPropagation(); // don't trigger the collapse/expand toggle
+        onView?.();
+    };
 
     return (
         <div className="bg-white border-2 border-brand-soft rounded-3xl p-4 mb-4 shadow-sm transition-all overflow-hidden">
             {/* COLLAPSIBLE HEADER */}
             <div
-                className="flex items-center justify-between cursor-pointer"
+                className="flex items-center justify-between cursor-pointer flex-wrap gap-3"
                 onClick={() => setIsOpen(!isOpen)}
             >
                 <div className="flex items-center gap-4">
@@ -34,13 +38,20 @@ const PartialPaymentCard = ({ transaction }) => {
                     Delivery Boy - {transaction.deliveryBoy?.name || "Not Assigned"}
                 </div>
 
-
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                     <div className="text-right">
                         <p className="text-brand-gray text-[10px] font-bold uppercase">Total Amount</p>
-                        <p className="text-brand-teal font-extrabold text-xl">{transaction.currency}{transaction.totalAmount.toLocaleString()}</p>
+                        <p className="text-brand-teal font-extrabold text-xl">{transaction.currency}{transaction.totalAmount?.toLocaleString()}</p>
                     </div>
-                    <div className="text-brand-navy ml-2">
+
+                    <button
+                        onClick={handleView}
+                        className="flex items-center gap-1 bg-[#1E264F] text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-opacity-90 transition-all shrink-0"
+                    >
+                        <Eye size={14} /> View
+                    </button>
+
+                    <div className="text-brand-navy ml-1">
                         {isOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
                     </div>
                 </div>

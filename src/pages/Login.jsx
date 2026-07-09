@@ -8,7 +8,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const Login = () => {
   const [email, setEmail] = useState("onkarmadane79@gmail.com");
-  const [password, setPassword] = useState("Onkar123");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 

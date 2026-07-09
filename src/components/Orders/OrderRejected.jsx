@@ -37,6 +37,7 @@ export default function UsersTable() {
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const exportMenuRef = useRef(null);
 
   // ✅ Filter and search on current page data (API already paginated)
   const filteredUsers =
@@ -58,6 +59,21 @@ export default function UsersTable() {
 
   // ✅ Use searched users directly (already from current API page)
   const currentOrders = searchedUsers;
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Reset to page 1 when filters change and refetch
   useEffect(() => {
@@ -352,7 +368,7 @@ export default function UsersTable() {
               className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-navy"
             />
           </div>
-          <div className="relative">
+          <div ref={exportMenuRef} className="relative">
             <button
               className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
               onClick={() => setIsExportMenuOpen((prev) => !prev)}

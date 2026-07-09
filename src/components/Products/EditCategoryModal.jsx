@@ -142,6 +142,7 @@ export const EditCategoryModal = ({ isOpen, onClose, productData }) => {
 
           {/* <input
             type="number"
+            min="0"
             name="GstRate"
             placeholder="GST Rate"
             value={formData.GstRate}

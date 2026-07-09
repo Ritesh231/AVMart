@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import { ChevronDown, Download, Search, SlidersHorizontal } from 'lucide-react'
-import { FaSearch, FaEdit, FaTrash } from "react-icons/fa";
+import { FaSearch, FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import ProductCategoryCards from "../Products/ProductCategorytabs"
 import { useGetallproductsQuery, useDeleteProductMutation, useUpdateStatusMutation } from "../../Redux/apis/productsApi"
 import EditProductModal from "../../components/Products/UpdateProductModel";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const products = Array.from({ length: 20 });
 
@@ -107,7 +108,7 @@ const ProductGrid = () => {
       await deleteproduct(id).unwrap();
       toast.success("Product Deleted Successfully");
     } catch (err) {
-      toast.error("Error to delete Product", err);
+      toast.error(err?.data?.message || "Failed to delete brand");
     }
   }
 
@@ -182,9 +183,10 @@ const ProductGrid = () => {
       return [];
     }
 
-    return sourceRows.map((item) => {
+    return sourceRows.map((item, index) => {
       const firstVariant = item.variants?.[0] || {};
       return {
+        srNo: index + 1,
         "Product ID": item._id?.slice(-5) || "-",
         "Product Name": item.productName || "-",
         Slug: item.slug || "-",
@@ -254,7 +256,14 @@ const ProductGrid = () => {
 
     return `
         <html>
-          <head><meta charset="utf-8" /></head>
+          <head><meta charset="utf-8" />
+          <style>
+@page{
+    size: A4 landscape;
+    margin:10mm;
+}
+</style>
+</head>
           <body>
             <h2>${toSafeHtml(title)}</h2>
             <table border="1" cellspacing="0" cellpadding="6">
@@ -492,27 +501,33 @@ const ProductGrid = () => {
                         }`}
                     />
                   </button>
-
                 </div>
 
                 {/* Buttons */}
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-3 mt-3">
                   <button
-                    className="flex-1 flex items-center justify-center gap-1 p-1.5 rounded-md bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white text-xs font-medium"
+                    className="flex-1 h-9 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white text-sm font-medium"
                     onClick={() => {
                       setSelectedProduct(product);
                       setIsModalOpen(true);
                     }}
                   >
-                    <FaEdit size={12} />
+                    <FaEdit size={14} />
                     Edit
                   </button>
 
                   <button
-                    className="flex items-center justify-center p-1.5 rounded-md bg-red-50 text-red-600"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                    onClick={() => navigate(`/product-details/${product._id}`)}
+                  >
+                    <FaEye size={15} />
+                  </button>
+
+                  <button
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition"
                     onClick={() => handleDelete(product._id)}
                   >
-                    <FaTrash size={12} />
+                    <FaTrash size={14} />
                   </button>
                 </div>
               </div>

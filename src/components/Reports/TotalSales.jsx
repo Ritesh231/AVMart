@@ -7,7 +7,6 @@ import { IoCartOutline, IoCashOutline, IoPieChartOutline } from "react-icons/io5
 import { Download, ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
 
-
 const ITEMS_PER_PAGE = 10;
 
 const TableSkeleton = ({ rows = 5, columns = 5 }) => (
@@ -196,7 +195,9 @@ function SalesReport() {
         }
         return [...filtered].reverse().map((order, index) => ({
             "S.No": index + 1,
-            "Order ID": order.orderId || "-",
+            "Order ID": order.orderId
+                ? String(order.orderId).slice(-5)
+                : "-",
             Date: order.date ? new Date(order.date).toLocaleString("en-IN") : "-",
             Items: order.totalItems || 0,
             Amount: `₹${Number(order.totalAmount || 0).toFixed(2)}`,
@@ -419,7 +420,7 @@ function SalesReport() {
                             <Download size={18} /> Export <ChevronDown size={16} />
                         </button>
                         {isExportMenuOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-0 overflow-hidden">
                                 <button onClick={exportToExcel} className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">Export Excel</button>
                                 <button onClick={exportToPdf} className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">Export PDF</button>
                                 <button onClick={exportToDoc} className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">Export DOC</button>

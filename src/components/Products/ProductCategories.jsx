@@ -68,6 +68,7 @@ export default function ProductCategories() {
           />
         ))}
       </div>
+
       {categories.length > limit && (
         <div className="flex justify-between items-center mt-6 px-4 py-4 bg-white border-t rounded-xl">
 

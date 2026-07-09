@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FiSearch, FiDownload, FiEdit, FiTrash2 } from "react-icons/fi";
 import { useGetallBrandsQuery, useDeleteBrandMutation } from "../../Redux/apis/productsApi";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import EditBrandModal from "./EditBrandModal";
 
 export default function BrandsSection() {
@@ -106,7 +106,8 @@ export default function BrandsSection() {
       return [];
     }
 
-    return sourceRows.map((brand) => ({
+    return sourceRows.map((brand, index) => ({
+      srNo: index + 1,
       "Brand ID": brand._id?.slice(-5) || "-",
       "Brand Name": brand.name || "-"
     }));
@@ -246,10 +247,10 @@ export default function BrandsSection() {
     if (!confirmDelete) return;
     try {
       await deleteBrand(id).unwrap();
-      toast.success("Category Deleted Successfully");
+      toast.success("Brand Deleted Successfully");
       refetch();
     } catch (err) {
-      toast.error("Error to delete Category", err);
+      toast.error(err?.data?.message || "Failed to delete brand");
     }
   }
 

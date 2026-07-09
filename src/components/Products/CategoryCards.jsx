@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { useEditCategoryMutation, useDeleteCategoryMutation } from "../../Redux/apis/productsApi";
 import { EditCategoryModal } from "../../components/Products/EditCategoryModal"
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { IdCard } from "lucide-react";
 
 export default function CategoryCard({ category }) {
@@ -57,7 +57,7 @@ export default function CategoryCard({ category }) {
       await deleteCategory(id).unwrap();
       toast.success("Category Deleted Successfully");
     } catch (err) {
-      toast.error("Error to delete Category", err);
+      toast.error(err?.data?.message || "Failed to delete category");
     }
   }
 

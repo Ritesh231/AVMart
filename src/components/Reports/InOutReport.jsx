@@ -263,7 +263,7 @@ function InrateOutrateReport() {
                             <Download size={18} /> Export <ChevronDown size={16} />
                         </button>
                         {isExportMenuOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-0 overflow-hidden">
                                 <button onClick={exportToExcel} className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">Export Excel</button>
                                 <button onClick={exportToPdf} className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">Export PDF</button>
                                 <button onClick={exportToDoc} className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">Export DOC</button>

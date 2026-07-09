@@ -48,8 +48,14 @@ export const Productsapi = baseApi.injectEndpoints({
           },
         };
       },
-      // Invalidates cache if needed
       invalidatesTags: ['Products'],
+    }),
+
+    Productdetails: builder.query({
+      query: (id) => ({
+        url: `/api/v1/admin/products/${id}`,
+      }),
+      providesTags: ["Products"],
     }),
 
 
@@ -186,4 +192,4 @@ export const { useGetallproductsQuery, useGetallcategoriesQuery,
   useAddCategoryMutation, useAddSubcategoryMutation, useAddBrandMutation, useEditCategoryMutation,
   useDeleteCategoryMutation, useEditSubcategoryMutation, useDeleteSubcategoryMutation,
   useUpdateProductMutation, useDeleteProductMutation, useUpdateBrandMutation, useDeleteBrandMutation, useUpdateStatusMutation,
-  useSearchPartyQuery, useUpdatePartyMutation } = Productsapi;
+  useSearchPartyQuery, useUpdatePartyMutation, useProductdetailsQuery } = Productsapi;

@@ -1,4 +1,3 @@
-import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import StatCard from '../components/StatCard'
 import OnlinePaymentCard from '../components/payment/OnlinePaymentCard';
@@ -7,6 +6,8 @@ import PartialPaymentCard from '../components/payment/PartialPaymentCard';
 import { useGetTransactionsOverviewQuery } from "../Redux/apis/paymentApi";
 import { asBlob } from "html-docx-js-typescript";
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, WidthType } from "docx";
+import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown, CircleDashed, CreditCard, Download, Eye, FileText, HandCoins, Search, SlidersHorizontal, Upload, Wallet, WalletMinimal } from 'lucide-react'
+import TransactionDetailModal from '../components/payment/TransactionDetailModal';
 
 const Payments = () => {
     const [activeTab, setActiveTab] = useState('Online');
@@ -20,6 +21,7 @@ const Payments = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(20);
     const exportMenuRef = useRef(null);
+    const [viewOrderId, setViewOrderId] = useState(null);
 
     const tabMapping = {
         Online: "online",
@@ -162,13 +164,14 @@ const Payments = () => {
         if (!sourceRows.length) {
             return [];
         }
-        return sourceRows.map((txn) => ({
+        return sourceRows.map((txn, index) => ({
+            srNo: index + 1,
             Tab: activeTab,
             Customer: txn.customer || "-",
             "Order ID": txn.shortOrderId || "-",
             "Transaction ID": txn.txnId || txn.paymentDetails?.[0]?.id || "-",
             "Payment Method": txn.method || "-",
-            Amount: txn.amount ?? "-",
+            "Amount": txn.amount ?? "-",
             "Paid Online": txn.paidOnline ?? "-",
             "Paid Cash": txn.paidCash ?? "-",
             Remaining: txn.remaining ?? "-",
@@ -177,6 +180,7 @@ const Payments = () => {
             "Delivery Boy": txn.deliveryBoy?.name || "Not Assigned"
         }));
     };
+
 
     const downloadBlob = (content, fileName, type) => {
         const blob = new Blob([content], { type });
@@ -542,6 +546,7 @@ ${tableRows}
     console.log("Mapped tab value:", tabMapping[activeTab]);
     console.log("API params:", { tab: tabMapping[activeTab], page: currentPage, limit: itemsPerPage });
 
+
     if (isError) return <p>Error loading payments</p>;
 
     return (
@@ -738,6 +743,7 @@ ${tableRows}
                                         checked={selectedTransactionIds.includes(txn.id)}
                                         onChange={() => toggleTransactionSelection(txn.id)}
                                     />
+
                                     <OnlinePaymentCard
                                         customerName={txn.customer}
                                         dateTime={txn.dateTime}
@@ -746,6 +752,7 @@ ${tableRows}
                                         paymentMethod={txn.method}
                                         amount={txn.amount}
                                         status={txn.status}
+                                        onView={() => setViewOrderId(txn.id)}
                                     />
                                 </div>
                             ))
@@ -768,6 +775,7 @@ ${tableRows}
                                         checked={selectedTransactionIds.includes(txn.id)}
                                         onChange={() => toggleTransactionSelection(txn.id)}
                                     />
+
                                     <CashOnDeliveryCard
                                         transaction={{
                                             id: txn.id,
@@ -779,6 +787,7 @@ ${tableRows}
                                             deliveryBoy: txn.deliveryBoy?.name || "Not Assigned",
                                             amount: txn.amount,
                                         }}
+                                        onView={() => setViewOrderId(txn.id)}
                                     />
                                 </div>
                             ))
@@ -833,6 +842,7 @@ ${tableRows}
                                         />
                                         <PartialPaymentCard
                                             transaction={formattedTransaction}
+                                            onView={() => setViewOrderId(txn.id)}
                                         />
                                     </div>
                                 );
@@ -877,6 +887,13 @@ ${tableRows}
                         </button>
                     </div>
                 </div>
+            )}
+
+            {viewOrderId && (
+                <TransactionDetailModal
+                    orderId={viewOrderId}
+                    onClose={() => setViewOrderId(null)}
+                />
             )}
         </div>
     )

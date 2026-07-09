@@ -675,7 +675,7 @@ export default function UsersTable() {
             <div className="bg-white w-[400px] max-h-[500px] overflow-y-auto rounded-xl p-5">
 
               <h2 className="text-lg font-semibold mb-2">
-                Assign Delivery Boy
+                Assign Delivery Boyz-50
               </h2>
               <div className={`text-xs mb-4 ${isConnected ? "text-green-500" : "text-red-500"}`}>
                 Socket: {isConnected ? "Connected" : "Disconnected"}

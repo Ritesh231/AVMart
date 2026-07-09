@@ -61,7 +61,6 @@ export default function UsersTable() {
 
       return queryDate >= start && queryDate <= end;
     }
-
     return true;
   });
 
@@ -166,7 +165,8 @@ export default function UsersTable() {
     if (!sourceRows.length) {
       return [];
     }
-    return sourceRows.map((q) => ({
+    return sourceRows.map((q, index) => ({
+      srNo: index + 1,
       Name: q.name || "-",
       Email: q.email || "-",
       Contact: q.contactNo || "-",

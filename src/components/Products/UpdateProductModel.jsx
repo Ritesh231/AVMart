@@ -593,6 +593,7 @@ export default function EditProductModal({
                 <div className="relative">
                   <input
                     type="number"
+                    min="0"
                     value={variant.quantityValue || ""}
                     onChange={(e) => handleVariantChange(index, "quantityValue", e.target.value)}
                     placeholder=" "
@@ -608,6 +609,7 @@ export default function EditProductModal({
                 <div className="relative">
                   <input
                     type="number"
+                    min="0"
                     value={variant.minQuantity || ""}
                     onChange={(e) => handleVariantChange(index, "minQuantity", e.target.value)}
                     placeholder=" "
@@ -640,6 +642,7 @@ export default function EditProductModal({
                 <div className="relative">
                   <input
                     type="number"
+                    min="0"
                     value={variant.originalPrice || ""}
                     onChange={(e) => handleVariantChange(index, "originalPrice", e.target.value)}
                     placeholder=" "
@@ -756,6 +759,7 @@ export default function EditProductModal({
                 <div className="relative">
                   <input
                     type="number"
+                    min="0"
                     value={variant.marginPercentage || ""}
                     onChange={(e) => handleVariantChange(index, "marginPercentage", e.target.value)}
                     placeholder=" "
@@ -773,6 +777,7 @@ export default function EditProductModal({
                 <div className="relative">
                   <input
                     type="number"
+                    min="0"
                     value={variant.InRate || ""}
                     onChange={(e) => handleVariantChange(index, "InRate", e.target.value)}
                     placeholder=" "
@@ -801,6 +806,7 @@ export default function EditProductModal({
                 <div className="relative">
                   <input
                     type="number"
+
                     value={variant.MrpPrice || ""}
                     onChange={(e) => handleVariantChange(index, "MrpPrice", e.target.value)}
                     placeholder=" "
@@ -821,6 +827,7 @@ export default function EditProductModal({
                 <div className="relative">
                   <input
                     type="number"
+                    min="0"
                     value={variant.stock || ""}
                     onChange={(e) => handleVariantChange(index, "stock", e.target.value)}
                     placeholder=" "

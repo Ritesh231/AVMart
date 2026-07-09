@@ -50,6 +50,7 @@ const UpdateDeliveryCharges = () => {
 
                         <input
                             type="number"
+                            min="0"
                             placeholder="Enter amount"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}

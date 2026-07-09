@@ -316,6 +316,7 @@ const AddBanner = ({ closeModal, activeTab }) => {
           </label>
           <input
             type="number"
+            min="0"
             name="displayOrder"
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-cyan-500 outline-none"
             value={formData.displayOrder}

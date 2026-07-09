@@ -3,9 +3,11 @@ import { ArrowDown, BadgeIndianRupee, Blocks, ChartColumnIncreasing, ChevronDown
 import { IoFilter } from "react-icons/io5";
 import { BsWallet2 } from "react-icons/bs";
 import { MdDelete } from "react-icons/md";
+import ExcelJS from "exceljs";
 import { useGetallSubcategoriesQuery, useDeleteSubcategoryMutation } from "../../Redux/apis/productsApi"
 import EditSubcategoryModal from "../../components/Products/EditSubcategoryModal";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function UsersTable() {
   const { data, isLoading, isError } = useGetallSubcategoriesQuery();
@@ -19,6 +21,7 @@ export default function UsersTable() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [selectedSubcategoryIds, setSelectedSubcategoryIds] = useState([]);
   const selectAllRef = useRef(null);
   const exportMenuRef = useRef(null);
@@ -105,29 +108,18 @@ export default function UsersTable() {
     if (!confirmDelete) return;
     try {
       await deleteSubcategory(id).unwrap();
-      toast.success("Category Deleted Successfully");
+      toast.success("Subcategory Deleted Successfully");
     } catch (err) {
-      toast.error("Error to delete Category", err);
+      toast.error(err?.data?.message || "Failed to delete subcategory");
     }
   }
 
-  const getRowsForExport = () => {
+  // Raw rows (not stringified) used by every export type
+  const getExportRows = () => {
     const selectedRows = filteredSubcategories.filter((item) =>
       selectedSubcategoryIds.includes(item._id)
     );
-    const sourceRows = selectedRows.length ? selectedRows : filteredSubcategories;
-
-    if (!sourceRows.length) {
-      return [];
-    }
-
-    return sourceRows.map((item) => ({
-      "Subcategory ID": item._id?.slice(-5) || "-",
-      "Subcategory Name": item.name || "-",
-      "Image URL": item.image || "-",
-      "Category Name": item.categoryName || "-",
-      Products: item.productCount ?? 0
-    }));
+    return selectedRows.length ? selectedRows : filteredSubcategories;
   };
 
   const downloadBlob = (content, fileName, type) => {
@@ -140,27 +132,6 @@ export default function UsersTable() {
     URL.revokeObjectURL(url);
   };
 
-  const exportToExcel = () => {
-    const rows = getRowsForExport();
-    if (!rows.length) {
-      setIsExportMenuOpen(false);
-      return;
-    }
-
-    const headers = Object.keys(rows[0]);
-    const csv = [
-      headers.join(","),
-      ...rows.map((row) =>
-        headers
-          .map((header) => `"${String(row[header]).replace(/"/g, '""')}"`)
-          .join(",")
-      )
-    ].join("\n");
-
-    downloadBlob(csv, "subcategories_export.csv", "text/csv;charset=utf-8;");
-    setIsExportMenuOpen(false);
-  };
-
   const toSafeHtml = (value) =>
     String(value)
       .replace(/&/g, "&amp;")
@@ -168,22 +139,122 @@ export default function UsersTable() {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
-  const getExportHtml = (title) => {
-    const rows = getRowsForExport();
-    if (!rows.length) {
-      return "";
+  // Fetches an image and converts it to a base64 data URI so it can be
+  // embedded directly into Excel/DOC/PDF instead of exporting as a link.
+  // NOTE: requires the image host to allow cross-origin fetches (CORS).
+  const imageUrlToBase64 = async (url) => {
+    if (!url) return null;
+    try {
+      const response = await fetch(url, { mode: "cors" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      console.warn("Could not embed image (likely a CORS issue):", url, err);
+      return null;
     }
+  };
 
-    const headers = Object.keys(rows[0]);
-    const tableHead = headers.map((header) => `<th>${toSafeHtml(header)}</th>`).join("");
-    const tableRows = rows
-      .map(
-        (row) =>
-          `<tr>${headers
-            .map((header) => `<td>${toSafeHtml(row[header])}</td>`)
-            .join("")}</tr>`
-      )
-      .join("");
+  // ---------- EXCEL (.xlsx with real embedded images) ----------
+  const exportToExcel = async () => {
+    const rows = getExportRows();
+    if (!rows.length) {
+      setIsExportMenuOpen(false);
+      return;
+    }
+    setIsExportMenuOpen(false);
+    setIsExporting(true);
+
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet("Subcategories");
+
+      sheet.columns = [
+        { header: "Sr No", key: "srNo", width: 10 },
+        { header: "Subcategory ID", key: "id", width: 18 },
+        { header: "Subcategory Name", key: "name", width: 28 },
+        { header: "Image", key: "image", width: 14 },
+        { header: "Category Name", key: "category", width: 22 },
+        { header: "Products", key: "products", width: 12 },
+      ];
+      sheet.getRow(1).font = { bold: true };
+      sheet.getRow(1).height = 20;
+
+      for (let i = 0; i < rows.length; i++) {
+        const item = rows[i];
+        sheet.addRow({
+          srNo: i + 1,
+          id: item._id?.slice(-5) || "-",
+          name: item.name || "-",
+          image: "",
+          category: item.categoryName || "-",
+          products: item.productCount ?? 0,
+        });
+
+        const rowNumber = i + 2; // header occupies row 1
+        sheet.getRow(rowNumber).height = 60;
+
+        if (item.image) {
+          const base64 = await imageUrlToBase64(item.image);
+          if (base64) {
+            const match = base64.match(/^data:image\/(png|jpe?g|gif);/i);
+            let extension = match ? match[1].toLowerCase() : "png";
+            if (extension === "jpg") extension = "jpeg";
+            if (!["png", "jpeg", "gif"].includes(extension)) extension = "png";
+
+            const imageId = workbook.addImage({ base64, extension });
+            sheet.addImage(imageId, {
+              tl: { col: 3, row: rowNumber - 1 },
+              ext: { width: 50, height: 50 },
+            });
+          }
+        }
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      downloadBlob(
+        buffer,
+        "subcategories_export.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export Excel file");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // ---------- Shared HTML builder (used by DOC + PDF) ----------
+  const getExportHtml = async (title) => {
+    const rows = getExportRows();
+    if (!rows.length) return "";
+
+    const headers = ["Sr No", "Subcategory ID", "Subcategory Name", "Image", "Category Name", "Products"];
+    const tableHead = headers.map((h) => `<th>${toSafeHtml(h)}</th>`).join("");
+
+    const bodyRows = await Promise.all(
+      rows.map(async (item, index) => {
+        const base64 = item.image ? await imageUrlToBase64(item.image) : null;
+        const imageCell = base64
+          ? `<img src="${base64}" width="50" height="50" style="object-fit:cover;border-radius:6px;" />`
+          : "-";
+
+        return `<tr>
+         <td>${index + 1}</td>
+          <td>${toSafeHtml(item._id?.slice(-5) || "-")}</td>
+          <td>${toSafeHtml(item.name || "-")}</td>
+          <td>${imageCell}</td>
+          <td>${toSafeHtml(item.categoryName || "-")}</td>
+          <td>${toSafeHtml(item.productCount ?? 0)}</td>
+        </tr>`;
+      })
+    );
 
     return `
       <html>
@@ -192,57 +263,69 @@ export default function UsersTable() {
           <h2>${toSafeHtml(title)}</h2>
           <table border="1" cellspacing="0" cellpadding="6">
             <thead><tr>${tableHead}</tr></thead>
-            <tbody>${tableRows}</tbody>
+            <tbody>${bodyRows.join("")}</tbody>
           </table>
         </body>
       </html>`;
   };
 
-  const exportToDoc = () => {
-    const html = getExportHtml("Subcategories Export");
-    if (!html) {
-      setIsExportMenuOpen(false);
-      return;
-    }
-    downloadBlob(html, "subcategories_export.doc", "application/msword");
+  const exportToDoc = async () => {
     setIsExportMenuOpen(false);
+    setIsExporting(true);
+    try {
+      const html = await getExportHtml("Subcategories Export");
+      if (!html) return;
+      downloadBlob(html, "subcategories_export.doc", "application/msword");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export DOC file");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  const exportToPdf = () => {
-    const html = getExportHtml("Subcategories Export");
-    if (!html) {
-      setIsExportMenuOpen(false);
-      return;
-    }
-
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      setIsExportMenuOpen(false);
-      return;
-    }
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Subcategories Export</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h2 { margin-bottom: 12px; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background: #f2f2f2; }
-          </style>
-        </head>
-        <body>
-          ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+  const exportToPdf = async () => {
     setIsExportMenuOpen(false);
+    setIsExporting(true);
+    try {
+      const html = await getExportHtml("Subcategories Export");
+      if (!html) return;
+
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) return;
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Subcategories Export</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              h2 { margin-bottom: 12px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background: #f2f2f2; }
+              img { display: block; }
+            </style>
+          </head>
+          <body>
+            ${html.match(/<body>([\s\S]*)<\/body>/)?.[1] || ""}
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      printWindow.focus();
+      // Give the images time to load from base64 before triggering print
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+      setTimeout(() => printWindow.print(), 300);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export PDF file");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const toggleSubcategorySelection = (id) => {
@@ -279,9 +362,6 @@ export default function UsersTable() {
 
         {/* Export Button */}
         <div className='flex justify-evenly gap-2 items-center'>
-          {/* <button className='bg-brand-cyan  font-semibold text-brand-navy px-3 py-3 rounded-xl flex justify-center gap-2 items-center'>
-            <SlidersHorizontal size={20} />
-          </button> */}
           <div className="relative">
             <select
               value={selectedCategory}
@@ -305,10 +385,11 @@ export default function UsersTable() {
           </div>
           <div ref={exportMenuRef} className="relative">
             <button
-              className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all'
+              className='bg-brand-navy px-6 py-3 rounded-2xl flex justify-center gap-2 items-center text-white font-bold hover:bg-opacity-90 transition-all disabled:opacity-60'
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
+              disabled={isExporting}
             >
-              <Download size={20} /> Export
+              <Download size={20} /> {isExporting ? "Exporting..." : "Export"}
             </button>
             {isExportMenuOpen && (
               <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border z-20">

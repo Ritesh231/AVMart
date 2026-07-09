@@ -111,8 +111,9 @@ export default function AddCategory() {
       setPreview(null);
 
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to Add Category ❌");
+      toast.error(
+        error?.data?.message || "Failed to Add Category ❌"
+      );
     }
   };
 

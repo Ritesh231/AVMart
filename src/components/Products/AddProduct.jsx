@@ -719,6 +719,7 @@ export default function AddProduct() {
                       label="Opening Balance"
                       name="OpeningBalance"
                       type="number"
+                      min="0"
                       value={partyUpdateData.OpeningBalance}
                       onChange={handlePartyUpdateChange}
                       error={partyErrors.OpeningBalance}
@@ -728,6 +729,7 @@ export default function AddProduct() {
                       label="Credit Limit"
                       name="CreditLimit"
                       type="number"
+                      min="0"
                       value={partyUpdateData.CreditLimit}
                       onChange={handlePartyUpdateChange}
                       error={partyErrors.CreditLimit}
@@ -1066,6 +1068,7 @@ export default function AddProduct() {
                     label="Minimum Quantity"
                     name="minQuantity"
                     type="number"
+                    min="0"
                     placeholder="Value should be a Number"
                     value={variant.minQuantity}
                     onChange={(e) => handleVariantChange(index, e)}
@@ -1075,6 +1078,7 @@ export default function AddProduct() {
                     label="Stock"
                     name="stock"
                     type="number"
+                    min="0"
                     placeholder="Value should be a Number"
                     value={variant.stock}
                     onChange={(e) => handleVariantChange(index, e)}
@@ -1085,6 +1089,7 @@ export default function AddProduct() {
                     name="originalPrice"             // ✅ InPrice
                     placeholder="Value should be Number"
                     type="number"
+                    min="0"
                     value={variant.originalPrice}    // ✅ InPrice
                     onChange={(e) => handleVariantChange(index, e)}
                   />
@@ -1181,10 +1186,11 @@ export default function AddProduct() {
                     label="Margin %"
                     name="marginPercentage"
                     type="number"
+                    min="0"
                     placeholder="Enter margin %"
                     value={variant.marginPercentage}
                     onChange={(e) => handleVariantChange(index, e)}
-                    min={0}
+
                     max={100}
                     onInput={(e) => {
                       if (e.target.value > 100) {
@@ -1216,6 +1222,7 @@ export default function AddProduct() {
                     <input
                       name="MrpPrice"
                       type="number"
+
                       placeholder="Value should be Number"
                       value={variant.MrpPrice || ""}
                       min={variant.OutRate || 0}

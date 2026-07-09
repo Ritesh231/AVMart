@@ -151,7 +151,8 @@ export default function UsersTable() {
     if (!sourceRows.length) {
       return [];
     }
-    return sourceRows.map((u) => ({
+    return sourceRows.map((u, index) => ({
+      srNo: index + 1,
       Name: u.Name || "N/A",
       Date: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-",
       Contact: u.contactNo || "-",

@@ -22,7 +22,17 @@ export const paymentapi = baseApi.injectEndpoints({
       },
       providesTags: ["Payment"],
     }),
+
+    getTransactionById: builder.query({
+      query: ({ id }) => {
+        return {
+          url: `/api/v1/adminauth/payment/by-order/${id}`,
+        };
+      },
+      providesTags: ["Payment"],
+    }),
+
   }),
 });
 
-export const { useGetTransactionsOverviewQuery } = paymentapi;
+export const { useGetTransactionsOverviewQuery, useGetTransactionByIdQuery } = paymentapi;
