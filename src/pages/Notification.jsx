@@ -17,6 +17,7 @@ import {
     useMarkNotificationReadMutation,
     useDeleteNotificationMutation,
 } from "../Redux/apis/notificationApi";
+import { toast } from "react-toastify";
 
 const CATEGORY_META = {
     order: {
@@ -104,24 +105,31 @@ export default function NotificationsPage() {
     const handleMarkAllRead = async () => {
         try {
             await markAllRead().unwrap();
+            toast.success("All notifications marked as read");
         } catch (e) {
             console.error("Failed to mark all as read", e);
+            toast.error("Failed to mark all as read");
         }
     };
 
     const handleMarkOneRead = async (id) => {
         try {
             await markOneRead(id).unwrap();
+            toast.success("Notification marked as read");
         } catch (e) {
             console.error("Failed to mark notification as read", e);
+            toast.error("Failed to mark notification as read");
         }
     };
 
     const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this notification?")) return;
         try {
             await deleteNotification(id).unwrap();
+            toast.success("Notification deleted successfully");
         } catch (e) {
             console.error("Failed to delete notification", e);
+            toast.error("Failed to delete notification");
         }
     };
 
@@ -268,12 +276,12 @@ export default function NotificationsPage() {
                                     </div>
 
                                     {/* actions */}
-                                    <div className="flex shrink-0 items-start gap-1 opacity-0 transition group-hover:opacity-100">
+                                    <div className="flex shrink-0 items-start gap-1 opacity-100 transition ">
                                         {!n.isRead && (
                                             <button
                                                 onClick={() => handleMarkOneRead(n._id)}
                                                 title="Mark as read"
-                                                className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
+                                                className="rounded-lg p-2 text-slate-400 bg-emerald-100 text-emerald-500 hover:bg-emerald-200 hover:text-emerald-900"
                                             >
                                                 <Check className="h-4 w-4" />
                                             </button>
@@ -281,7 +289,7 @@ export default function NotificationsPage() {
                                         <button
                                             onClick={() => handleDelete(n._id)}
                                             title="Delete"
-                                            className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                                            className="rounded-lg p-2 text-slate-400 bg-rose-100 text-rose-800 hover:bg-rose-200 hover:text-rose-900"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>

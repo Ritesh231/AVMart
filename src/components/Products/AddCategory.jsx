@@ -14,6 +14,33 @@ export default function AddCategory() {
     image: null,
   });
 
+  const [errors, setErrors] = useState({
+    name: "",
+    HscCode: "",
+    image: "",
+  });
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Category Name is required.";
+    }
+
+    if (!formData.HscCode.trim()) {
+      newErrors.HscCode = "HSC Code is required.";
+    }
+
+    if (!formData.image) {
+      newErrors.image = "Category Image is required.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+
   const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
   const ALLOWED_TYPES = [
@@ -30,7 +57,17 @@ export default function AddCategory() {
   /* -------------------- Handlers -------------------- */
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
   };
 
   const handleImageChange = (e) => {
@@ -72,6 +109,13 @@ export default function AddCategory() {
         image: file,
       }));
 
+      setErrors((prev) => ({
+        ...prev,
+        image: "",
+      }));
+
+      setPreview(URL.createObjectURL(file));
+
       setPreview(URL.createObjectURL(file));
     };
 
@@ -83,6 +127,16 @@ export default function AddCategory() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.name.trim()) {
+      toast.error("Category Name is required.");
+      return;
+    }
+
+    if (!formData.HscCode.trim()) {
+      toast.error("HSC Code is required.");
+      return;
+    }
+
     if (!formData.image) {
       toast.error("Category Image is required.");
       return;
@@ -93,7 +147,6 @@ export default function AddCategory() {
 
       data.append("name", formData.name);
       data.append("HscCode", formData.HscCode);
-      // data.append("GstRate", formData.GstRate);
       data.append("image", formData.image);
 
       await addCategory(data).unwrap();
@@ -101,19 +154,15 @@ export default function AddCategory() {
       toast.success("Category Added Successfully ✅");
       navigate("/products/categories");
 
-      // Reset form
       setFormData({
         name: "",
         HscCode: "",
-        // GstRate: "",
         image: null,
       });
       setPreview(null);
 
     } catch (error) {
-      toast.error(
-        error?.data?.message || "Failed to Add Category ❌"
-      );
+      toast.error(error?.data?.message || "Failed to Add Category ❌");
     }
   };
 
