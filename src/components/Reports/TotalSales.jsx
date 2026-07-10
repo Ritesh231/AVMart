@@ -469,11 +469,11 @@ function SalesReport() {
                                         <td className="p-3">
                                             <div className="flex justify-center w-full">
                                                 <div className="w-full max-w-[200px] text-left text-gray-800 font-medium">
-                                                    {item.productName}
+                                                    {item.productName || "N/A"}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-3 text-center text-gray-700">{item.totalQuantity}</td>
+                                        <td className="p-3 text-center text-gray-700">{item.totalQuantity || "N/A"}</td>
                                         <td className="p-3 text-right font-semibold text-green-600">
                                             ₹{Number(item.totalSales).toFixed(2)}
                                         </td>

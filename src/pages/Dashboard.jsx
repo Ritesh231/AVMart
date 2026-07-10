@@ -153,11 +153,12 @@ const Dashboard = () => {
                             <div className="relative overflow-hidden bg-brand-navy rounded-[2.5rem] p-8 text-white shadow-xl min-h-[240px] flex flex-col justify-between">
                                 <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-[#FF8800]/50 rounded-full blur-[50px]"></div>
                                 <div className="flex justify-between items-start relative z-10">
-                                    <h3 className="text-xl font-medium opacity-90">Total Revenue</h3>
+                                    <h3 className="text-xl font-medium opacity-90">Total Delivered Order Revenue</h3>
                                     <span className="text-xs font-semibold bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
                                         {product?.revenueChange} from last Month
                                     </span>
                                 </div>
+
                                 <div className="relative z-10">
                                     <h3 className="text-5xl font-bold tracking-tight">₹ {product?.totalRevenue}</h3>
                                 </div>
@@ -305,6 +306,7 @@ const Dashboard = () => {
                                 <Plus size={18} /> Add Product
                             </button>
                         </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {product?.recentProducts?.map((product, index) => (
                                 <ProductViewCard key={index} product={product} />

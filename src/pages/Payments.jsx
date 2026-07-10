@@ -469,6 +469,20 @@ ${tableRows}
             special: false
         },
         {
+            title: "Partial Payments",
+            number: summary?.partial || "0",
+            statement: "+ 12 % from last week",
+            icon: <BadgeIndianRupee size={24} />,
+            special: false
+        },
+        {
+            title: "Total Margin",
+            number: summary?.totalMargin || "0",
+            statement: "+ 12 % from last week",
+            icon: <BadgeIndianRupee size={24} />,
+            special: false
+        },
+        {
             title: "Total Revenue",
             number: summary?.totalRevenue || "0",
             statement: "+ 12 % from last week",
@@ -558,7 +572,7 @@ ${tableRows}
 
             {/* Stats Cards */}
             <section className="stat-card-sec mb-6 bg-white border-2 border-[#0F172A]/20 rounded-[2.5rem] p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     {paymentTypeStat.map((stat, index) => (
                         <StatCard
                             key={index}
@@ -753,6 +767,7 @@ ${tableRows}
                                         amount={txn.amount}
                                         status={txn.status}
                                         onView={() => setViewOrderId(txn.id)}
+                                        margin={txn.margin}
                                     />
                                 </div>
                             ))
@@ -786,6 +801,7 @@ ${tableRows}
                                             CODId: txn.paymentDetails?.[0]?.id,
                                             deliveryBoy: txn.deliveryBoy?.name || "Not Assigned",
                                             amount: txn.amount,
+                                            margin: txn.margin,
                                         }}
                                         onView={() => setViewOrderId(txn.id)}
                                     />

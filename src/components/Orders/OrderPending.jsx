@@ -47,15 +47,6 @@ export default function UsersTable() {
     pages: 1
   };
 
-  // ❌ REMOVE THIS - No need to filter out confirmed/cancelled from API response
-  // The API should only return Pending orders
-  // const users = orders.filter(
-  //   (order) =>
-  //     order.OrderStatus !== "confirmed" &&
-  //     order.OrderStatus !== "cancelled"
-  // );
-
-  // ✅ Use orders directly from API
   const users = orders;
 
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
@@ -86,13 +77,6 @@ export default function UsersTable() {
     JSON.stringify(order || {}).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ❌ REMOVE THESE - No more frontend pagination variables
-  // const totalPages = Math.ceil(searchedOrders.length / ordersPerPage);
-  // const indexOfLastOrder = currentPage * ordersPerPage;
-  // const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  // const currentOrders = searchedOrders.slice(indexOfFirstOrder, indexOfLastOrder);
-
-  // ✅ Use searchedOrders directly (API already paginated)
   const currentOrders = searchedOrders;
 
   // Reset page to 1 when filters change
@@ -137,22 +121,11 @@ export default function UsersTable() {
   const [assignDeliveryBoy, { isLoading: assigning }] =
     useGetAssignDeliveryBoysMutation();
 
-  const handleApprove = async (id) => {
-    try {
-      const response = await assignOrderStatus({
-        id,
-        status: "confirmed",
-      }).unwrap();
-
-      // Open Delivery Modal
-      setSelectedOrderForDelivery(id);
-      setIsDeliveryModalOpen(true);
-      toast.success(response?.message || "Order approved successfully");
-      refetch();
-    } catch (err) {
-      console.error(err);
-      toast.error(err?.data?.error || "Failed to approve order");
-    }
+  // ✅ Tick icon just opens the delivery boy modal now.
+  // No API call happens until a delivery boy is picked and "Assign Delivery Boy" is clicked.
+  const handleApprove = (id) => {
+    setSelectedOrderForDelivery(id);
+    setIsDeliveryModalOpen(true);
   };
 
   const handleReject = async (id) => {
@@ -208,22 +181,34 @@ export default function UsersTable() {
     }
   }, [deliveryData]);
 
-
+  // ✅ Now hits BOTH apis: approve the order status, then assign the delivery boy.
   const handleAssignDelivery = async () => {
     if (!selectedBoyId) {
       toast.error("Please select a Delivery Boy");
       return;
     }
 
+    if (!selectedOrderForDelivery) {
+      toast.error("No order selected");
+      return;
+    }
+
     try {
       setAssigningBoyId(selectedBoyId);
 
+      // 1) Approve / confirm the order
+      await assignOrderStatus({
+        id: selectedOrderForDelivery,
+        status: "confirmed",
+      }).unwrap();
+
+      // 2) Assign the delivery boy to that order
       await assignDeliveryBoy({
         orderId: selectedOrderForDelivery,
         deliveryBoyId: selectedBoyId,
       }).unwrap();
 
-      toast.success("Delivery Boy assigned successfully");
+      toast.success("Order approved and delivery boy assigned successfully");
 
       setIsDeliveryModalOpen(false);
       setSelectedOrderForDelivery(null);
@@ -231,7 +216,8 @@ export default function UsersTable() {
 
       refetch();
     } catch (error) {
-      toast.error(error?.data?.error || "Failed to assign Delivery Boy");
+      console.error(error);
+      toast.error(error?.data?.error || error?.data?.message || "Failed to assign order");
     } finally {
       setAssigningBoyId(null);
     }
@@ -631,11 +617,10 @@ export default function UsersTable() {
                   </td>
                   <td className="p-3 whitespace-nowrap">
                     <div className="flex items-center gap-1">
-                      {/* ✅ Approve */}
+                      {/* ✅ Approve — just opens the delivery boy modal, no API call yet */}
                       <button
                         className="p-1 text-green-600 bg-white"
                         onClick={() => handleApprove(u._id)}
-                        disabled={isUpdating}
                       >
                         <SiTicktick size={18} />
                       </button>
@@ -667,15 +652,13 @@ export default function UsersTable() {
           </tbody>
         </table>
 
-
-
         {isDeliveryModalOpen && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
             <div className="bg-white w-[400px] max-h-[500px] overflow-y-auto rounded-xl p-5">
 
               <h2 className="text-lg font-semibold mb-2">
-                Assign Delivery Boyz-50
+                Assign Delivery Boy
               </h2>
               <div className={`text-xs mb-4 ${isConnected ? "text-green-500" : "text-red-500"}`}>
                 Socket: {isConnected ? "Connected" : "Disconnected"}
@@ -694,7 +677,7 @@ export default function UsersTable() {
                   return (
                     <div
                       key={boy._id}
-                      onClick={() => !assigning && setSelectedBoyId(boy._id)}
+                      onClick={() => !assigning && !isUpdating && setSelectedBoyId(boy._id)}
                       className={`
 relative
 border-2
@@ -714,10 +697,8 @@ ${isThisLoading
                           ? "opacity-50 cursor-not-allowed"
                           : ""
                         }
-
+                 
             `}
-
-
                     >
                       {isSelected && (
                         <div className="absolute top-3 right-3">
@@ -728,7 +709,7 @@ ${isThisLoading
                       )}
                       <p className="font-medium">{boy.Name}</p>
                       <p className="text-sm text-gray-500">
-                        Orders: {boy.completeOrders}
+                        Orders: {boy.assignedOrders}
                       </p>
                       <p className="text-sm text-gray-500">
                         Status: {boy.deliveryBoyAvailable}
@@ -754,18 +735,22 @@ ${isThisLoading
 
               <button
                 onClick={handleAssignDelivery}
-                disabled={!selectedBoyId || assigningBoyId}
+                disabled={!selectedBoyId || assigningBoyId || isUpdating}
                 className={`w-full py-2 rounded-lg mb-3 font-semibold transition
     ${selectedBoyId
                     ? "bg-green-600 text-white hover:bg-green-700"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }`}
               >
-                {assigningBoyId ? "Assigning..." : "Assign Delivery Boy"}
+                {assigningBoyId || isUpdating ? "Assigning..." : "Assign Delivery Boy"}
               </button>
 
               <button
-                onClick={() => setIsDeliveryModalOpen(false)}
+                onClick={() => {
+                  setIsDeliveryModalOpen(false);
+                  setSelectedOrderForDelivery(null);
+                  setSelectedBoyId(null);
+                }}
                 className="mt-4 w-full bg-red-400 text-white py-2 rounded-lg"
               >
                 Close

@@ -1,5 +1,5 @@
-import React from 'react'
-import { CreditCard, CheckCircle2, Eye } from 'lucide-react';
+import React from 'react';
+import { CreditCard, CheckCircle2, Eye, Receipt } from 'lucide-react';
 
 const OnlinePaymentCard = ({
     customerName,
@@ -9,70 +9,82 @@ const OnlinePaymentCard = ({
     paymentMethod,
     amount,
     status,
-    onView, // ✅ destructure it
+    onView,
+    margin,
 }) => {
     return (
-        <div className="bg-white border-2 border-brand-soft rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow w-full max-w-md">
-            {/* Header Section */}
-            <div className="flex justify-between items-start mb-4">
-                <div className="flex gap-3">
-                    <div className="bg-brand-navy p-3 rounded-xl flex items-center justify-center text-white">
-                        <CreditCard size={24} />
+        <div className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow w-full max-w-md">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="bg-[#1E264F] w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-white">
+                        <CreditCard size={20} />
                     </div>
-                    <div>
-                        <h3 className="text-brand-navy font-bold text-lg leading-tight">{customerName}</h3>
-                        <p className="text-brand-navy text-xs font-medium">{dateTime?.split("T")[0]}</p>
+                    <div className="min-w-0">
+                        <h3 className="text-[#1E264F] font-semibold text-base leading-tight truncate">
+                            {customerName}
+                        </h3>
+                        <p className="text-slate-400 text-xs mt-0.5">{dateTime?.split('T')[0]}</p>
                     </div>
                 </div>
-                {/* Status Badge */}
-                <div className="flex items-center gap-1 bg-brand-green text-green-600 px-3 py-2 rounded-lg border border-green-200 whitespace-break-spaces">
-                    <CheckCircle2 size={18} />
-                    <span className="text-xs font-semibold">
-                        {status?.split("_")[0]}
-                    </span>
+
+                <span className="shrink-0 inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-medium px-2.5 py-1.5 rounded-full border border-emerald-200">
+                    <CheckCircle2 size={14} />
+                    {status?.split('_')[0]}
+                </span>
+            </div>
+
+            {/* Order info */}
+            <div className="flex items-start gap-2 bg-brand-blue rounded-xl px-3.5 py-3 mb-2 border border-blue-100">
+                <Receipt size={16} className="text-[#1E264F]/50 mt-0.5 shrink-0" />
+                <div className="text-xs text-[#1E264F]/80 leading-relaxed min-w-0">
+                    <p className="truncate">
+                        Order <span className="text-[#1E264F] font-medium">{orderId}</span>
+                    </p>
+                    <p className="truncate">
+                        Transaction <span className="text-[#1E264F] font-medium">{txnId}</span>
+                    </p>
                 </div>
             </div>
 
-            {/* Order Info */}
-            <div className="mb-5">
-                <p className="text-black text-sm">
-                    Order : {orderId} <br /> Transaction : {txnId}
-                </p>
-            </div>
-
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {/* Payment Method */}
-                <div className="bg-brand-blue p-2 sm:p-3 rounded-lg flex flex-col justify-between items-start w-full">
-                    <p className="text-[10px] text-brand-navy font-bold uppercase w-full break-words whitespace-normal">
-                        Payment Method
+            {/* Details */}
+            <div className="grid grid-cols-3 gap-3">
+                <div className="bg-brand-blue border border-blue-100 rounded-xl p-3 flex flex-col justify-between">
+                    <p className="text-[10px] font-semibold uppercase text-[#1E264F]/60 tracking-wide">
+                        Method
                     </p>
-                    <p className="text-brand-navy font-extrabold text-sm sm:text-base break-words">
-                        Online
-                    </p>
+                    <p className="text-sm font-semibold text-[#1E264F] mt-2">{paymentMethod ?? 'Online'}</p>
                 </div>
 
-                {/* Amount + View button side by side */}
-                <div className="bg-brand-blue p-2 sm:p-3 rounded-lg flex items-center justify-between w-full gap-2">
-                    <div className="flex flex-col justify-between items-start">
-                        <p className="text-[10px] text-brand-navy font-bold uppercase">
+                <div className="bg-brand-blue border border-blue-100 rounded-xl p-3 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-semibold uppercase text-[#1E264F]/60 tracking-wide">
                             Amount
                         </p>
-                        <p className="text-brand-navy font-extrabold text-sm sm:text-base">
-                            ₹{amount?.toFixed(2)}
-                        </p>
+                        <button
+                            onClick={onView}
+                            aria-label="View payment details"
+                            className="text-[#1E264F] hover:bg-[#1E264F] hover:text-white rounded-md p-1 transition-colors"
+                        >
+                            <Eye size={14} />
+                        </button>
                     </div>
+                    <p className="text-sm font-semibold text-[#1E264F] mt-2">
+                        ₹{amount?.toFixed(2)}
+                    </p>
+                </div>
 
-                    <button
-                        onClick={onView}
-                        className="flex items-center gap-1 bg-[#1E264F] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-opacity-90 transition-all shrink-0"
-                    >
-                        <Eye size={14} /> View
-                    </button>
+                <div className="bg-brand-blue border border-blue-100 rounded-xl p-3 flex flex-col justify-between">
+                    <p className="text-[10px] font-semibold uppercase text-[#1E264F]/60 tracking-wide">
+                        Margin
+                    </p>
+                    <p className="text-sm font-semibold text-emerald-600 mt-2">
+                        ₹{margin?.toFixed(2)}
+                    </p>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default OnlinePaymentCard;

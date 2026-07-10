@@ -1,78 +1,88 @@
-import React from "react";
-import { CheckCircle2, Eye } from "lucide-react";
-import { FaWallet } from "react-icons/fa6";
+import React from 'react';
+import { CheckCircle2, Eye, Receipt } from 'lucide-react';
+import { FaWallet } from 'react-icons/fa6';
 
 const CashOnDeliveryCard = ({ transaction, onView }) => {
-  const {
-    customer,
-    date,
-    status,
-    orderId,
-    CODId,
-    deliveryBoy,
-    amount,
-  } = transaction;
+  const { customer, date, status, orderId, CODId, deliveryBoy, amount, margin } = transaction;
+
+  const hasDeliveryBoy =
+    deliveryBoy && deliveryBoy.trim().toLowerCase() !== 'not assigned';
 
   return (
-    <div className="bg-white border-2 border-brand-soft rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow w-full max-w-md">
+    <div className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow w-full max-w-md">
       {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex gap-3">
-          <div className="bg-brand-navy h-12 p-3 rounded-xl text-white">
-            <FaWallet size={24} />
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="bg-[#1E264F] w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-white">
+            <FaWallet size={18} />
           </div>
-          <div>
-            <h3 className="text-brand-navy font-semibold text-lg">
+          <div className="min-w-0">
+            <h3 className="text-[#1E264F] font-semibold text-base leading-tight truncate">
               {customer}
             </h3>
-            <p className="text-brand-navy text-xs font-medium">
-              {date}
-            </p>
+            <p className="text-slate-400 text-xs mt-0.5">{date}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 bg-brand-green text-green-600 px-3 py-2 rounded-lg border border-green-200">
-          <CheckCircle2 size={18} />
-          <span className="text-xs capitalize">
-            {status}
-          </span>
-        </div>
+
+        <span className="shrink-0 inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-medium px-2.5 py-1.5 rounded-full border border-emerald-200 capitalize">
+          <CheckCircle2 size={14} />
+          {status}
+        </span>
       </div>
 
-      {/* Order Info */}
-      <div className="mb-5">
-        <p className="text-brand-gray/60 text-sm font-semibold whitespace-break-spaces">
-          Order : {orderId} · COD ID : {CODId}
-        </p>
+      {/* Order info */}
+      <div className="flex items-start gap-2 bg-brand-blue rounded-xl px-3.5 py-3 mb-4 border border-blue-100">
+        <Receipt size={16} className="text-[#1E264F]/50 mt-0.5 shrink-0" />
+        <div className="text-xs text-[#1E264F]/80 leading-relaxed min-w-0">
+          <p className="truncate">
+            Order <span className="text-[#1E264F] font-medium">{orderId}</span>
+          </p>
+          <p className="truncate">
+            COD ID <span className="text-[#1E264F] font-medium">{CODId}</span>
+          </p>
+        </div>
       </div>
 
       {/* Details */}
-      <div className="grid grid-cols-2 gap-4">
-        {deliveryBoy &&
-          deliveryBoy.trim().toLowerCase() !== "not assigned" && (
-            <div className="bg-brand-blue p-2 rounded-lg">
-              <p className="text-[10px] font-bold uppercase">
-                Delivery Boy
-              </p>
-              <p className="font-extrabold">{deliveryBoy}</p>
-            </div>
-          )}
+      <div className={`grid gap-3 ${hasDeliveryBoy ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        {hasDeliveryBoy && (
+          <div className="bg-brand-blue border border-blue-100 rounded-xl p-3 flex flex-col justify-between">
+            <p className="text-[10px] font-semibold uppercase text-[#1E264F]/60 tracking-wide">
+              Delivery boy
+            </p>
+            <p className="text-sm font-semibold text-[#1E264F] mt-2 truncate">
+              {deliveryBoy}
+            </p>
+          </div>
+        )}
 
-        {/* Amount + View button side by side */}
-        <div className="bg-brand-blue p-2 rounded-lg flex items-center justify-between gap-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase">
+        <div className="bg-brand-blue border border-blue-100 rounded-xl p-3 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase text-[#1E264F]/60 tracking-wide">
               Amount
             </p>
-            <p className="font-extrabold">₹{amount?.toFixed(2)}</p>
+            <button
+              onClick={onView}
+              aria-label="View transaction details"
+              className="text-[#1E264F] hover:bg-[#1E264F] hover:text-white rounded-md p-1 transition-colors"
+            >
+              <Eye size={14} />
+            </button>
           </div>
-
-          <button
-            onClick={onView}
-            className="flex items-center gap-1 bg-[#1E264F] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-opacity-90 transition-all shrink-0"
-          >
-            <Eye size={14} /> View
-          </button>
+          <p className="text-sm font-semibold text-[#1E264F] mt-2">
+            ₹{amount?.toFixed(2)}
+          </p>
         </div>
+
+        <div className="bg-brand-blue border border-blue-100 rounded-xl p-3 flex flex-col justify-between">
+          <p className="text-[10px] font-semibold uppercase text-[#1E264F]/60 tracking-wide">
+            Margin
+          </p>
+          <p className="text-sm font-semibold text-emerald-600 mt-2">
+            ₹{margin?.toFixed(2)}
+          </p>
+        </div>
+
       </div>
     </div>
   );

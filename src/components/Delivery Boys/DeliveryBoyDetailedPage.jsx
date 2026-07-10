@@ -31,6 +31,9 @@ export default function DeliveryBoyDetails() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
   const { id } = useParams();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState("");
+  const [previewTitle, setPreviewTitle] = useState("");
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -412,13 +415,16 @@ export default function DeliveryBoyDetails() {
       <p className="text-sm font-semibold mb-2">{title}</p>
 
       {image ? (
-        <a href={image} target="_blank" rel="noreferrer">
-          <img
-            src={image}
-            alt={title}
-            className="h-40 w-full object-cover rounded-lg border hover:opacity-90"
-          />
-        </a>
+        <img
+          src={image}
+          alt={title}
+          onClick={() => {
+            setPreviewFile(image);
+            setPreviewTitle(title);
+            setPreviewOpen(true);
+          }}
+          className="h-40 w-full object-cover rounded-lg border cursor-pointer hover:opacity-90 transition"
+        />
       ) : (
         <div className="h-40 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400">
           No Document
@@ -1279,6 +1285,53 @@ export default function DeliveryBoyDetails() {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {previewOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-5">
+          <div className="bg-white rounded-xl w-full max-w-5xl h-[90vh] flex flex-col">
+
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="font-semibold text-lg">{previewTitle}</h2>
+
+              <div className="flex items-center gap-3">
+                <a
+                  href={previewFile}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+                >
+                  Download
+                </a>
+
+                <button
+                  onClick={() => setPreviewOpen(false)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto flex items-center justify-center p-4">
+              {previewFile.toLowerCase().includes(".pdf") ? (
+                <iframe
+                  src={previewFile}
+                  title={previewTitle}
+                  className="w-full h-full rounded-lg"
+                />
+              ) : (
+                <img
+                  src={previewFile}
+                  alt={previewTitle}
+                  className="max-w-full max-h-full object-contain"
+                />
+              )}
+            </div>
+
+          </div>
         </div>
       )}
     </div>

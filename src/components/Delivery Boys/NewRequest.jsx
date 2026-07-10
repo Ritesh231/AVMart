@@ -9,6 +9,7 @@ import { useLocation } from "react-router-dom";
 import { useGetAllDeliveryBoysQuery, useUpdateDeliveryStatusMutation } from "../../Redux/apis/deliveryApi";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function UsersTable() {
 
@@ -50,18 +51,29 @@ export default function UsersTable() {
     reason = ""
   ) => {
     try {
-      await updateDeliveryStatus({
+      const res = await updateDeliveryStatus({
         id,
         status: newStatus,
         rejectReason: reason,
       }).unwrap();
+
+      toast.success(
+        res?.message ||
+        `Delivery boy ${newStatus === "approved" ? "approved" : "rejected"} successfully.`
+      );
 
       refetch();
 
       setShowRejectModal(false);
       setRejectReason("");
       setSelectedDeliveryBoyId(null);
+
     } catch (error) {
+      toast.error(
+        error?.data?.message ||
+        `Failed to ${newStatus} delivery boy.`
+      );
+
       console.error(error);
     }
   };
