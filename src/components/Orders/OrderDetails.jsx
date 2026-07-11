@@ -45,6 +45,10 @@ const OrderDetails = () => {
   const pagination = data?.data?.meta?.pagination;
   const statsData = data?.data?.stats || {};
 
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
+  const [previewTitle, setPreviewTitle] = useState("");
+
   const stats = [
     {
       title: "Total Orders",
@@ -87,6 +91,63 @@ const OrderDetails = () => {
   const completedOrders = orders.filter(
     (order) => order.status === "Delivered"
   );
+
+  const DetailItem = ({ label, value }) => (
+    <div>
+      <p className="text-sm text-gray-500 mb-1">{label}</p>
+      <div className="border rounded-lg px-4 py-2 bg-gray-50 font-medium break-words">
+        {value || "-"}
+      </div>
+    </div>
+  );
+
+  const ImageCard = ({ title, image }) => (
+    <div>
+      <p className="text-sm text-gray-500 mb-2">{title}</p>
+
+      {image ? (
+        <img
+          src={image}
+          alt={title}
+          onClick={() => {
+            setPreviewImage(image);
+            setPreviewTitle(title);
+            setPreviewOpen(true);
+          }}
+          className="w-full h-52 object-cover rounded-lg border cursor-pointer hover:scale-105 hover:shadow-lg transition duration-300"
+        />
+      ) : (
+        <div className="h-52 flex items-center justify-center rounded-lg border bg-gray-100 text-gray-500">
+          No Image
+        </div>
+      )}
+    </div>
+  );
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(previewImage);
+
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = previewTitle || "image";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const getTrackingSteps = (order) => {
     const steps = [
@@ -167,56 +228,73 @@ const OrderDetails = () => {
 
           <button
             onClick={() =>
-              setOpenTrackingId((prev) => (prev === order._id ? null : order._id))
+              setOpenTrackingId((prev) =>
+                prev === order._id ? null : order._id
+              )
             }
             className="text-sm text-blue-600 font-medium flex items-center gap-1"
           >
             {openTrackingId === order._id ? "Hide" : "View"} Tracking
-            <span className={`transition-transform ${openTrackingId === order._id ? "rotate-180" : ""}`}>
+            <span
+              className={`transition-transform ${openTrackingId === order._id ? "rotate-180" : ""
+                }`}
+            >
               ▼
             </span>
           </button>
-
         </div>
 
-        <div className="relative">
+        {openTrackingId === order._id && (
+          <div className="border border-emerald-200 rounded-xl p-5 mt-4">
+            <div className="relative">
+              {/* Vertical Line */}
+              <div className="absolute left-5 top-2 bottom-2 w-[2px] bg-slate-600"></div>
 
-          <div className="space-y-8">
-            {openTrackingId === order._id && (
-              <div className="border border-emerald-200 rounded-xl p-5 mt-4">
-
-                <div className="relative">
-                  <div className="absolute left-5 top-2 h-full w-[2px] bg-slate-300"></div>
-
-                  <div className="space-y-8">
-                    {getTrackingSteps(order).map((step, index) => (
-                      <div key={index} className="flex items-start gap-4 relative">
-                        <div
-                          className={`w-10 h-10 flex items-center justify-center rounded-full z-10
-              ${step.done ? "bg-[#0F1E4A]" : "bg-gray-400"}
-            `}
-                        >
-                          <FaCheck
-                            className={`text-sm ${step.done ? "text-emerald-400" : "text-white"
-                              }`}
-                          />
-                        </div>
-
-                        <div>
-                          <p className="font-medium">{step.label}</p>
-                          <p className="text-xs text-gray-500">
-                            {step.done ? "Completed" : "Pending"}
-                          </p>
-                        </div>
-
+              <div className="space-y-8">
+                {order?.tracking?.length > 0 ? (
+                  order.tracking.map((step, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-4 relative"
+                    >
+                      {/* Circle */}
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center z-10 ${step.done ? "bg-[#0F1E4A]" : "bg-gray-400"
+                          }`}
+                      >
+                        <FaCheck
+                          className={`text-sm ${step.done
+                            ? "text-emerald-400"
+                            : "text-white"
+                            }`}
+                        />
                       </div>
-                    ))}
-                  </div>
-                </div>
+
+                      {/* Content */}
+                      <div>
+                        <p className="font-medium">{step.status}</p>
+
+                        <p className="text-xs text-gray-500">
+                          {step.done ? "Completed" : "Pending"}
+                        </p>
+
+                        {step.time && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(step.time).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    No tracking available.
+                  </p>
+                )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -476,12 +554,117 @@ const OrderDetails = () => {
 
           {/* Personal Details */}
           {activeTab === "personal" && (
-            <div className="bg-white rounded-xl shadow-sm p-6 border space-y-2">
-              <h3 className="font-semibold text-lg mb-3">Personal Details</h3>
-              <p><strong>Name:</strong> {data?.data?.shop?.shopName}</p>
-              <p><strong>Email:</strong> {data?.data?.shop?.email}</p>
-              <p><strong>Contact:</strong> {data?.data?.shop?.contact}</p>
-              <p><strong>Joined:</strong> {new Date(data?.data?.shop?.joined).toLocaleDateString()}</p>
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <h3 className="text-xl font-semibold mb-6">
+                Personal Details
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <DetailItem label="Name" value={data?.data?.shop?.name} />
+                <DetailItem label="Shop Name" value={data?.data?.shop?.shopName} />
+                <DetailItem label="Email" value={data?.data?.shop?.email} />
+                <DetailItem label="Contact" value={data?.data?.shop?.contact} />
+                <DetailItem label="Shop Type" value={data?.data?.shop?.shopType} />
+                <DetailItem label="GST Number" value={data?.data?.shop?.gstNumber} />
+                <DetailItem
+                  label="Shop Act License"
+                  value={data?.data?.shop?.shopActLicense}
+                />
+                <DetailItem label="Status" value={data?.data?.shop?.status} />
+                <DetailItem label="City" value={data?.data?.shop?.city} />
+                <DetailItem label="State" value={data?.data?.shop?.state} />
+                <DetailItem
+                  label="Postal Code"
+                  value={data?.data?.shop?.postalCode}
+                />
+                <DetailItem
+                  label="Landmark"
+                  value={data?.data?.shop?.landmark}
+                />
+                <DetailItem
+                  label="Wallet Balance"
+                  value={`₹${data?.data?.shop?.walletBalance}`}
+                />
+                <DetailItem
+                  label="Referral Balance"
+                  value={`₹${data?.data?.shop?.referralBalance}`}
+                />
+                <DetailItem
+                  label="Shop Wallet Balance"
+                  value={`₹${data?.data?.shop?.shopWalletBalance}`}
+                />
+                <DetailItem
+                  label="Notification"
+                  value={data?.data?.shop?.notificationOptIn ? "Enabled" : "Disabled"}
+                />
+                <DetailItem
+                  label="Date of Birth"
+                  value={
+                    data?.data?.shop?.dateOfBirth
+                      ? new Date(data.data.shop.dateOfBirth).toLocaleDateString("en-IN")
+                      : "-"
+                  }
+                />
+                <DetailItem
+                  label="Anniversary"
+                  value={
+                    data?.data?.shop?.anniversaryDate
+                      ? new Date(data.data.shop.anniversaryDate).toLocaleDateString("en-IN")
+                      : "-"
+                  }
+                />
+                <DetailItem
+                  label="Joined"
+                  value={
+                    data?.data?.shop?.joined
+                      ? new Date(data.data.shop.joined).toLocaleString("en-IN")
+                      : "-"
+                  }
+                />
+                <DetailItem
+                  label="Approved At"
+                  value={
+                    data?.data?.shop?.approvedAt
+                      ? new Date(data.data.shop.approvedAt).toLocaleString("en-IN")
+                      : "-"
+                  }
+                />
+
+                <div className="md:col-span-2">
+                  <DetailItem
+                    label="Address"
+                    value={data?.data?.shop?.shopAddress}
+                  />
+                </div>
+
+              </div>
+
+              {/* Images */}
+              <div className="mt-8">
+                <h4 className="font-semibold text-lg mb-4">
+                  Shop Images
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+
+                  <ImageCard
+                    title="Shop Outer Photo"
+                    image={data?.data?.shop?.shopOuterPhoto}
+                  />
+
+                  <ImageCard
+                    title="Shop Inner Photo"
+                    image={data?.data?.shop?.shopInnerPhoto}
+                  />
+
+                  <ImageCard
+                    title="Shop Act License"
+                    image={data?.data?.shop?.shopActLicenseFile}
+                  />
+
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -512,6 +695,48 @@ const OrderDetails = () => {
         </button>
 
       </div>
+
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+              <h2 className="text-lg font-semibold">
+                {previewTitle}
+              </h2>
+
+              <div className="flex items-center gap-3">
+
+                <button
+                  onClick={handleDownload}
+                  className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg"
+                >
+                  Download
+                </button>
+
+                <button
+                  onClick={() => setPreviewOpen(false)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg font-medium transition"
+                >
+                  Close
+                </button>
+
+              </div>
+            </div>
+
+            {/* Image */}
+            <div className="flex-1 flex items-center justify-center bg-gray-100 p-5 overflow-auto">
+              <img
+                src={previewImage}
+                alt={previewTitle}
+                className="max-w-full max-h-full object-contain rounded-xl shadow-xl"
+              />
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

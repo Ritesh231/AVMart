@@ -1038,6 +1038,8 @@ export default function AddProduct() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <InputField
                     label="Product Size"
+                    type="number"
+                    min="0"
                     name="quantityValue"
                     placeholder="e.g. 300"
                     value={variant.quantityValue}

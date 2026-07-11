@@ -336,7 +336,10 @@ export default function BrandsSection() {
                 onChange={() => toggleBrandSelection(brand._id)}
               />
               <div className="text-center">
-                <h2 className="text-2xl font-black tracking-wide">
+                <h2
+                  className="text-xl font-black text-center leading-snug line-clamp-2 break-words"
+                  title={brand.name}
+                >
                   {brand.name}
                 </h2>
               </div>

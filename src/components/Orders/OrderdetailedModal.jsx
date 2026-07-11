@@ -36,7 +36,17 @@ function OrderDetailsModal({ order, loading, onClose }) {
   const [qtyDecrease] = useQtyDecreaseMutation();
 
   const handlePrint = () => {
-    const printContents = printRef.current.innerHTML;
+
+    const clone = printRef.current.cloneNode(true);
+
+    const scrollContainer = clone.querySelector(".max-h-\\[80vh\\]");
+
+    if (scrollContainer) {
+      scrollContainer.style.maxHeight = "none";
+      scrollContainer.style.overflow = "visible";
+    }
+
+    const printContents = clone.innerHTML;
 
     const printWindow = window.open("", "_blank", "width=800,height=600");
 
@@ -206,10 +216,10 @@ function OrderDetailsModal({ order, loading, onClose }) {
                       <p className="text-xs text-gray-500">{item.variantInfo}</p>
                     )}
                     <p className="text-xs text-gray-500">
-                      Qty: {item.quantity} &nbsp;•&nbsp; Price: ₹{item.price?.toFixed(2)}
+                      Qty: {item.quantity} &nbsp;•&nbsp; Selling Price: ₹{item.price?.toFixed(2)}
                     </p>
                     {typeof item.mrp === "number" && (
-                      <p className="text-xs text-gray-400">MRP: ₹{item.mrp.toFixed(2)}</p>
+                      <p className="text-xs text-gray-400">InRate: ₹{item.mrp.toFixed(2)}</p>
                     )}
                     {item.discountType && item.discountValue > 0 && (
                       <p className="text-xs text-green-600">
@@ -318,7 +328,7 @@ function OrderDetailsModal({ order, loading, onClose }) {
                 <span>₹{order?.amountPaidOnline?.toFixed(2)}</span>
               </div>
             )}
-            {order?.amountPaidCash > 0 && (
+            {order?.paymentMethod !== "COD" && order?.amountPaidCash > 0 && (
               <div className="flex justify-between text-sm">
                 <span>Paid in Cash</span>
                 <span>₹{order?.amountPaidCash?.toFixed(2)}</span>

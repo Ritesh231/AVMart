@@ -491,7 +491,7 @@ export default function DeliveryBoyDetails() {
             <div className="flex flex-wrap items-center gap-3 mb-2">
               <h2 className="text-xl font-semibold">{profile?.name}</h2>
               <span className="text-xs bg-gray-200 px-2 py-1 rounded">
-                {profile?._id}
+                {profile?._id?.slice(-5)}
               </span>
               <span
                 className={`text-xs px-3 py-1 rounded-full ${profile?.availabilityStatus === "Notavailable"

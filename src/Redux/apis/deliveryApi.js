@@ -22,6 +22,21 @@ export const deliveryapi = baseApi.injectEndpoints({
       providesTags: ["DeliveryBoys"],
     }),
 
+    getAllDeliveryActiveBoys: builder.query({
+      query: ({ status, period, page, limit, search }) => ({
+        url: "/api/v1/delivery/active-deliveryboys",
+        method: "GET",
+        params: {
+          status,
+          period,
+          page,
+          limit,
+          search,
+        },
+      }),
+      providesTags: ["DeliveryBoys"],
+    }),
+
     getAssignDeliveryBoys: builder.mutation({
       query: (body) => ({
         url: "/api/v1/delivery/assignOrderByZone/byAdmin",
@@ -104,7 +119,7 @@ export const deliveryapi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetAllDeliveryBoysQuery, useGetAssignDeliveryBoysMutation,
+export const { useGetAllDeliveryBoysQuery, useGetAllDeliveryActiveBoysQuery, useGetAssignDeliveryBoysMutation,
   useUpdateDeliveryStatusMutation, useGetdeliveryProfileQuery, useGetDeliveryBoyDetailsQuery,
   useGetDeliveryBoyOrderDetailsQuery, useGetWithdrawalRequestsQuery, useVerifyWithdrawalMutation,
   useUpdateDeliveryChargesMutation, useGetProfileQuery } = deliveryapi;

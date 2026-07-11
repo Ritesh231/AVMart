@@ -8,7 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useGetOrdersByStatusQuery, useAssignOrderStatusMutation, } from "../../Redux/apis/ordersApi";
 
 import {
-  useGetAllDeliveryBoysQuery,
+  useGetAllDeliveryActiveBoysQuery,
   useGetAssignDeliveryBoysMutation
 } from "../../Redux/apis/deliveryApi";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
@@ -114,7 +114,7 @@ export default function UsersTable() {
 
   const skeletonRows = Array.from({ length: 6 });
 
-  const { data: deliveryData } = useGetAllDeliveryBoysQuery({
+  const { data: deliveryData } = useGetAllDeliveryActiveBoysQuery({
     status: "approved"
   });
 

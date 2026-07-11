@@ -421,7 +421,7 @@ const ProductGrid = () => {
 
               <div
                 key={product._id}
-                className="relative bg-white rounded-xl p-3"
+                className="relative bg-white rounded-xl p-3 h-full flex flex-col"
               >
                 <input
                   type="checkbox"
@@ -429,6 +429,7 @@ const ProductGrid = () => {
                   checked={selectedProductIds.includes(product._id)}
                   onChange={() => toggleProductSelection(product._id)}
                 />
+
                 {/* Status Dot */}
                 <span
                   onClick={() => navigate("/AddProduct")}
@@ -504,7 +505,7 @@ const ProductGrid = () => {
                 </div>
 
                 {/* Buttons */}
-                <div className="flex items-center gap-3 mt-3">
+                <div className="flex items-center gap-3 mt-auto pt-3">
                   <button
                     className="flex-1 h-9 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#FD610D] to-[#FF8800] text-white text-sm font-medium"
                     onClick={() => {
