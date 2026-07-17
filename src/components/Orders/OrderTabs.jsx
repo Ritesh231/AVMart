@@ -27,11 +27,11 @@ const tabs = [
     label: "Rejected",
     path: "/orders/rejected",
   },
-  {
-    id: "reassign",
-    label: "Reassign",
-    path: "/orders/reassign",
-  }
+  // {
+  //   id: "reassign",
+  //   label: "Reassign",
+  //   path: "/orders/reassign",
+  // }
 ];
 
 export default function OrderPaymentTabs() {

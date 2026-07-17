@@ -41,8 +41,8 @@ export default function EditSubcategoryModal({
       const objectUrl = URL.createObjectURL(file);
 
       img.onload = () => {
-        if (img.width !== 400 || img.height !== 500) {
-          toast.error("Subcategory Image must be exactly 400 × 500 px ❌");
+        if (img.width !== 800 || img.height !== 800) {
+          toast.error("Subcategory Image must be exactly 800 × 800 px ❌");
 
           setFormData((prev) => ({
             ...prev,

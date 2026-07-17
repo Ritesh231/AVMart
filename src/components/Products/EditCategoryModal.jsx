@@ -44,8 +44,8 @@ export const EditCategoryModal = ({ isOpen, onClose, productData }) => {
     img.src = URL.createObjectURL(file);
 
     img.onload = () => {
-      if (img.width !== 512 || img.height !== 512) {
-        toast.error("Category Image must be exactly 512 × 512 px ❌");
+      if (img.width !== 800 || img.height !== 800) {
+        toast.error("Category Image must be exactly 800 × 800 px ❌");
         e.target.value = "";
         return;
       }

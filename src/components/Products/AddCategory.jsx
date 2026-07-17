@@ -49,8 +49,8 @@ export default function AddCategory() {
     "image/png",
   ];
 
-  const REQUIRED_WIDTH = 512;
-  const REQUIRED_HEIGHT = 512;
+  const REQUIRED_WIDTH = 800;
+  const REQUIRED_HEIGHT = 800;
 
   const [preview, setPreview] = useState(null);
 
@@ -256,7 +256,7 @@ export default function AddCategory() {
 
             <div className="mt-2 text-xs text-gray-500 space-y-1">
               <p><strong>Supported Formats:</strong> JPG, JPEG, PNG</p>
-              <p><strong>Required Size:</strong> 512 × 512 px</p>
+              <p><strong>Required Size:</strong> 800 × 800 px</p>
               <p><strong>Maximum File Size:</strong> 2 MB</p>
             </div>
           </div>
