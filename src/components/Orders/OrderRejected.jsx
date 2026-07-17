@@ -2,6 +2,7 @@ import { FaEye } from "react-icons/fa";
 import { ChevronDown, Download, Search, SlidersHorizontal } from "lucide-react";
 import { BsWallet2 } from "react-icons/bs";
 import { useGetOrdersByStatusQuery, useAssignOrderStatusMutation } from "../../Redux/apis/ordersApi";
+import { useGetAllDeliveryActiveBoysQuery, useGetAssignDeliveryBoysMutation } from "../../Redux/apis/deliveryApi";
 import OrderDetailsModal from "../Orders/OrderdetailedModal";
 import { useGetOrdersByIdMutation } from "../../Redux/apis/ordersApi";
 import { useEffect, useRef, useState } from "react";
@@ -30,7 +31,11 @@ export default function UsersTable() {
     pages: 1
   };
 
-  const [assignOrderStatus] = useAssignOrderStatusMutation();
+  const [assignOrderStatus] = useGetAssignDeliveryBoysMutation();
+
+  const { data: deliveryBoysData } = useGetAllDeliveryActiveBoysQuery({
+    status: "approved"
+  });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All");
@@ -38,6 +43,9 @@ export default function UsersTable() {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
   const exportMenuRef = useRef(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedDeliveryBoy, setSelectedDeliveryBoy] = useState("");
 
   // ✅ Filter and search on current page data (API already paginated)
   const filteredUsers =
@@ -319,12 +327,35 @@ export default function UsersTable() {
   const startIndex = (pagination.page - 1) * pagination.limit + 1;
   const endIndex = Math.min(pagination.page * pagination.limit, pagination.total);
 
-  const handleReassign = async (id) => {
-    try {
-      await assignOrderStatus({ id, status: "confirmed" });
-    } catch (error) {
-      console.error("Error reassigning order:", error);
+  const handleReassign = async () => {
+    if (!selectedDeliveryBoy) {
+      alert("Please select a delivery boy");
+      return;
     }
+
+    try {
+      await assignOrderStatus({
+        orderId: selectedOrder._id,
+        deliveryBoyId: selectedDeliveryBoy,
+        isReassigned: true,
+      }).unwrap();
+
+      setShowAssignModal(false);
+      setSelectedOrder(null);
+      setSelectedDeliveryBoy("");
+
+      refetch();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const isCancelledByDeliveryBoy = (order) => {
+    return order?.statusHistory?.some(
+      (item) =>
+        item.by === "DeliveryBoy" ||
+        item.status?.toLowerCase().includes("deliveryboy cancelled")
+    );
   };
 
   return (
@@ -532,13 +563,18 @@ export default function UsersTable() {
                     >
                       <FaEye size={18} />
                     </button>
-                    {/* <button
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                        bg-[#1E264F] text-white hover:bg-opacity-90"
-                      onClick={() => handleReassign(u._id)}
-                    >
-                      Reassign
-                    </button> */}
+                    {isCancelledByDeliveryBoy(u) && (
+                      <button
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[#1E264F] text-white hover:bg-opacity-90"
+                        onClick={() => {
+                          setSelectedOrder(u);
+                          setSelectedDeliveryBoy("");
+                          setShowAssignModal(true);
+                        }}
+                      >
+                        Reassign
+                      </button>
+                    )}
                   </td>
 
                 </tr>
@@ -621,6 +657,50 @@ export default function UsersTable() {
               >
                 Next
               </button>
+            </div>
+          </div>
+        )}
+
+        {showAssignModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-[400px]">
+              <h2 className="text-lg font-semibold mb-4">
+                Reassign Delivery Boy
+              </h2>
+
+              <select
+                value={selectedDeliveryBoy}
+                onChange={(e) => setSelectedDeliveryBoy(e.target.value)}
+                className="w-full border rounded-lg p-3"
+              >
+                <option value="">Select Delivery Boy</option>
+
+                {deliveryBoysData?.data?.length ? (
+                  deliveryBoysData.data.map((boy) => (
+                    <option key={boy._id} value={boy._id}>
+                      {boy.Name} ({boy.VehicleType}) - {boy.contactNo}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No Delivery Boys Found</option>
+                )}
+              </select>
+
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  className="px-4 py-2 border rounded-lg"
+                  onClick={() => setShowAssignModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="px-4 py-2 bg-[#1E264F] text-white rounded-lg"
+                  onClick={handleReassign}
+                >
+                  Assign
+                </button>
+              </div>
             </div>
           </div>
         )}
