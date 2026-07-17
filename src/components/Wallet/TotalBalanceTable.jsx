@@ -85,7 +85,8 @@ export default function UsersTable() {
     const isAllSelected =
         filteredUsers.length > 0 && selectedFilteredCount === filteredUsers.length;
     const isSomeSelected =
-        selectedFilteredCount > 1 && selectedFilteredCount < filteredProducts.length;
+        selectedFilteredCount > 0 &&
+        selectedFilteredCount < filteredUsers.length;
 
     useEffect(() => {
         if (selectAllRef.current) {
@@ -115,10 +116,12 @@ export default function UsersTable() {
         if (!sourceRows.length) {
             return [];
         }
-        return sourceRows.map((u) => ({
+        return sourceRows.map((u, index) => ({
+            "Sr. No.": index + 1,
             Date: u.date?.split("T")[0] || "-",
             User: u.user || "-",
             Reason: u.reason || "-",
+            Type: u.type || "-",
             Amount: u.amount ?? "-"
         }));
     };
@@ -322,7 +325,7 @@ export default function UsersTable() {
 
                     <thead className="bg-[#F1F5F9] text-gray-600">
                         <tr>
-                            <th className="p-3">
+                            <th className="w-4 p-3">
                                 <input
                                     ref={selectAllRef}
                                     type="checkbox"
@@ -333,58 +336,63 @@ export default function UsersTable() {
                             <th className="p-3 text-left">Date</th>
                             <th className="p-3 text-left">User</th>
                             <th className="p-3 text-left">Reason</th>
+                            <th className="p-3 text-left">Type</th>
                             <th className="p-3 text-left">Amount</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         {isLoading ? (
                             Array.from({ length: 6 }).map((_, index) => (
                                 <tr key={index} className="border-t animate-pulse">
-                                    <td className="p-3">
-                                        <div className="h-4 w-4 bg-gray-200 rounded"></div>
-                                    </td>
-                                    <td className="p-3">
-                                        <div className="h-4 w-24 bg-gray-200 rounded"></div>
-                                    </td>
-                                    <td className="p-3">
-                                        <div className="h-4 w-32 bg-gray-200 rounded"></div>
-                                    </td>
-                                    <td className="p-3">
-                                        <div className="h-4 w-48 bg-gray-200 rounded"></div>
-                                    </td>
-                                    <td className="p-3">
-                                        <div className="h-4 w-20 bg-gray-200 rounded"></div>
-                                    </td>
+                                    <td className="p-3"><div className="h-4 w-4 bg-gray-200 rounded"></div></td>
+                                    <td className="p-3"><div className="h-4 w-24 bg-gray-200 rounded"></div></td>
+                                    <td className="p-3"><div className="h-4 w-32 bg-gray-200 rounded"></div></td>
+                                    <td className="p-3"><div className="h-4 w-48 bg-gray-200 rounded"></div></td>
+                                    <td className="p-3"><div className="h-4 w-20 bg-gray-200 rounded"></div></td>
                                 </tr>
                             ))
-                        ) : users.length > 0 ? (
-                            filteredUsers.map((u) => (
-                                <tr key={getRowId(u)} className="border-t hover:bg-gray-50">
+                        ) : filteredUsers.length > 0 ? (
+                            filteredUsers.map((u, index) => (
+                                <tr
+                                    key={getRowId(u, index)}
+                                    className="border-t hover:bg-gray-50"
+                                >
                                     <td className="p-3">
                                         <input
                                             type="checkbox"
-                                            checked={selectedTransactionIds.includes(getRowId(u))}
-                                            onChange={() => toggleRowSelection(getRowId(u))}
+                                            checked={selectedTransactionIds.includes(getRowId(u, index))}
+                                            onChange={() => toggleRowSelection(getRowId(u, index))}
                                         />
                                     </td>
-                                    <td className="p-3 font-medium">
-                                        {u.date?.split("T")[0]}
+
+                                    <td className="p-3">
+                                        {new Date(u.date).toLocaleDateString("en-IN", {
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                        })}
                                     </td>
-                                    <td className="p-3 font-medium">{u.user}</td>
-                                    <td className="p-3">{u.reason}</td>
-                                    <td
-                                        className={`p-3 font-semibold ${u.amount < 0 ? "text-red-500" : "text-emerald-600"
-                                            }`}
-                                    >
-                                        ₹{u.amount}
+
+                                    <td className="p-3 font-medium">
+                                        {u.user || "-"}
+                                    </td>
+
+                                    <td className="p-3">
+                                        {u.reason || "-"}
+                                    </td>
+
+                                    <td className="p-3">
+                                        {u.type || "-"}
+                                    </td>
+
+                                    <td className="p-3 font-semibold text-emerald-600">
+                                        ₹{Number(u.amount || 0).toLocaleString("en-IN")}
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            // 🔥 No Data State
                             <tr>
-                                <td colSpan="5" className="text-center py-10 text-gray-500">
+                                <td colSpan={6} className="text-center py-10 text-gray-500">
                                     No Transactions Found
                                 </td>
                             </tr>
