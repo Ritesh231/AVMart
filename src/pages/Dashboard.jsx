@@ -134,7 +134,7 @@ const Dashboard = () => {
     //dashboard
     return (
         <div className="p-6 min-h-screen">
-            <h2 className=" text-2xl my-2">Dashboard</h2>
+            <h2 className=" text-2xl my-2 text-semibold">Dashboard</h2>
 
             {/* MAIN GRID LAYOUT */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
