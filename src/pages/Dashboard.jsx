@@ -131,7 +131,7 @@ const Dashboard = () => {
             </div>
         )
     }
-
+    //dashboard
     return (
         <div className="p-6 min-h-screen">
             <h2 className=" text-2xl my-2">Dashboard</h2>
