@@ -565,9 +565,9 @@ ${tableRows}
 
     return (
         <div className='p-6'>
-            <section className="heading-and-btn-sec my-2 ">
-                <h2>Payment</h2>
-                <p className='text-[#9F9F9F] text-[0.92rem]'>Manage Payments</p>
+            <section className="heading-and-btn-sec my-0 ">
+                <h2 className="text-2xl font-bold mb-2">Payment</h2>
+                <p className='text-[#9F9F9F] text-[0.92rem] mb-6'>Manage Payments</p>
             </section>
 
             {/* Stats Cards */}

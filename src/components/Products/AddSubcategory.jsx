@@ -5,6 +5,7 @@ import {
 } from "../../Redux/apis/productsApi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function AddSubcategory() {
   const [addSubcategory, { isLoading }] = useAddSubcategoryMutation();
@@ -121,10 +122,21 @@ export default function AddSubcategory() {
     <div className="bg-[#F8FAFC] py-6 px-4">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-md border">
 
-        <div className="px-5 py-3 border-b bg-[#1E264F] rounded-t-xl">
-          <h2 className="text-white font-semibold text-lg">
-            Add New Subcategory
-          </h2>
+        <div className="px-5 py-3 border-b bg-[#1E264F] rounded-t-xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 transition flex items-center justify-center text-white"
+              title="Go Back"
+            >
+              <ArrowLeft size={20} />
+            </button>
+
+            <h2 className="text-white font-semibold text-lg">
+              Add New Subcategory
+            </h2>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">

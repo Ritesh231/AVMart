@@ -23,7 +23,7 @@ export default function OrderManagement() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
+          <h1 className="text-2xl font-semibold mb-2">
             Product Management
           </h1>
           <p className="text-gray-400 text-sm">

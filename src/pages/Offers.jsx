@@ -12,7 +12,7 @@ const Offers = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-xl font-semibold">Offers</h1>
+        <h1 className="text-2xl font-semibold">Offers</h1>
 
         <button
           onClick={() => setOpenModal(true)}
@@ -25,7 +25,7 @@ const Offers = () => {
       <h3 className="text-[#9F9F9F] mb-6">Manage Offers</h3>
 
       {/* Tabs */}
-      <OfferTabs 
+      <OfferTabs
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />

@@ -12,6 +12,7 @@ import {
 import { toast } from "react-toastify";
 import { IoIosCloudUpload } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 /* -------------------- Reusable Fields -------------------- */
 
@@ -646,10 +647,21 @@ export default function AddProduct() {
   return (
     <div className="bg-[#F8FAFC] py-6 px-4">
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md border">
-        <div className="px-5 py-3 border-b bg-[#1E264F] rounded-t-xl">
-          <h2 className="text-white font-semibold text-lg">
-            Add New Product
-          </h2>
+        <div className="px-5 py-3 border-b bg-[#1E264F] rounded-t-xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 transition flex items-center justify-center text-white"
+              title="Go Back"
+            >
+              <ArrowLeft size={20} />
+            </button>
+
+            <h2 className="text-white font-semibold text-lg">
+              Add New Product
+            </h2>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-6">

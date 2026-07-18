@@ -39,7 +39,7 @@ export default function FeedbackList() {
     if (isLoading) {
         return (
             <div className="p-4">
-                <h2 className="text-xl font-semibold mb-4">User Feedback</h2>
+                <h2 className="text-2xl font-semibold mb-4">User Feedback</h2>
                 <div className="grid gap-4">
                     {[...Array(5)].map((_, index) => (
                         <TableSkeleton key={index} />
@@ -62,7 +62,7 @@ export default function FeedbackList() {
 
     return (
         <div className="p-4">
-            <h2 className="text-xl font-semibold mb-4">User Feedback</h2>
+            <h2 className="text-2xl font-semibold mb-4">User Feedback</h2>
 
             <div className="grid gap-4">
                 {feedbacks.map((item) => (
