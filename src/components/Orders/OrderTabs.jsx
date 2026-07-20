@@ -29,7 +29,7 @@ const tabs = [
   },
   {
     id: "reassign",
-    label: "Reassign",
+    label: "Reassigned",
     path: "/orders/reassign",
   }
 ];
