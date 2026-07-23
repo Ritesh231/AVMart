@@ -3,9 +3,18 @@ import { useGetWalletQuery } from "../../Redux/apis/walletApi";
 import StatCard from "../StatCard";
 import StatCardSkeleton from "../statcardskeleton";
 
-export default function UserStats() {
-  const { data, isLoading, isError } = useGetWalletQuery();
-  const wallet = data?.data?.stats || [];
+export default function UserStats({
+  dateFilter = "today",
+  startDate,
+  endDate,
+}) {
+  const { data, isLoading, isError } = useGetWalletQuery({
+    dateFilter,
+    startDate,
+    endDate,
+  });
+
+  const wallet = data?.data?.stats || {};
 
   const stats = [
     {
@@ -18,7 +27,6 @@ export default function UserStats() {
     {
       title: "Cashback Issued",
       number: wallet?.cashbackIssued?.total,
-      // statement: "+12% from last week",
       icon: <RiWallet3Fill size={24} />,
       variant: "normal",
     },
@@ -43,18 +51,18 @@ export default function UserStats() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {isLoading
           ? Array.from({ length: 4 }).map((_, index) => (
-            <StatCardSkeleton key={index} />
-          ))
+              <StatCardSkeleton key={index} />
+            ))
           : stats.map((item, index) => (
-            <StatCard
-              key={index}
-              title={item.title}
-              number={item.number}
-              statement={item.statement}
-              icon={item.icon}
-              variant={item.variant}
-            />
-          ))}
+              <StatCard
+                key={index}
+                title={item.title}
+                number={item.number}
+                statement={item.statement}
+                icon={item.icon}
+                variant={item.variant}
+              />
+            ))}
       </div>
     </section>
   );

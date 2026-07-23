@@ -4,9 +4,9 @@ import { useGetWalletQuery } from "../../Redux/apis/walletApi";
 import { useEffect, useRef, useState } from "react";
 
 export default function UsersTable() {
-    const { data, isLoading, isError } = useGetWalletQuery();
-    const users = data?.data?.transactions || [];
-    const [dateFilter, setDateFilter] = useState("Today");
+    const [dateFilter, setDateFilter] = useState("Last7Days");
+
+
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
@@ -14,6 +14,14 @@ export default function UsersTable() {
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const selectAllRef = useRef(null);
     const exportMenuRef = useRef(null);
+
+    const { data, isLoading, isError } = useGetWalletQuery({
+        dateFilter,
+        startDate: fromDate,
+        endDate: toDate,
+    });
+
+    const users = data?.data?.transactions || [];
 
     const dateFilteredUsers = users.filter((u) => {
         if (!u.date) return false;
@@ -265,10 +273,11 @@ export default function UsersTable() {
                             }}
                             className="border border-brand-cyan px-4 py-3 rounded-2xl font-semibold text-brand-navy"
                         >
-                            <option value="Today">Today</option>
-                            <option value="Yesterday">Yesterday</option>
-                            <option value="Last7Days">Last 7 Days</option>
-                            <option value="Custom">Custom Range</option>
+                           <option value="week">Last 7 Days</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                    
+                            <option value="custom">Custom Range</option>
                         </select>
 
                         {dateFilter === "Custom" && (
